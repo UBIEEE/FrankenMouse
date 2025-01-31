@@ -59,6 +59,26 @@ struct VisionPage: View {
               .foregroundColor(.secondary)
           }
         }
+        Section(header: Text("Calibration"),
+                footer: Text("Take measurements when no walls are visible to determine light bleed under/through cover")) {
+          VStack(alignment: .leading) {
+            Text("\(btManager.visionService.isCalibrated ? "Calibrated" : "Not Calibrated")")
+            Text("Is Calibrated?")
+              .font(.subheadline)
+              .foregroundColor(.secondary)
+          }
+          Button("Reset") {
+            let calibrateChar = btManager.connectionState.visionService.calibrateChar!
+            let calibrateData = Data([0])
+            btManager.writeValueToChar(calibrateChar, calibrateData)
+          }
+          Button("Calibrate") {
+            let calibrateChar = btManager.connectionState.visionService.calibrateChar!
+            let calibrateData = Data([1])
+            btManager.writeValueToChar(calibrateChar, calibrateData)
+          }
+        }
+        
       }
       .navigationTitle("Vision")
     }

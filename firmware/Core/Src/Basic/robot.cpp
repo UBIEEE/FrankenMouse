@@ -104,6 +104,7 @@ void Robot::start_next_task() {
 
   m_buzzer.quiet();
   m_navigator.stop();
+  m_drive_controller.stop();
   m_drive.stop();
   m_task = m_next_task;
 
@@ -121,37 +122,44 @@ void Robot::start_next_task() {
   // Start task.
 
   switch (m_task) {
-  case Task::STOPPED:
+    using enum Task;
+  case STOPPED:
     break;
-  case Task::MAZE_SEARCH:
+  case MAZE_SEARCH:
     start_task_maze_search();
     break;
-  case Task::MAZE_SLOW_SOLVE:
+  case MAZE_SLOW_SOLVE:
     start_task_maze_solve(false);
     break;
-  case Task::MAZE_FAST_SOLVE:
+  case MAZE_FAST_SOLVE:
     start_task_maze_solve(true);
     break;
-  case Task::TEST_DRIVE_STRAIGHT:
+  case TEST_DRIVE_STRAIGHT:
     start_task_test_drive_straight();
     break;
-  case Task::TEST_DRIVE_LEFT_TURN:
+  case TEST_DRIVE_LEFT_TURN:
     start_task_test_drive_left_turn();
     break;
-  case Task::TEST_DRIVE_RIGHT_TURN:
+  case TEST_DRIVE_RIGHT_TURN:
     start_task_test_drive_right_turn();
     break;
-  case Task::TEST_GYRO:
+  case TEST_GYRO:
     start_task_test_gyro();
     break;
-  case Task::ARMED:
+  case TEST_VISION_SIDE:
+    start_task_test_vision_side();
+    break;
+  case ARMED:
     start_task_armed();
     break;
-  case Task::ARMED_TRIGGERING:
+  case ARMED_TRIGGERING:
     start_task_armed_triggering();
     break;
-  case Task::ARMED_TRIGGERED:
+  case ARMED_TRIGGERED:
     start_task_armed_triggered();
+    break;
+  case VISION_CALIBRATE:
+    start_task_vision_calibrate();
     break;
   default:
     ErrorManager::get().fatal_error(Error::UNREACHABLE);
@@ -180,12 +188,35 @@ void Robot::start_task_maze_solve(bool fast) {
   m_navigator.solve_to(Maze::GOAL_ENDPOINTS, fast);
 }
 
-void Robot::start_task_test_drive_straight() {}
-void Robot::start_task_test_drive_left_turn() {}
-void Robot::start_task_test_drive_right_turn() {}
+void Robot::start_task_test_drive_straight() {
+  m_drive_controller.reset();
+  m_drive_controller.enqueue_forward(100.0, false);
+}
 
-void Robot::start_task_test_gyro() {
-  m_drive.control_speed_velocity(0.f, 90.f);
+void Robot::start_task_test_drive_left_turn() {
+  m_drive_controller.reset();
+
+  using Positions = Constants::RobotCellPositions;
+  using enum DriveController::TurnAngle;
+
+  // Forward to turning spot while accelerating.
+  m_drive_controller.enqueue_forward(Positions::TURNING_BEGIN_SPOT_MM - Positions::BACK_WALL_MM);
+  // Turn
+  m_drive_controller.enqueue_turn(CW_90, Positions::TURNING_RADIUS_MM);
+  // Forward to center while decelerating.
+  m_drive_controller.enqueue_forward(Positions::CENTERED_MM - Positions::TURNING_END_SPOT_MM, false);
+}
+
+void Robot::start_task_test_drive_right_turn() {
+  m_drive_controller.reset();
+
+  // TODO
+}
+
+void Robot::start_task_test_gyro() { m_drive.control_speed_velocity(0.f, 0.f); }
+
+void Robot::start_task_test_vision_side() {
+  m_drive_controller.make_idle();
 }
 
 void Robot::start_task_armed() {
@@ -226,6 +257,11 @@ void Robot::start_task_armed_triggered() {
   m_armed_trigger_timer.start();
 }
 
+void Robot::start_task_vision_calibrate() {
+  m_calibration_timer.reset();
+  m_calibration_timer.start();
+}
+
 void Robot::process_current_task() {
   switch (m_task) {
     using enum Task;
@@ -247,6 +283,8 @@ void Robot::process_current_task() {
     break;
   case TEST_GYRO:
     break;
+  case TEST_VISION_SIDE:
+    break;
   case ARMED:
     process_task_armed();
     break;
@@ -255,6 +293,9 @@ void Robot::process_current_task() {
     break;
   case ARMED_TRIGGERED:
     process_task_armed_triggered();
+    break;
+  case VISION_CALIBRATE:
+    process_task_vision_calibrate();
     break;
   default:
     ErrorManager::get().fatal_error(Error::UNREACHABLE);
@@ -367,7 +408,17 @@ void Robot::process_task_armed_triggered() {
 
   // TODO: Calibration
 
-  run_task(m_armed_task);
+  // run_task(m_armed_task);
+  run_task(Task::STOPPED);
+}
+
+void Robot::process_task_vision_calibrate() {
+  if (m_calibration_timer.elapsed_s() < Constants::Vision::CALIBRATION_TIME_S)
+    return;
+
+  m_vision.calibrate();
+
+  end_task();
 }
 
 void Robot::send_current_task() {
@@ -416,3 +467,18 @@ void RobotControl_RunTask(uint8_t task, uint8_t start_location) {
 }
 
 void RobotControl_ResetMaze(void) { Robot::get().reset_maze(); }
+
+void Vision_Calibrate(uint8_t calibrate) {
+  if (calibrate == 0) {
+    Robot::get().vision().reset_calibration();
+    return;
+  }
+  if (calibrate != 1) return;
+
+  if (Robot::get().vision().is_enabled()) {
+    Robot::get().vision().calibrate();
+    return;
+  }
+
+  Robot::get().run_task(Robot::Task::VISION_CALIBRATE);
+}

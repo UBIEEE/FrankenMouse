@@ -34,7 +34,7 @@ public:
 private:
   Mode m_mode;
 
-  bool m_done = false;
+  bool m_done = true;
 
 public:
   Navigator(DriveController& drive, Maze& maze, const SpeedConfig& speeds)

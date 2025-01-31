@@ -42,6 +42,7 @@ typedef enum
   /* visionService */
   CUSTOM_STM_VISION_RAWDATA_CHAR,
   CUSTOM_STM_VISION_NORMALIZEDDATA_CHAR,
+  CUSTOM_STM_VISION_CALIBRATE_CHAR,
   /* mainService */
   CUSTOM_STM_MAIN_TASK_CHAR,
   CUSTOM_STM_MAIN_APPREADY_CHAR,
@@ -69,6 +70,10 @@ typedef enum
   /* vision_normalizedData_notifyChar */
   CUSTOM_STM_VISION_NORMALIZEDDATA_CHAR_NOTIFY_ENABLED_EVT,
   CUSTOM_STM_VISION_NORMALIZEDDATA_CHAR_NOTIFY_DISABLED_EVT,
+  /* vision_calibrate_writeNotifyChar */
+  CUSTOM_STM_VISION_CALIBRATE_CHAR_WRITE_EVT,
+  CUSTOM_STM_VISION_CALIBRATE_CHAR_NOTIFY_ENABLED_EVT,
+  CUSTOM_STM_VISION_CALIBRATE_CHAR_NOTIFY_DISABLED_EVT,
   /* main_task_writeNotifyChar */
   CUSTOM_STM_MAIN_TASK_CHAR_WRITE_EVT,
   CUSTOM_STM_MAIN_TASK_CHAR_NOTIFY_ENABLED_EVT,
@@ -125,6 +130,7 @@ extern uint8_t SizeMusic_Playsong_Char;
 extern uint8_t SizeMusic_Isplaying_Char;
 extern uint8_t SizeVision_Rawdata_Char;
 extern uint8_t SizeVision_Normalizeddata_Char;
+extern uint8_t SizeVision_Calibrate_Char;
 extern uint8_t SizeMain_Task_Char;
 extern uint8_t SizeMain_Appready_Char;
 extern uint8_t SizeMain_Errorcode_Char;

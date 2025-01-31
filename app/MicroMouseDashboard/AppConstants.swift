@@ -19,6 +19,7 @@ class AppConstants {
       // Characteristics (0005-0009)
       static let RawDataUUID = CBUUID(string: "00000005-8E22-4541-9D4C-21EDAE82ED19"); // Notify
       static let NormalizedDataUUID = CBUUID(string: "00000006-8E22-4541-9D4C-21EDAE82ED19"); // Notify
+      static let CalibrateUUID = CBUUID(string: "00000007-8E22-4541-9D4C-21EDAE82ED19"); // Write & Notify
     }
     
     class MainService {

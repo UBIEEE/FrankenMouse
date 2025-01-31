@@ -42,6 +42,9 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
+# Enable compile commands
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
 # Project
 project(${CMAKE_PROJECT_NAME})
 

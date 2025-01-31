@@ -52,10 +52,7 @@ void Vision::process() {
     // Turn off the emitter.
     set_emitter(m_sensor, GPIO_PIN_RESET);
 
-    m_readings[m_sensor] = m_raw_readings[m_sensor] / 1024.f; // 10-Bit reading.
-    m_distances[m_sensor] = calculate_distance_mm(m_readings[m_sensor]);
-    m_adjusted_distances[m_sensor] =
-        adjust_distance_mm(m_distances[m_sensor], m_sensor);
+    handle_raw_sensor_reading();
 
     // Next sensor.
     m_sensor = static_cast<Sensor>((m_sensor + 1) % 4);
@@ -76,8 +73,25 @@ void Vision::process() {
   }
 }
 
+void Vision::calibrate() {
+  std::memcpy(m_calibration, m_readings, sizeof(m_calibration));
+  m_is_calibrated = true;
+}
+
 void Vision::set_emitter(Sensor sensor, GPIO_PinState state) {
   HAL_GPIO_WritePin(EMIT_PORTS[sensor], EMIT_PINS[sensor], state);
+}
+
+void Vision::handle_raw_sensor_reading() {
+  m_readings[m_sensor] = m_raw_readings[m_sensor] / 1024.f; // 10-Bit reading.
+
+  m_corrected_readings[m_sensor] =
+      m_readings[m_sensor] - m_calibration[m_sensor];
+
+  m_distances[m_sensor] = calculate_distance_mm(m_corrected_readings[m_sensor]);
+
+  m_wall_distances[m_sensor] =
+      calculate_distance_to_wall_mm(m_distances[m_sensor], m_sensor);
 }
 
 float Vision::calculate_distance_mm(const float& R) {
@@ -110,28 +124,38 @@ float Vision::calculate_distance_mm(const float& R) {
   return d;
 }
 
-float Vision::adjust_distance_mm(const float& distance, Sensor sensor) {
-  const float& sensor_angle_deg = [&sensor] {
-    if (sensor == FAR_RIGHT || sensor == FAR_LEFT) {
-      return Constants::RobotMeasurements::FAR_PHOTOTRANSISTOR_ANGLE_DEG;
-    }
-    return Constants::RobotMeasurements::MID_PHOTOTRANSISTOR_ANGLE_DEG;
-  }();
+float Vision::calculate_distance_to_wall_mm(const float& distance_mm,
+                                            Sensor sensor) {
+
+  float sensor_angle_deg =
+      Constants::RobotMeasurements::MID_PHOTOTRANSISTOR_ANGLE_DEG;
+
+  if (sensor == FAR_RIGHT || sensor == FAR_LEFT) {
+    sensor_angle_deg =
+        Constants::RobotMeasurements::FAR_PHOTOTRANSISTOR_ANGLE_DEG;
+  }
 
   const float sensor_angle_rad = deg_to_rad(sensor_angle_deg);
 
-  return std::cos(sensor_angle_rad) * distance;
+  return std::cos(sensor_angle_rad) * distance_mm;
 }
 
 void Vision::read_complete_handler() { m_adc_ready = true; }
 
 void Vision::send_feedback() {
+  static bool was_calibrated = false;
+  if (was_calibrated != m_is_calibrated) {
+    was_calibrated = m_is_calibrated;
+    Custom_STM_App_Update_Char(CUSTOM_STM_VISION_CALIBRATE_CHAR,
+                               (uint8_t*)&m_is_calibrated);
+  }
+
   if (!m_enabled) return;
 
   Custom_STM_App_Update_Char(CUSTOM_STM_VISION_RAWDATA_CHAR,
                              (uint8_t*)m_readings);
   Custom_STM_App_Update_Char(CUSTOM_STM_VISION_NORMALIZEDDATA_CHAR,
-                             (uint8_t*)m_adjusted_distances);
+                             (uint8_t*)m_wall_distances);
 }
 
 #include "Basic/robot.hpp"

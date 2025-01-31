@@ -25,7 +25,7 @@ class Robot : public Singleton<Robot> {
   Maze m_maze;
   FloodFillSolver m_flood_fill_solver {m_maze};
 
-  DriveController m_drive_controller {m_drive};
+  DriveController m_drive_controller {m_drive, m_vision};
   SpeedConfig m_speeds;
 
   Navigator m_navigator {m_drive_controller, m_maze, m_speeds};
@@ -88,11 +88,14 @@ public:
     TEST_DRIVE_LEFT_TURN  = 5,
     TEST_DRIVE_RIGHT_TURN = 6,
 
-    TEST_GYRO = 7,
+    TEST_GYRO         = 7,
+    TEST_VISION_SIDE  = 8,
 
     ARMED,
     ARMED_TRIGGERING,
     ARMED_TRIGGERED,
+
+    VISION_CALIBRATE,
 
     _COUNT,
   };
@@ -126,6 +129,8 @@ private:
     GOAL_TO_START = 1,
   } m_solve_stage = SolveStage::START_TO_GOAL;
 
+  Timer m_calibration_timer;
+
 public:
   Task current_task() const {
     if (m_is_next_task) return m_next_task;
@@ -141,6 +146,7 @@ private:
 private:
   friend void ::RobotControl_RunTask(uint8_t task, uint8_t start_location);
   friend void ::RobotControl_ResetMaze(void);
+  friend void ::Vision_Calibrate(uint8_t reset_or_calibrate);
 
   void arm_task(Task task);
   void run_task(Task task);
@@ -169,10 +175,13 @@ private:
   void start_task_test_drive_left_turn();
   void start_task_test_drive_right_turn();
   void start_task_test_gyro();
+  void start_task_test_vision_side();
 
   void start_task_armed();
   void start_task_armed_triggering();
   void start_task_armed_triggered();
+
+  void start_task_vision_calibrate();
 
   //
   // Process task functions.
@@ -188,6 +197,8 @@ private:
   void process_task_armed();
   void process_task_armed_triggering();
   void process_task_armed_triggered();
+
+  void process_task_vision_calibrate();
 
 private:
   void send_current_task();

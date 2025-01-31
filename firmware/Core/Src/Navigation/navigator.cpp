@@ -6,7 +6,7 @@
 void Navigator::process() {
   if (m_done) return;
 
-  if (!m_drive.is_motion_done()) return;
+  if (!m_drive.is_done()) return;
 
   switch (m_mode) {
     using enum Mode;
@@ -24,6 +24,8 @@ void Navigator::next_motion_slow() {
   if (m_mode == Mode::SEARCH) {
     m_solver->solve(m_target);
   }
+
+  // TODO: Determine next motion...
 
   /*
   if (finished) {

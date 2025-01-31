@@ -36,6 +36,7 @@ typedef struct{
   uint16_t  CustomVisionserviceHdle;                    /**< visionService handle */
   uint16_t  CustomVision_Rawdata_CharHdle;                  /**< vision_rawData_notifyChar handle */
   uint16_t  CustomVision_Normalizeddata_CharHdle;                  /**< vision_normalizedData_notifyChar handle */
+  uint16_t  CustomVision_Calibrate_CharHdle;                  /**< vision_calibrate_writeNotifyChar handle */
   uint16_t  CustomMainserviceHdle;                    /**< mainService handle */
   uint16_t  CustomMain_Task_CharHdle;                  /**< main_task_writeNotifyChar handle */
   uint16_t  CustomMain_Appready_CharHdle;                  /**< main_appReady_writeChar handle */
@@ -85,6 +86,7 @@ uint8_t SizeMusic_Playsong_Char = 1;
 uint8_t SizeMusic_Isplaying_Char = 1;
 uint8_t SizeVision_Rawdata_Char = 4*4;
 uint8_t SizeVision_Normalizeddata_Char = 4*4;
+uint8_t SizeVision_Calibrate_Char = 1;
 uint8_t SizeMain_Task_Char = 2;
 uint8_t SizeMain_Appready_Char = 1;
 uint8_t SizeMain_Errorcode_Char = 1;
@@ -164,6 +166,7 @@ do {\
 #define COPY_VISIONSERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x01,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
 #define COPY_VISION_RAWDATA_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x05,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 #define COPY_VISION_NORMALIZEDDATA_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x06,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_VISION_CALIBRATE_WRITENOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x07,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 #define COPY_MAINSERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x02,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
 #define COPY_MAIN_TASK_WRITENOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x0a,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 #define COPY_MAIN_APPREADY_WRITECHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x0b,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
@@ -343,6 +346,50 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
               break;
             }
           }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomVision_Normalizeddata_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
+
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomVision_Calibrate_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+            /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3 */
+
+            /* USER CODE END CUSTOM_STM_Service_2_Char_3 */
+            switch (attribute_modified->Attr_Data[0])
+            {
+              /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_attribute_modified */
+
+              /* USER CODE END CUSTOM_STM_Service_2_Char_3_attribute_modified */
+
+              /* Disabled Notification management */
+              case (!(COMSVC_Notification)):
+                /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_Disabled_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_2_Char_3_Disabled_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_VISION_CALIBRATE_CHAR_NOTIFY_DISABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_Disabled_END */
+
+                /* USER CODE END CUSTOM_STM_Service_2_Char_3_Disabled_END */
+                break;
+
+              /* Enabled Notification management */
+              case COMSVC_Notification:
+                /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_COMSVC_Notification_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_2_Char_3_COMSVC_Notification_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_VISION_CALIBRATE_CHAR_NOTIFY_ENABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_COMSVC_Notification_END */
+
+                /* USER CODE END CUSTOM_STM_Service_2_Char_3_COMSVC_Notification_END */
+                break;
+
+              default:
+                /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_default */
+
+                /* USER CODE END CUSTOM_STM_Service_2_Char_3_default */
+              break;
+            }
+          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomVision_Calibrate_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
 
           else if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Task_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
           {
@@ -663,6 +710,17 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
 
             /* USER CODE END CUSTOM_STM_Service_1_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
           } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMusic_Playsong_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomVision_Calibrate_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+            /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+
+            if (attribute_modified->Attr_Data_Length == 1) {
+              Vision_Calibrate(attribute_modified->Attr_Data[0]);
+            }
+
+            /* USER CODE END CUSTOM_STM_Service_2_Char_3_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+          } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomVision_Calibrate_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
           else if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Task_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
@@ -887,18 +945,20 @@ void SVCCTL_InitCustomSvc(void)
   /**
    *          visionService
    *
-   * Max_Attribute_Records = 1 + 2*2 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
+   * Max_Attribute_Records = 1 + 2*3 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
    * service_max_attribute_record = 1 for visionService +
    *                                2 for vision_rawData_notifyChar +
    *                                2 for vision_normalizedData_notifyChar +
+   *                                2 for vision_calibrate_writeNotifyChar +
    *                                1 for vision_rawData_notifyChar configuration descriptor +
    *                                1 for vision_normalizedData_notifyChar configuration descriptor +
-   *                              = 7
+   *                                1 for vision_calibrate_writeNotifyChar configuration descriptor +
+   *                              = 10
    *
    * This value doesn't take into account number of descriptors manually added
    * In case of descriptors added, please update the max_attr_record value accordingly in the next SVCCTL_InitService User Section
    */
-  max_attr_record = 7;
+  max_attr_record = 10;
 
   /* USER CODE BEGIN SVCCTL_InitService */
   /* max_attr_record to be updated if descriptors have been added */
@@ -972,6 +1032,32 @@ void SVCCTL_InitCustomSvc(void)
   /* Place holder for Characteristic Descriptors */
 
   /* USER CODE END SVCCTL_Init_Service2_Char2 */
+  /**
+   *  vision_calibrate_writeNotifyChar
+   */
+  COPY_VISION_CALIBRATE_WRITENOTIFYCHAR_UUID(uuid.Char_UUID_128);
+  ret = aci_gatt_add_char(CustomContext.CustomVisionserviceHdle,
+                          UUID_TYPE_128, &uuid,
+                          SizeVision_Calibrate_Char,
+                          CHAR_PROP_WRITE | CHAR_PROP_NOTIFY,
+                          ATTR_PERMISSION_NONE,
+                          GATT_NOTIFY_ATTRIBUTE_WRITE,
+                          0x10,
+                          CHAR_VALUE_LEN_CONSTANT,
+                          &(CustomContext.CustomVision_Calibrate_CharHdle));
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : VISION_CALIBRATE_CHAR, error code: 0x%x \n\r", ret);
+  }
+  else
+  {
+    APP_DBG_MSG("  Success: aci_gatt_add_char command   : VISION_CALIBRATE_CHAR \n\r");
+  }
+
+  /* USER CODE BEGIN SVCCTL_Init_Service2_Char3/ */
+  /* Place holder for Characteristic Descriptors */
+
+  /* USER CODE END SVCCTL_Init_Service2_Char3 */
 
   /**
    *          mainService
@@ -1419,6 +1505,25 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
       /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_2_Char_2*/
 
       /* USER CODE END CUSTOM_STM_App_Update_Service_2_Char_2*/
+      break;
+
+    case CUSTOM_STM_VISION_CALIBRATE_CHAR:
+      ret = aci_gatt_update_char_value(CustomContext.CustomVisionserviceHdle,
+                                       CustomContext.CustomVision_Calibrate_CharHdle,
+                                       0, /* charValOffset */
+                                       SizeVision_Calibrate_Char, /* charValueLen */
+                                       (uint8_t *)  pPayload);
+      if (ret != BLE_STATUS_SUCCESS)
+      {
+        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value VISION_CALIBRATE_CHAR command, result : 0x%x \n\r", ret);
+      }
+      else
+      {
+        APP_DBG_MSG("  Success: aci_gatt_update_char_value VISION_CALIBRATE_CHAR command\n\r");
+      }
+      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_2_Char_3*/
+
+      /* USER CODE END CUSTOM_STM_App_Update_Service_2_Char_3*/
       break;
 
     case CUSTOM_STM_MAIN_TASK_CHAR:

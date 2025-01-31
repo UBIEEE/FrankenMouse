@@ -41,10 +41,12 @@ class BluetoothManager: NSObject, ObservableObject,
       var serviceFound = false
       var rawDataChar: CBCharacteristic?
       var normalizedDataChar: CBCharacteristic?
+      var calibrateChar: CBCharacteristic?
       
       var isReady: Bool {
         get {
-          return serviceFound && rawDataChar != nil && normalizedDataChar != nil
+          return serviceFound && rawDataChar != nil &&
+                 normalizedDataChar != nil && calibrateChar != nil
         }
       }
     }
@@ -121,6 +123,7 @@ class BluetoothManager: NSObject, ObservableObject,
   struct VisionService {
     var rawSensorData        = [Float32](repeating: 0, count: 4)
     var normalizedSensorData = [Float32](repeating: 0, count: 4)
+    var isCalibrated         = false
 
     var rawFarRightReading: Float32 {
       get { return rawSensorData[0] }
@@ -323,6 +326,9 @@ class BluetoothManager: NSObject, ObservableObject,
         case AppConstants.Bluetooth.VisionService.NormalizedDataUUID: // Notify
           connectionState.visionService.normalizedDataChar = ch
           setNotify()
+        case AppConstants.Bluetooth.VisionService.CalibrateUUID: // Write & Notify
+          connectionState.visionService.calibrateChar = ch
+          setNotify()
 
         // Main service
         case AppConstants.Bluetooth.MainService.TaskUUID: // Write
@@ -378,6 +384,8 @@ class BluetoothManager: NSObject, ObservableObject,
       visionService.rawSensorData = getFloatValues(ch.value!, numValues: 4)
     case AppConstants.Bluetooth.VisionService.NormalizedDataUUID:
       visionService.normalizedSensorData = getFloatValues(ch.value!, numValues: 4)
+    case AppConstants.Bluetooth.VisionService.CalibrateUUID:
+      visionService.isCalibrated = ch.value![0] == 1
 
     // Main service
     case AppConstants.Bluetooth.MainService.TaskUUID:

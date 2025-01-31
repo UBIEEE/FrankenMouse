@@ -22,6 +22,8 @@ void Buzzer_PlaySong(uint8_t song);
 
 void Drive_UpdatePIDConstants(uint8_t* buf);
 
+void Vision_Calibrate(uint8_t reset_or_calibrate);
+
 #ifdef __cplusplus
 }
 #endif
