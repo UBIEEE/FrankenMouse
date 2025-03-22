@@ -2,15 +2,38 @@
     "version": 4,
     "configurations": [
         {
-            /** 
-             * ms-vscode.cmake-tools plugin should be installed.
-             * 
-             * It provides data for C/C++ plugin,
-             * such as include paths, browse paths, defines, etc.
-             */
             "name": "STM32",
             "configurationProvider": "ms-vscode.cmake-tools",
-            "intelliSenseMode": "${default}"
+            "intelliSenseMode": "${default}",
+            "includePath": [
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/platform/simulation/include",
+
+                "${workspaceFolder}/platform/mouse_v2/Core/Inc",
+                "${workspaceFolder}/platform/mouse_v2/Core/Inc",
+                "${workspaceFolder}/platform/mouse_v2/STM32_WPAN/App",
+                "${workspaceFolder}/platform/mouse_v2/Drivers/STM32WBxx_HAL_Driver/Inc",
+                "${workspaceFolder}/platform/mouse_v2/Drivers/STM32WBxx_HAL_Driver/Inc/Legacy",
+                "${workspaceFolder}/platform/mouse_v2/Utilities/lpm/tiny_lpm",
+                "${workspaceFolder}/platform/mouse_v2/Middlewares/ST/STM32_WPAN",
+                "${workspaceFolder}/platform/mouse_v2/Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread",
+                "${workspaceFolder}/platform/mouse_v2/Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl",
+                "${workspaceFolder}/platform/mouse_v2/Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/shci",
+                "${workspaceFolder}/platform/mouse_v2/Middlewares/ST/STM32_WPAN/utilities",
+                "${workspaceFolder}/platform/mouse_v2/Middlewares/ST/STM32_WPAN/ble/core",
+                "${workspaceFolder}/platform/mouse_v2/Middlewares/ST/STM32_WPAN/ble/core/auto",
+                "${workspaceFolder}/platform/mouse_v2/Middlewares/ST/STM32_WPAN/ble/core/template",
+                "${workspaceFolder}/platform/mouse_v2/Middlewares/ST/STM32_WPAN/ble/svc/Inc",
+                "${workspaceFolder}/platform/mouse_v2/Middlewares/ST/STM32_WPAN/ble/svc/Src",
+                "${workspaceFolder}/platform/mouse_v2/Drivers/CMSIS/Device/ST/STM32WBxx/Include",
+                "${workspaceFolder}/platform/mouse_v2/Utilities/sequencer",
+                "${workspaceFolder}/platform/mouse_v2/Middlewares/ST/STM32_WPAN/ble",
+                "${workspaceFolder}/platform/mouse_v2/Drivers/CMSIS/Include",
+
+                "${workspaceFolder}/build/_deps/googletest-src/googletest/include",
+                "${workspaceFolder}/build/platform/simulation"
+
+            ]
         }
     ]
 }

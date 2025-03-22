@@ -1,0 +1,37 @@
+[gd_scene load_steps=3 format=3 uid="uid://j2cfwfkqowrq"]
+
+[ext_resource type="PackedScene" uid="uid://b1wkd5q1glyvs" path="res://models/micromouse.blend" id="1_6fin3"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ayrao"]
+size = Vector3(0.07, 0.025, 0.099)
+
+[node name="MicroMouse" type="MicroMouse"]
+
+[node name="Pivot" type="Node3D" parent="."]
+
+[node name="MicroMouse" parent="Pivot" instance=ExtResource("1_6fin3")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0.006, 0.005)
+
+[node name="Far Left" type="RayCast3D" parent="Pivot"]
+transform = Transform3D(0.996195, 0, 0.0871557, 0, 1, 0, -0.0871557, 0, 0.996195, 0.026, 0.011, 0.049)
+target_position = Vector3(0, 0, 0.2)
+debug_shape_thickness = 1
+
+[node name="Mid Left" type="RayCast3D" parent="Pivot"]
+transform = Transform3D(0.615662, 0, 0.788011, 0, 1, 0, -0.788011, 0, 0.615662, 0.018, 0.011, 0.053)
+target_position = Vector3(0, 0, 0.2)
+debug_shape_thickness = 1
+
+[node name="Far Right" type="RayCast3D" parent="Pivot"]
+transform = Transform3D(0.996195, 0, -0.0871557, 0, 1, 0, 0.0871557, 0, 0.996195, -0.026, 0.011, 0.049)
+target_position = Vector3(0, 0, 0.2)
+debug_shape_thickness = 1
+
+[node name="Mid Right" type="RayCast3D" parent="Pivot"]
+transform = Transform3D(0.615662, 0, -0.788011, 0, 1, 0, 0.788011, 0, 0.615662, -0.018, 0.011, 0.053)
+target_position = Vector3(0, 0, 0.2)
+debug_shape_thickness = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.013, 0.005)
+shape = SubResource("BoxShape3D_ayrao")

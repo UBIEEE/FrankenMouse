@@ -1,23 +1,23 @@
 import SwiftUI
 
 struct MusicPage: View {
-  @EnvironmentObject var btManager: BluetoothManager
-  
+  @EnvironmentObject var feedback: AppFeedback
+
   enum Song: UInt8, CaseIterable, Identifiable {
     case homeDepot = 4
     case nokiaRingtone = 5
-    
+
     var id: Self { self }
   }
-  
+
   @State private var selectedSong: Song = .homeDepot
-  
+
   var body: some View {
     NavigationStack {
       List {
         Section("Status") {
           // Show whether the MicroMouse is currently playing anything!
-          Text("\(btManager.musicService.isPlaying ? "Playing" : "Not Playing")")
+          Text("\(feedback.musicService.isPlaying ? "Playing" : "Not Playing")")
         }
         Section("User Controls") {
           // Select the song to play.
@@ -25,20 +25,16 @@ struct MusicPage: View {
             Text("Home Depot").tag(Song.homeDepot)
             Text("Nokia Ringtone").tag(Song.nokiaRingtone)
           }
-          Button("\(btManager.musicService.isPlaying ? "Restart" : "Play")") {
+          Button("\(feedback.musicService.isPlaying ? "Restart" : "Play")") {
             // Tell the MicroMouse to play the selected song.
-            let playChar = btManager.connectionState.musicService.playSongChar!
-            let playData = Data([selectedSong.rawValue])
-            btManager.writeValueToChar(playChar, playData)
+            feedback.publishMusicSong(selectedSong.rawValue)
           }
           Button("Stop") {
             // Tell the MicroMouse to be quiet.
-            let playChar = btManager.connectionState.musicService.playSongChar!
-            let playData = Data([0])
-            btManager.writeValueToChar(playChar, playData)
+            feedback.publishMusicSong(0)
           }
           // Disable stop button when nothing is playing.
-          .disabled(!btManager.musicService.isPlaying)
+          .disabled(!feedback.musicService.isPlaying)
         }
       }
       .navigationTitle("Music")
@@ -48,5 +44,5 @@ struct MusicPage: View {
 
 #Preview {
   MusicPage()
-    .environmentObject(BluetoothManager())
+    .environmentObject(AppFeedback())
 }

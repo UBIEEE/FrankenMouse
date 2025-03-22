@@ -1,0 +1,36 @@
+[configuration]
+
+entry_symbol = "simulation_library_init"
+compatibility_minimum = "4.4"
+reloadable = true
+
+[libraries]
+
+macos.debug = "res://bin/libsimulator.macos.debug.framework"
+macos.release = "res://bin/libsimulator.macos.release.framework"
+ios.debug = "res://bin/libsimulator.ios.debug.xcframework"
+ios.release = "res://bin/libsimulator.ios.release.xcframework"
+windows.debug.x86_32 = "res://bin/libsimulator.windows.debug.x86_32.dll"
+windows.release.x86_32 = "res://bin/libsimulator.windows.release.x86_32.dll"
+windows.debug.x86_64 = "res://bin/libsimulator.windows.debug.x86_64.dll"
+windows.release.x86_64 = "res://bin/libsimulator.windows.release.x86_64.dll"
+linux.debug.x86_64 = "res://bin/libsimulator.linux.debug.x86_64.so"
+linux.release.x86_64 = "res://bin/libsimulator.linux.release.x86_64.so"
+linux.debug.arm64 = "res://bin/libsimulator.linux.debug.arm64.so"
+linux.release.arm64 = "res://bin/libsimulator.linux.release.arm64.so"
+linux.debug.rv64 = "res://bin/libsimulator.linux.debug.rv64.so"
+linux.release.rv64 = "res://bin/libsimulator.linux.release.rv64.so"
+android.debug.x86_64 = "res://bin/libsimulator.android.debug.x86_64.so"
+android.release.x86_64 = "res://bin/libsimulator.android.release.x86_64.so"
+android.debug.arm64 = "res://bin/libsimulator.android.debug.arm64.so"
+android.release.arm64 = "res://bin/libsimulator.android.release.arm64.so"
+
+[dependencies]
+
+ios.debug = {
+    "res://bin/libgodot-cpp.ios.debug.xcframework": ""
+}
+ios.release = {
+    "res://bin/libgodot-cpp.ios.release.xcframework": ""
+}
+

@@ -1,22 +1,27 @@
 import SwiftUI
 
 struct ContentView: View {
-  @StateObject var btManager = BluetoothManager()
-  
+  @StateObject var feedback = AppFeedback()
+
   var body: some View {
-    // Bluetooth is disabled in Settings.
-    if !btManager.isBluetoothEnabled {
-      BluetoothDisabledPage()
+    VStack {
+      // Bluetooth is disabled in Settings.
+      if !feedback.isEnabled {
+        FeedbackDisabledPage()
+      }
+      // MicroMouse isn't found/connected/ready yet.
+      else if !feedback.connectionState.isReady {
+        ConnectionStatusPage()
+          .environmentObject(feedback)
+      }
+      // App is ready to go!
+      else {
+        NavigationView()
+          .environmentObject(feedback)
+      }
     }
-    // MicroMouse isn't found/connected/ready yet.
-    else if !btManager.connectionState.isReady {
-      ConnectionStatusPage()
-        .environmentObject(btManager)
-    }
-    // App is ready to go!
-    else {
-      NavigationView()
-        .environmentObject(btManager)
+    .onDisappear {
+      feedback.destroy()
     }
   }
 }

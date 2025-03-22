@@ -1,38 +1,37 @@
 import SwiftUI
 
 struct ErrorInfoPage: View {
-  @EnvironmentObject var btManager: BluetoothManager
-  
+  @EnvironmentObject var feedback: AppFeedback
+
   var body: some View {
     NavigationStack {
       List {
         Section("RSSI") {
-          Text("\(btManager.rssi)")
+          Text("\(feedback.rssi)")
             .foregroundStyle(
-              btManager.rssi >= -70 ? .green :
-              btManager.rssi >= -85 ? .yellow :
-              btManager.rssi >= -100 ? .orange :
-                .red
+              feedback.rssi >= -70
+                ? .green : feedback.rssi >= -85 ? .yellow : feedback.rssi >= -100 ? .orange : .red
             )
           Button("Read") {
-            btManager.readRSSI()
+            feedback.readRSSI()
           }
         }
         Section("Errors") {
-          ForEach(btManager.mainService.errorCodes, id: \.self) { errorCode in
+          ForEach(feedback.mainService.errorCodes, id: \.self) { errorCode in
             Text("\(errorCode)")
           }
         }
       }
       .navigationTitle("Error Info")
     }
-    .onAppear(perform: ({
-      btManager.readRSSI()
-    }))
+    .onAppear(
+      perform: ({
+        feedback.readRSSI()
+      }))
   }
 }
 
 #Preview {
   ErrorInfoPage()
-    .environmentObject(BluetoothManager())
+    .environmentObject(AppFeedback())
 }

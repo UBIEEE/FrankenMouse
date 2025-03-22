@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MazePage: View {
-  @EnvironmentObject var btManager: BluetoothManager
+  @EnvironmentObject var feedback: AppFeedback
 
   var body: some View {
     NavigationStack {
@@ -14,5 +14,5 @@ struct MazePage: View {
 
 #Preview {
   MazePage()
-    .environmentObject(BluetoothManager())
+    .environmentObject(AppFeedback())
 }

@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct NavigationView: View {
-  @EnvironmentObject var btManager: BluetoothManager
-  
+  @EnvironmentObject var feedback: AppFeedback
+
   var body: some View {
     TabView {
       Tab("Main", systemImage: "ant") {
@@ -34,14 +34,14 @@ struct NavigationView: View {
       }
     }
     // When app is ready, send a message to the MicroMouse.
-    .onAppear(perform: ({
-      // Don't crash the preview!
-      guard Utilities.isPreviewRunning() == false else { return }
-      
-      let appReadyChar = btManager.connectionState.mainService.appReadyChar!
-      let appReadyData = Data([1])
-      btManager.writeValueToChar(appReadyChar, appReadyData)
-    }))
+    .onAppear(
+      perform: ({
+        // Don't crash the preview!
+        guard Utilities.isPreviewRunning() == false else { return }
+
+        feedback.publishAppReady()
+      })
+    )
     // Sidebar on ipadOS and macOS.
     .tabViewStyle(.sidebarAdaptable)
   }
@@ -49,5 +49,5 @@ struct NavigationView: View {
 
 #Preview {
   NavigationView()
-    .environmentObject(BluetoothManager())
+    .environmentObject(AppFeedback())
 }

@@ -72,3 +72,13 @@ _deps
 [Rr]elease*/
 
 .mxproject
+
+# VS Code stuff
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/c_cpp_properties.json
+
+.history/
+
