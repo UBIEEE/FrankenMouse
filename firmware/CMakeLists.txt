@@ -10,24 +10,31 @@ enable_testing()
 ### Select target
 ###
 
+option(BUILD_MOUSE_V3   "Build for MicroMouse (v3)" OFF)
 option(BUILD_MOUSE_V2   "Build for MicroMouse (v2)" OFF)
 option(BUILD_SIMULATION "Build for Desktop Simulation" OFF)
 option(BUILD_TESTS      "Build for Desktop Testing" OFF)
 
-if(NOT (BUILD_MOUSE_V2 OR BUILD_SIMULATION OR BUILD_TESTS))
-  set(BUILD_MOUSE_V2 ON)
+if(NOT (BUILD_MOUSE_V3 OR BUILD_MOUSE_V2 OR BUILD_SIMULATION OR BUILD_TESTS))
+  set(BUILD_MOUSE_V3 ON)
 endif()
 
 if(BUILD_SIMULATION OR BUILD_TESTS)
   set(BUILD_DESKTOP ON)
 endif()
 
-if(BUILD_MOUSE_V2 AND BUILD_DESKTOP)
+if(BUILD_MOUSE_V3 OR BUILD_MOUSE_V2)
+  set(BUILD_STM32 ON)
+endif()
+
+if(BUILD_STM32 AND BUILD_DESKTOP)
   message(FATAL_ERROR "Multiple build platforms selected.")
 endif()
 
-if(BUILD_MOUSE_V2)
-  message(STATUS "Build platform: STM32")
+if(BUILD_MOUSE_V3)
+  message(STATUS "Build platform: Mouse v3")
+elseif(BUILD_MOUSE_V2)
+  message(STATUS "Build platform: Mouse v2")
 else()
   message(STATUS "Build platform: Desktop")
 endif()
@@ -54,7 +61,10 @@ endif()
 set(CMAKE_PROJECT_NAME firmware)
 
 # ARM Toolchain
-if(BUILD_MOUSE_V2)
+if(BUILD_MOUSE_V3)
+  list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/platform/mouse_v3/cmake")
+  include(gcc-arm-none-eabi)
+elseif(BUILD_MOUSE_V2)
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/platform/mouse_v2/cmake")
   include(gcc-arm-none-eabi)
 endif()
@@ -96,15 +106,18 @@ endif()
 if(BUILD_SIMULATION)
   add_subdirectory(platform/simulation)
   set_target_properties(simulation PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-
 endif()
 
 if(BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
+if(BUILD_MOUSE_V3)
+  add_subdirectory(platform/mouse_v3)
+  set_target_properties(mouse-v3-firmware PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+endif()
+
 if(BUILD_MOUSE_V2)
   add_subdirectory(platform/mouse_v2)
   set_target_properties(mouse-v2-firmware PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()
-
