@@ -1,0 +1,206 @@
+(footprint "DSS0012A"
+	(version 20240108)
+	(generator "pcbnew")
+	(generator_version "8.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at 0 -3 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "bc5b1a41-445d-46a0-a986-99ffacd612f8")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "DSS0012A"
+		(at 0 1 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "0515d071-6155-41c6-b795-4882370b88db")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "206cf2be-1c12-4ee0-9d39-72c8ed829ae6")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "40300d37-d39a-4c1c-acb5-d1b7a50ccf70")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "d13bdb3c-8ec5-4218-a518-76a7781b5bcb")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(fp_circle
+		(center -0.95 -1.975)
+		(end -0.85 -1.975)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(fill none)
+		(layer "F.SilkS")
+		(uuid "6fc2248c-7988-48c6-aabf-12260754a5ac")
+	)
+	(fp_rect
+		(start -1.4 -1.575)
+		(end 1.4 1.575)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(fill none)
+		(layer "F.CrtYd")
+		(uuid "01f0906b-fd11-41ce-80bb-20eb167fe2c8")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0 2.5 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "d94e56a6-60ff-468c-858f-f0e2d808d1f3")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" smd rect
+		(at -0.95 -1.25)
+		(size 0.5 0.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "27d32401-0f68-4295-9037-265ea2a05911")
+	)
+	(pad "2" smd rect
+		(at -0.95 -0.75)
+		(size 0.5 0.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "b16beb95-2334-487d-a1ec-728cee616428")
+	)
+	(pad "3" smd rect
+		(at -0.95 -0.25)
+		(size 0.5 0.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "d8ca4774-0881-44b9-9f3f-60c81b86a5d8")
+	)
+	(pad "4" smd rect
+		(at -0.95 0.25)
+		(size 0.5 0.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "768a9294-dbd1-4780-a85b-1dc2cdc2bc9a")
+	)
+	(pad "5" smd rect
+		(at -0.95 0.75)
+		(size 0.5 0.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "6893f993-648b-4829-a2d8-dd5fac238fd7")
+	)
+	(pad "6" smd rect
+		(at -0.95 1.25)
+		(size 0.5 0.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "2b9a8a32-bddd-4dfd-a0c1-8c06d6992350")
+	)
+	(pad "7" smd rect
+		(at 0.95 1.25)
+		(size 0.5 0.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "cfd63eab-344e-4965-aff5-5cc99a9c3d6d")
+	)
+	(pad "8" smd rect
+		(at 0.95 0.75)
+		(size 0.5 0.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "1cdddbd8-f291-4512-b26b-cb137753c502")
+	)
+	(pad "9" smd rect
+		(at 0.95 0.25)
+		(size 0.5 0.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "d3460108-efc7-493c-8b73-e9e830061594")
+	)
+	(pad "10" smd rect
+		(at 0.95 -0.25)
+		(size 0.5 0.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "e5eb5fb3-1c22-4ea6-bb15-45c00b1bd93a")
+	)
+	(pad "11" smd rect
+		(at 0.95 -0.75)
+		(size 0.5 0.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "68d82037-195a-4455-b2e4-40548e4d40c6")
+	)
+	(pad "12" smd rect
+		(at 0.95 -1.25)
+		(size 0.5 0.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "46d09855-8f74-42ce-ae4e-f6197bda85e0")
+	)
+	(pad "13" smd rect
+		(at 0 0)
+		(size 0.9 2)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(thermal_bridge_angle 45)
+		(uuid "350c8575-6a7e-4f57-ae8a-2fc3a0207bdb")
+	)
+	(model "${KIPRJMOD}/models/DSS0012A.stp"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)
