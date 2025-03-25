@@ -4,7 +4,7 @@
 template <typename T>
 class Singleton {
  public:
-  static constexpr T& get() {
+  static T& get() {
     static T instance;
     return instance;
   }
