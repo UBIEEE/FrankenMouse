@@ -1,11 +1,14 @@
 #include "hardware/buttons_impl.hpp"
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+  ButtonsImpl& buttons = get_mouse_v2_buttons();
+
   switch (GPIO_Pin) {
-    case BUTTON_1_Pin: break;
-    case BUTTON_2_Pin: break;
-    case IMU_INT1_Pin:
-      // get_mouse_v2_imu().int1_handler();
+    case BUTTON_1_Pin:
+      buttons.button_1_callback();
+      break;
+    case BUTTON_2_Pin:
+      buttons.button_2_callback();
       break;
   }
 }
