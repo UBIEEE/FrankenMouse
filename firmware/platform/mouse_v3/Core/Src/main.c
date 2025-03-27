@@ -22,6 +22,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include <micromouse/robot.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -134,6 +136,14 @@ int main(void)
   MX_USART1_UART_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // Left Motor
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2); // Right Motor
+
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL); // Encoder Right
+  HAL_LPTIM_Encoder_Start(&hlptim1, 0xFFFF); // Encoder Left
+
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1); // Buzzer
 
   /* USER CODE END 2 */
 
@@ -512,7 +522,7 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 0;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 65535;
+  htim1.Init.Period = 7199;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;

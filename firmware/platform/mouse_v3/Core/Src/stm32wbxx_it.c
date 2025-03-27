@@ -22,6 +22,11 @@
 #include "stm32wbxx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include <stdbool.h>
+#include "stm32_seq.h"
+#include <micromouse/robot.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,6 +46,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+
+extern bool g_robot_tasks_registered; // custom_app.c
 
 /* USER CODE END PV */
 
@@ -192,6 +199,22 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
+
+  // Make sure the tasks are registered with the sequencer before telling the
+  // sequencer to run the tasks!
+  if (!g_robot_tasks_registered) return;
+
+  const uint32_t ticks = HAL_GetTick();
+
+  // Tell the sequencer to run the main robot task every tick.
+  if (ticks % ROBOT_UPDATE_PERIOD_MS == 0) {
+    UTIL_SEQ_SetTask(1 << CFG_TASK_ROBOT_PERIODIC_ID, CFG_SCH_PRIO_0);
+  }
+
+  // Tell the sequencer to run the send feedback robot task less often.
+  if (ticks % ROBOT_PUBLISH_FEEDBACK_PERIOD_MS == 0) {
+    UTIL_SEQ_SetTask(1 << CFG_TASK_ROBOT_SEND_FEEDBACK_ID, CFG_SCH_PRIO_0);
+  }
 
   /* USER CODE END SysTick_IRQn 1 */
 }

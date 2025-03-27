@@ -30,6 +30,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include <micromouse/robot.h>
+#include <stdbool.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -87,6 +90,8 @@ uint8_t UpdateCharData[247];
 uint8_t NotifyCharData[247];
 
 /* USER CODE BEGIN PV */
+
+bool g_robot_tasks_registered = false;
 
 /* USER CODE END PV */
 
@@ -340,11 +345,15 @@ void Custom_APP_Notification(Custom_App_ConnHandle_Not_evt_t *pNotification)
     case CUSTOM_CONN_HANDLE_EVT :
       /* USER CODE BEGIN CUSTOM_CONN_HANDLE_EVT */
 
+      Robot_OnConnect();
+
       /* USER CODE END CUSTOM_CONN_HANDLE_EVT */
       break;
 
     case CUSTOM_DISCON_HANDLE_EVT :
       /* USER CODE BEGIN CUSTOM_DISCON_HANDLE_EVT */
+
+      Robot_OnDisconnect();
 
       /* USER CODE END CUSTOM_DISCON_HANDLE_EVT */
       break;
@@ -366,6 +375,20 @@ void Custom_APP_Notification(Custom_App_ConnHandle_Not_evt_t *pNotification)
 void Custom_APP_Init(void)
 {
   /* USER CODE BEGIN CUSTOM_APP_Init */
+
+  Robot_Init();
+
+  // Register the robot update task with the sequencer.
+  // The task will be executed every 20ms (see SysTick_Handler in stm32wbxx_it.c).
+  UTIL_SEQ_RegTask(1 << CFG_TASK_ROBOT_PERIODIC_ID, 0, Robot_Periodic);
+
+  // Register the robot send feedback task with the sequencer.
+  // The task will be executed every 200ms (see SysTick_Handler in stm32wbxx_it.c).
+  UTIL_SEQ_RegTask(1 << CFG_TASK_ROBOT_SEND_FEEDBACK_ID, 0, Robot_PublishPeriodicFeedback);
+
+  // The tasks have been registered with the sequencer, so signal that the task
+  // is ready to be run.
+  g_robot_tasks_registered = true;
 
   /* USER CODE END CUSTOM_APP_Init */
   return;
