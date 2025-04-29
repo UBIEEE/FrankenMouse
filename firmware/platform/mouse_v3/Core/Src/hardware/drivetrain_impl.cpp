@@ -164,7 +164,7 @@ void DrivetrainImpl::set_motors(float left_percent, float right_percent) {
   const uint16_t left_out(std::abs(left_percent) * 7199);
   const uint16_t right_out(std::abs(right_percent) * 7199);
 
-  const bool left_dir = std::signbit(left_percent);
+  const bool left_dir = !std::signbit(left_percent);
   const bool right_dir = std::signbit(right_percent);
 
   const GPIO_PinState left_dir_pin = static_cast<GPIO_PinState>(left_dir);
