@@ -57,6 +57,16 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  message(STATUS "Build type: Debug")
+  list(APPEND CMAKE_CXX_FLAGS "-g -O0")
+  list(APPEND CMAKE_C_FLAGS "-g -O0")
+else()
+  message(STATUS "Build type: Release")
+  list(APPEND CMAKE_CXX_FLAGS "-O3")
+  list(APPEND CMAKE_C_FLAGS "-O3")
+endif()
+
 # Project name
 set(CMAKE_PROJECT_NAME firmware)
 
