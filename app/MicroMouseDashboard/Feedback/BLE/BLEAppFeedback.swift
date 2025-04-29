@@ -294,8 +294,9 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
           setNotify()
 
         // Main service
-        case AppConstants.Bluetooth.MainService.TaskUUID:  // Write
+        case AppConstants.Bluetooth.MainService.TaskUUID:  // Write & Notify
           connectionState.foundWriteChars[.mainTask] = ch
+          connectionState.foundReceiveChars[.mainTask] = ch
           setNotify()
         case AppConstants.Bluetooth.MainService.AppReadyUUID:  // Write
           connectionState.foundWriteChars[.mainAppReady] = ch
@@ -310,7 +311,8 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
         case AppConstants.Bluetooth.DriveService.IMUDataUUID:  // Notify
           connectionState.foundReceiveChars[.driveIMUData] = ch
           setNotify()
-        case AppConstants.Bluetooth.DriveService.PIDConstantsUUID:  // Notify
+        case AppConstants.Bluetooth.DriveService.PIDConstantsUUID:  // Write & Notify
+          connectionState.foundWriteChars[.drivePIDData] = ch
           connectionState.foundReceiveChars[.drivePIDData] = ch
           setNotify()
 
