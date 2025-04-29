@@ -29,7 +29,6 @@ namespace maze {
 class Maze {
  public:
   Cell m_cells[MazeDimensions::TOTAL_CELLS];
-  uint8_t m_cell_values[MazeDimensions::TOTAL_CELLS];
 
  private:
   // Center four cells.
@@ -168,14 +167,6 @@ class Maze {
    * @return Cell* nullptr if the neighbor is out of bounds.
    */
   Cell* neighbor_cell(Coordinate coord, Direction direction);
-
-  uint8_t cell_value(Coordinate coord) const { return m_cell_values[coord]; }
-
-  void set_cell_value(Coordinate coord, uint8_t value) {
-    m_cell_values[coord] = value;
-  }
-
-  Direction smallest_neighbor(Coordinate coord) const;
 
  private:
   /**

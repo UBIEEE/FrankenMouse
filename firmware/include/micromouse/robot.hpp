@@ -42,10 +42,10 @@ class Robot : public Singleton<Robot> {
 
   // Logic Subsystems
 
-  drive::DriveController m_drive_controller{m_speeds.normal_speeds};
-  audio::AudioPlayer m_audio_player;
   vision::Vision m_vision;
-  navigation::Navigator m_navigator{m_drive_controller, m_maze};
+  audio::AudioPlayer m_audio_player;
+  drive::DriveController m_drive_controller{m_vision, m_speeds.normal_speeds};
+  navigation::Navigator m_navigator{m_drive_controller, m_vision, m_maze};
 
   Maze::StartLocation m_start_location = Maze::StartLocation::WEST_OF_GOAL;
 

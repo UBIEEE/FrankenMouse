@@ -1,5 +1,5 @@
-#include <micromouse/maze/maze.hpp>
 #include <gtest/gtest.h>
+#include <micromouse/maze/maze.hpp>
 
 using namespace maze;
 
@@ -194,34 +194,6 @@ TEST(Maze, TestGetNeighborCell) {
 
   neighbor = maze.neighbor_cell(Coordinate(0, 0), WEST);
   ASSERT_EQ(nullptr, neighbor);
-}
-
-TEST(Maze, TestSmallestNeighbor) {
-  using enum Direction;
-
-  Maze maze;
-
-  // Maze interior
-  maze.set_cell_value(Coordinate(7, 7), 0);
-  maze.set_cell_value(Coordinate(7, 8), 1);
-  maze.set_cell_value(Coordinate(8, 7), 2);
-  maze.set_cell_value(Coordinate(7, 6), 3);
-  maze.set_cell_value(Coordinate(6, 7), 4);
-
-  ASSERT_EQ(NORTH, maze.smallest_neighbor(Coordinate(7, 7)));
-
-  // Maze corner
-  maze.set_cell_value(Coordinate(0, 1), 2);
-  maze.set_cell_value(Coordinate(1, 0), 1);
-
-  ASSERT_EQ(EAST, maze.smallest_neighbor(Coordinate(0, 0)));
-
-  // Maze edge
-  maze.set_cell_value(Coordinate(15, 14), 2);
-  maze.set_cell_value(Coordinate(14, 13), 3);
-  maze.set_cell_value(Coordinate(15, 12), 1);
-
-  ASSERT_EQ(SOUTH, maze.smallest_neighbor(Coordinate(15, 13)));
 }
 
 TEST(Maze, TestSetWall) {

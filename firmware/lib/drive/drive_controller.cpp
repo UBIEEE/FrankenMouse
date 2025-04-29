@@ -47,22 +47,33 @@ DO_PERIODIC:
       return;
   }
 
-  const ChassisSpeeds chassis_speeds = {
+  ChassisSpeeds chassis_speeds = {
       .linear_velocity_mmps =
           m_linear_profile.sample(linear_elapsed_s).velocity,
       .angular_velocity_dps =
           m_angular_profile.sample(angular_elapsed_s).velocity};
 
+  if (chassis_speeds.linear_velocity_mmps > 10 &&
+      std::abs(chassis_speeds.angular_velocity_dps) < 1.f &&
+      m_vision.left_wall() && m_vision.right_wall()) {
+    // align
+
+    const float left_distance =
+        m_ir_sensors.get_distance_mm(hardware::IRSensors::MID_LEFT);
+    const float right_distance =
+        m_ir_sensors.get_distance_mm(hardware::IRSensors::MID_RIGHT);
+    const float diff = right_distance - left_distance;
+
+    chassis_speeds.angular_velocity_dps += m_vision_align_pid.calculate(
+        diff, 0.f);  // TODO: make this a function of speed
+  }
+
   m_drivetrain.set_chassis_speeds(chassis_speeds);
 }
 
-  void DriveController::publish_periodic_feedback() {
+void DriveController::publish_periodic_feedback() {}
 
-  }
-
-  void DriveController::publish_extra_feedback() {
-
-  }
+void DriveController::publish_extra_feedback() {}
 
 void DriveController::start_next_motion() {
   m_current_motion = m_motions.front();
@@ -216,7 +227,7 @@ void DriveController::config_linear(float distance_mm,
   //
   // This is commented out for now because it messes things up when debugging in
   // simulation (because timer keeps going...)
-#if 0
+#if 1
   const float final_distance_mm =
       m_linear_profile.sample(m_linear_timer->elapsed_s()).distance;
 

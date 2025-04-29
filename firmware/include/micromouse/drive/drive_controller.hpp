@@ -1,5 +1,6 @@
 #pragma once
 
+#include <micromouse/drive/pid_controller.hpp>
 #include <micromouse/drive/speed_config.hpp>
 #include <micromouse/drive/trapezoid_profile.hpp>
 #include <micromouse/hardware/drivetrain.hpp>
@@ -7,6 +8,8 @@
 #include <micromouse/hardware/measurements.hpp>
 #include <micromouse/hardware/timer.hpp>
 #include <micromouse/subsystem.hpp>
+#include <micromouse/vision/vision.hpp>
+#include <micromouse/robot.h>
 
 #include <cmath>
 #include <functional>
@@ -18,6 +21,8 @@ namespace drive {
 class DriveController : public Subsystem {
   hardware::RobotMeasurements& m_measurements = get_robot_measurements();
   hardware::Drivetrain& m_drivetrain = get_platform_drivetrain();
+  vision::Vision& m_vision;
+  hardware::IRSensors& m_ir_sensors = get_platform_ir_sensors();
 
   TrapezoidProfile m_linear_profile;
   TrapezoidProfile m_angular_profile;
@@ -26,6 +31,10 @@ class DriveController : public Subsystem {
   std::unique_ptr<hardware::Timer> m_angular_timer = make_platform_timer();
 
   SpeedConstraints m_speeds;
+
+  drive::PIDController m_vision_align_pid {
+    0.05f, 0.f, 0.f, ROBOT_UPDATE_PERIOD_S,
+  };
 
   enum class MotionState {
     NONE,
@@ -74,7 +83,8 @@ class DriveController : public Subsystem {
   using CompletionCallback = std::function<void()>;
 
  public:
-  DriveController(const SpeedConstraints& speeds) : m_speeds(speeds) {}
+  DriveController(vision::Vision& vision, const SpeedConstraints& speeds)
+      : m_vision(vision), m_speeds(speeds) {}
 
   void reset();
   void set_speeds(const SpeedConstraints& speeds) { m_speeds = speeds; }

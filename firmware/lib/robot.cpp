@@ -41,6 +41,9 @@ void Robot::publish_periodic_feedback() {
   for (auto s : m_subsystems) {
     s->publish_periodic_feedback();
   }
+  for (auto c : m_components) {
+    c->publish_periodic_feedback();
+  }
 }
 
 void Robot::publish_extra_feedback() {
@@ -49,6 +52,9 @@ void Robot::publish_extra_feedback() {
 
   for (auto s : m_subsystems) {
     s->publish_extra_feedback();
+  }
+  for (auto c : m_components) {
+    c->publish_extra_feedback();
   }
 
   publish_current_task();
@@ -71,6 +77,8 @@ void Robot::delegate_received_feedback(FeedbackTopicReceive topic,
       }
       return;
     case MAZE_RESET:
+      m_maze.reset();
+      m_maze.init_start_cell(Maze::StartLocation::WEST_OF_GOAL);
       return;
     case MUSIC_PLAY_SONG:
       if (data[0] >= static_cast<uint8_t>(audio::Song::_COUNT))
@@ -197,6 +205,9 @@ void Robot::start_next_task() {
 
 void Robot::start_task_maze_search() {
   m_search_stage = SearchStage::START_TO_GOAL;
+
+  m_maze.reset();
+  m_maze.init_start_cell(Maze::StartLocation::WEST_OF_GOAL);
 
   m_navigator.reset_position(Maze::start(m_start_location),
                              maze::Direction::NORTH,
