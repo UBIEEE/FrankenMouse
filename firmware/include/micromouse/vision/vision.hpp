@@ -18,6 +18,10 @@ class Vision : public Subsystem {
 
   void reset_calibration();
   void calibrate();
+
+  bool left_wall();
+  bool right_wall();
+  bool front_wall();
 };
 
 }  // namespace vision

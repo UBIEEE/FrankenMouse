@@ -33,6 +33,14 @@ class IRSensors : public Component {
    * @return float* Pointer to array of 4 distances, from left to right.
    */
   virtual const float* get_distances_mm() const = 0;
+
+  const float& get_raw_reading(Sensor sensor) const {
+    return get_raw_readings()[static_cast<int>(sensor)];
+  }
+
+  const float& get_distance_mm(Sensor sensor) const {
+    return get_distances_mm()[static_cast<int>(sensor)];
+  }
 };
 
 }  // namespace hardware
