@@ -7,4 +7,4 @@ class FeedbackImpl : public hardware::Feedback {
   void publish_topic(FeedbackTopicSend topic, uint8_t* data) override;
 };
 
-FeedbackImpl& get_mouse_v2_feedback();
+FeedbackImpl& get_mouse_v3_feedback();
