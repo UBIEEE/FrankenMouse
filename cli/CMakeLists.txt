@@ -4,6 +4,18 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
   message(FATAL_ERROR "In-source builds are not allowed.")
 endif()
 
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+  message(FATAL_ERROR "Windows is not currently supported! Please use WSL or a Unix-like system.")
+endif()
+
+###
+### Select target
+###
+
+option(BUILD_WITH_BLE "Include BLE support for communicating wirelessly with the physical MicroMoue" ON)
+option(BUILD_WITH_ROS2 "Include ROS2 support for interfacing with the simulation" ON)
+option(BUILD_WITH_SERIAL "Include Serial support for communicating with the physical MicroMouse over UART and for interfacing with serial controller inputs" ON)
+
 ###
 ### Configure project settings
 ###
@@ -58,10 +70,80 @@ target_sources(${CMAKE_PROJECT_NAME} PUBLIC ${SOURCES})
 # Includes
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC include)
 
-# Enable all warnings
+# Set executable filename
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME "mm")
+
+###
+### Link libraries
+###
+
+include(FetchContent)
+find_package(PkgConfig REQUIRED)
+
+# ROS2
+if(BUILD_WITH_ROS2)
+  find_package(ament_cmake REQUIRED)
+  find_package(rclcpp REQUIRED)
+  find_package(std_msgs REQUIRED)
+  find_package(geometry_msgs REQUIRED)
+
+  ament_target_dependencies(${CMAKE_PROJECT_NAME} rclcpp std_msgs geometry_msgs)
+
+  list(APPEND DEF_LIST "WITH_ROS2=1")
+endif()
+
+# SimpleBLE
+if(BUILD_WITH_BLE)
+  find_package(simpleble)
+  if(NOT simpleble_FOUND)
+    message(STATUS "simpleble not found, fetching from git")
+
+    FetchContent_Declare(
+        simpleble
+        GIT_REPOSITORY https://github.com/SimpleBLE/SimpleBLE.git
+        GIT_TAG v0.9.1
+        GIT_SHALLOW YES
+    )
+
+    FetchContent_GetProperties(simpleble)
+    if(NOT simpleble_POPULATED)
+        FetchContent_Populate(simpleble)
+        list(APPEND CMAKE_MODULE_PATH "${simpleble_SOURCE_DIR}/cmake/find")
+        add_subdirectory("${simpleble_SOURCE_DIR}/simpleble" "${simpleble_BINARY_DIR}")
+    endif()
+  endif()
+
+  target_link_libraries(${CMAKE_PROJECT_NAME} simpleble::simpleble)
+
+  list(APPEND DEF_LIST "WITH_BLE=1")
+endif()
+
+if(BUILD_WITH_SERIAL)
+  list(APPEND DEF_LIST "WITH_SERIAL=1")
+endif()
+
+# Isocline
+
+FetchContent_Declare(
+    isocline
+    GIT_REPOSITORY https://github.com/petelilley/isocline.git
+    GIT_TAG main
+)
+
+FetchContent_MakeAvailable(isocline)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} isocline)
+
+###
+### Definitions
+###
+
+target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC ${DEF_LIST})
+
+###
+### Compiler settings
+###
+
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
   target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
-
-# Set executable filename
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME "mm")
