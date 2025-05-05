@@ -4,27 +4,36 @@
 #include <cassert>
 #include <filesystem>
 
-void Prompt::register_command(int id,
-                              std::string_view name,
+void Prompt::register_command(const char* name,
                               std::span<const char*> options,
-                              bool accepts_file_paths) {
-  assert(id > 0);
+                              bool can_accept_file_paths,
+                              MakeCommandFunc make_command) {
+  CommandInfo info{
+      .options = options,
+      .can_accept_file_paths = can_accept_file_paths,
+      .make_command_func = make_command,
+  };
 
-  m_commands.emplace(std::string(name),
-                     CommandInfo{.id = id,
-                                 .options = options,
-                                 .accepts_file_paths = accepts_file_paths});
+  m_commands.emplace(std::string(name), std::move(info));
 }
 
-std::optional<Prompt::CommandInvocation> Prompt::readline() {
+Command* Prompt::readline() {
+REPEAT:
   char* input = ic_readline(m_prompt_text.c_str());
   if (!input)
-    return std::nullopt;
+    return nullptr;
 
   CommandInvocation result = parse_command_invocation(input);
-
   free(input);
-  return result;
+
+  if (result.command == m_commands.end()) {
+    fprintf(stderr, "%s: unknown command: '%s'\n", m_prompt_text.c_str(),
+            result.args[0].c_str());
+    goto REPEAT;
+  }
+
+  const auto& [name, info] = *result.command;
+  return info.make_command_func(std::move(result.args));
 }
 
 std::optional<std::string> Prompt::get_history_filename() {
@@ -115,7 +124,7 @@ void Prompt::completer(ic_completion_env_t* cenv, const char* input) {
     return;
 
   const auto& [name, info] = *it;
-  if (info.accepts_file_paths) {
+  if (info.can_accept_file_paths) {
     ic_complete_filename(cenv, input, 0, ".", nullptr);
   }
 }
@@ -207,7 +216,7 @@ void Prompt::highlighter(ic_highlight_env_t* henv, const char* input_begin) {
 
 Prompt::CommandInvocation Prompt::parse_command_invocation(
     const char* input_begin) {
-  CommandInvocation invocation{.command = COMMAND_NONE};
+  CommandInvocation invocation;
 
   const char* input = input_begin;
 
@@ -222,10 +231,8 @@ Prompt::CommandInvocation Prompt::parse_command_invocation(
 
     if (first_word) {
       first_word = false;
-      invocation.command = COMMAND_UNKNOWN;
       if (auto it = m_commands.find(word); it != m_commands.end()) {
-        const auto& [name, info] = *it;
-        invocation.command = info.id;
+        invocation.command = it;
       }
     }
 

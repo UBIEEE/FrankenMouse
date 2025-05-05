@@ -1,19 +1,18 @@
-#include <cstdio>
-#include <span>
-
 #include <micromouse_cli/prompt.hpp>
-#include <thread>
+
+#include <micromouse_cli/commands/clear.hpp>
+#include <micromouse_cli/commands/exit.hpp>
+#include <micromouse_cli/commands/help.hpp>
 
 #include <unistd.h>
 #include <csignal>
+#include <string>
+#include <vector>
 
 static volatile sig_atomic_t signal_received = 0;
 
-enum {
-  COMMAND_EXIT = 1,
-  COMMAND_HELP,
-  COMMAND_CLEAR,
-};
+static void register_commands(Prompt& prompt);
+static bool process_command(Command* command);
 
 int main(int argc, const char** argv) {
   signal(SIGINT, [](int) {
@@ -25,33 +24,34 @@ int main(int argc, const char** argv) {
   (void)args;  // TODO
 
   Prompt prompt;
+  register_commands(prompt);
 
-  std::vector<const char*> help_options{"eric"};
-  prompt.register_command(COMMAND_HELP, "help", help_options);
-  prompt.register_command(COMMAND_EXIT, "exit");
-  prompt.register_command(COMMAND_CLEAR, "clear");
-
-  std::optional<Prompt::CommandInvocation> input;
-  while ((input = prompt.readline())) {
-    signal_received = 0;
-
-    if (input->command == COMMAND_EXIT)
-      break;
-
-    switch (input->command) {
-      case COMMAND_HELP:
-        puts("help");  // TODO
-        break;
-      case COMMAND_CLEAR:
-        printf("\033[2J\033[;H");  // Clear terminal and set cursor to 1,1
-        fflush(stdout);
-        break;
-      case Prompt::COMMAND_UNKNOWN:
-        fprintf(stderr, "%s: unknown command: '%s'\n", argv[0],
-                input->args[0].c_str());
-        break;
-    }
+  Command* command;
+  bool done = false;
+  while (!done && (command = prompt.readline())) {
+    done = process_command(command);
+    delete command;
   }
 
   return 0;
+}
+
+static void register_commands(Prompt& prompt) {
+  prompt.register_command<HelpCommand>();
+  prompt.register_command<ClearCommand>();
+  prompt.register_command<ExitCommand>();
+}
+
+static bool process_command(Command* command) {
+  signal_received = 0;
+
+  while (!signal_received) {
+    CommandProcessResult result = command->process();
+    if (result == CommandProcessResult::EXIT_ALL)
+      return true;
+    if (result != CommandProcessResult::CONTINUE)
+      break;
+  }
+
+  return false;
 }

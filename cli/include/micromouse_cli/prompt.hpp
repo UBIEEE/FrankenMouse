@@ -1,35 +1,25 @@
 #pragma once
 
+#include <micromouse_cli/commands/command.hpp>
 #include <optional>
 #include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 
+using MakeCommandFunc = Command* (*)(CommandArguments);
+
 class Prompt final {
   std::string m_prompt_text = "micromouse";
 
   struct CommandInfo {
-    int id;
     std::span<const char*> options;
-    bool accepts_file_paths;
+    bool can_accept_file_paths;
+    MakeCommandFunc make_command_func;
   };
 
   std::unordered_map<std::string, CommandInfo> m_commands;
   using CommandIterator = decltype(m_commands)::const_iterator;
-
- public:
-  enum {
-    COMMAND_NONE = 0,
-    COMMAND_UNKNOWN = -1,
-  };
-
-  struct CommandInvocation {
-    int command = COMMAND_NONE;
-
-    // index 0 is the command name, 1+ are arguments
-    std::vector<std::string> args;
-  };
 
  public:
   Prompt(std::string_view text = "") {
@@ -47,26 +37,42 @@ class Prompt final {
    * @brief Adds a command to the list of available input commands for this
    *        prompt.
    *
-   * @param id                 Unique ID of the command (not zero!).
-   * @param name               Name of the command, as typed by the user (no
-   *                           spaces!).
-   * @param options            List of option arguments for this command, used
-   *                           for completions.
-   * @param accepts_file_paths If true, the prompt will suggest file paths from
-   *                           the current working directory during completion.
+   * @tparam T Type of the command to register. Must conform to the CommandType
+   *           concept.
    */
-  void register_command(int id,
-                        std::string_view name,
-                        std::span<const char*> options = {},
-                        bool accepts_file_paths = false);
+  template <CommandType T>
+  void register_command() {
+    const char* name = T::name();
+
+    std::span<const char*> options;
+    if constexpr (CommandType_WithOptions<T>) {
+      options = T::options();
+    }
+
+    bool can_accept_file_paths = false;
+    if constexpr (CommandType_WithCanAcceptFilePaths<T>) {
+      can_accept_file_paths = T::can_accept_file_paths();
+    }
+
+    register_command(
+        name, options, can_accept_file_paths,
+        [](CommandArguments args) -> Command* { return new T(args); });
+  }
+
+  void register_command(const char* name,
+                        std::span<const char*> options,
+                        bool can_accept_file_paths,
+                        MakeCommandFunc make_command);
 
   /**
-   * @brief Prompts the user for input and returns the command invocation.
+   * @brief Prompts the user for input and returns an instance of the
+   *        invoked command.
    *
-   * @return The command invocation, or std::nullopt if an exit signal was
-   *         caught or an error occurred.
+   * @return A heap-allocated instance of the invoked command, or nullptr if an
+   *         exit signal was caught or an error occurred. User must free the
+   *         returned object.
    */
-  std::optional<CommandInvocation> readline();
+  Command* readline();
 
  private:
   static std::optional<std::string> get_history_filename();
@@ -89,6 +95,13 @@ class Prompt final {
                                 const char* word);
 
   void highlighter(struct ic_highlight_env_s* henv, const char* input);
+
+  struct CommandInvocation {
+    CommandIterator command;
+
+    // index 0 is the command name, 1+ are arguments
+    CommandArguments args;
+  };
 
   CommandInvocation parse_command_invocation(const char* input);
 
