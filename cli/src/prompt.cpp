@@ -5,7 +5,7 @@
 #include <filesystem>
 
 void Prompt::register_command(const char* name,
-                              std::span<const char*> options,
+                              std::span<const char* const> options,
                               bool can_accept_file_paths,
                               MakeCommandFunc make_command) {
   CommandInfo info{

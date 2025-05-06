@@ -13,7 +13,7 @@ class Prompt final {
   std::string m_prompt_text = "micromouse";
 
   struct CommandInfo {
-    std::span<const char*> options;
+    std::span<const char* const> options;
     bool can_accept_file_paths;
     MakeCommandFunc make_command_func;
   };
@@ -44,7 +44,7 @@ class Prompt final {
   void register_command() {
     const char* name = T::name();
 
-    std::span<const char*> options;
+    std::span<const char* const> options;
     if constexpr (CommandType_WithOptions<T>) {
       options = T::options();
     }
@@ -60,7 +60,7 @@ class Prompt final {
   }
 
   void register_command(const char* name,
-                        std::span<const char*> options,
+                        std::span<const char* const> options,
                         bool can_accept_file_paths,
                         MakeCommandFunc make_command);
 

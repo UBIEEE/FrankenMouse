@@ -1,11 +1,12 @@
 #pragma once
 
 #include <concepts>
-#include <vector>
+#include <span>
 #include <string>
 #include <string_view>
+#include <vector>
 
-using CommandArguments = std::vector<const std::string>;
+using CommandArguments = std::vector<std::string>;
 
 enum class CommandProcessResult {
   DONE,
@@ -27,7 +28,11 @@ class Command {
    *
    * @return True if done, false if it should keep running.
    */
-  virtual CommandProcessResult process() = 0;
+  virtual CommandProcessResult process() { return CommandProcessResult::DONE; }
+
+  virtual bool is_done() const { return false; }
+
+  explicit operator bool() const { return is_done(); }
 };
 
 /**
@@ -50,7 +55,7 @@ concept CommandType =
  */
 template <typename T>
 concept CommandType_WithOptions = CommandType<T> && requires(T t) {
-  { T::options() } -> std::same_as<std::span<const char*>>;
+  { T::options() } -> std::same_as<std::span<const char* const>>;
 };
 
 /**

@@ -3,15 +3,10 @@
 #include <micromouse_cli/commands/command.hpp>
 
 class HelpCommand final : public Command {
-  static inline std::vector<const char*> s_options {
-    "eric",
-  };
-
  public:
-  HelpCommand(const CommandArguments args) : Command(args) {}
+  HelpCommand(const CommandArguments args);
 
   static const char* name() { return "help"; }
-  static std::span<const char*> options() { return s_options; }
 
-  CommandProcessResult process() override;
+  bool is_done() const override { return true; }
 };

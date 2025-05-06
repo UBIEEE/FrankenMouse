@@ -1,8 +1,10 @@
+#include <micromouse_cli/options/argument_parser.hpp>
 #include <micromouse_cli/prompt.hpp>
 
 #include <micromouse_cli/commands/clear.hpp>
 #include <micromouse_cli/commands/exit.hpp>
 #include <micromouse_cli/commands/help.hpp>
+#include <micromouse_cli/commands/ti84_control.hpp>
 
 #include <unistd.h>
 #include <csignal>
@@ -21,7 +23,6 @@ int main(int argc, const char** argv) {
   });
 
   std::vector<std::string> args{argv, argv + argc};
-  (void)args;  // TODO
 
   Prompt prompt;
   register_commands(prompt);
@@ -40,12 +41,13 @@ static void register_commands(Prompt& prompt) {
   prompt.register_command<HelpCommand>();
   prompt.register_command<ClearCommand>();
   prompt.register_command<ExitCommand>();
+  prompt.register_command<TI84ControlCommand>();
 }
 
 static bool process_command(Command* command) {
   signal_received = 0;
 
-  while (!signal_received) {
+  while (!signal_received && !command->is_done()) {
     CommandProcessResult result = command->process();
     if (result == CommandProcessResult::EXIT_ALL)
       return true;
