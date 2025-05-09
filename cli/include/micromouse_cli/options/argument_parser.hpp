@@ -26,6 +26,9 @@ class ArgumentParser final {
     parse();
   }
 
+  std::span<const std::string> args() const { return m_args; }
+  std::span<const Option> options() const { return m_options; }
+
   const std::unordered_set<int>& parsed_options() const {
     return m_parsed_options;
   }

@@ -1,6 +1,7 @@
 #include <micromouse_cli/options/argument_parser.hpp>
 
 #include <cassert>
+#include <micromouse_cli/diagnostics.hpp>
 
 void ArgumentParser::parse() {
   if (m_args.size() < 2)
@@ -21,14 +22,13 @@ void ArgumentParser::parse() {
       case Error::NONE:
         break;
       case Error::INVALID_OPTION:
-        (void)fprintf(stderr, "%s: invalid option: '%s'\n", command, option);
+        report_error(command, "invalid option: '%s'", option);
         break;
       case Error::MISSING_VALUE:
-        (void)fprintf(stderr, "%s: missing argument for option: '%s'\n",
-                      command, option);
+        report_error(command, "missing value for option: '%s'", option);
         break;
       case Error::DUPLICATE_OPTION:
-        (void)fprintf(stderr, "%s: duplicate option: '%s'\n", command, option);
+        report_error(command, "duplicate option: '%s'", option);
         break;
     }
 
