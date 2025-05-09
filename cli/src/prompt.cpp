@@ -1,5 +1,7 @@
 #include <micromouse_cli/prompt.hpp>
 
+#include <micromouse_cli/diagnostics.hpp>
+
 #include <isocline.h>
 #include <cassert>
 #include <filesystem>
@@ -17,23 +19,35 @@ void Prompt::register_command(const char* name,
   m_commands.emplace(std::string(name), std::move(info));
 }
 
-Command* Prompt::readline() {
+Prompt::Result Prompt::readline(Command** command) {
+  assert(command != nullptr);
+  *command = nullptr;
+
+  m_stopped = false;
+
 REPEAT:
   char* input = ic_readline(m_prompt_text.c_str());
-  if (!input)
-    return nullptr;
+  if (!input) {
+    return m_stopped ? Result::STOPPED : Result::SIGNAL_OR_ERROR;
+  }
 
   CommandInvocation result = parse_command_invocation(input);
   free(input);
 
   if (result.command == m_commands.end()) {
-    fprintf(stderr, "%s: unknown command: '%s'\n", m_prompt_text.c_str(),
-            result.args[0].c_str());
+    report_error(nullptr, "unknown command: '%s'", result.args[0].c_str());
     goto REPEAT;
   }
 
   const auto& [name, info] = *result.command;
-  return info.make_command_func(std::move(result.args));
+  *command = info.make_command_func(std::move(result.args));
+
+  return Result::COMMAND;
+}
+
+void Prompt::stop() {
+  m_stopped = true;
+  ic_async_stop();
 }
 
 std::optional<std::string> Prompt::get_history_filename() {

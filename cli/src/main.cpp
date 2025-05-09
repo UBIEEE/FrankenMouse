@@ -1,3 +1,5 @@
+#include <micromouse_cli/ble_manager.hpp>
+#include <micromouse_cli/diagnostics.hpp>
 #include <micromouse_cli/options/argument_parser.hpp>
 #include <micromouse_cli/prompt.hpp>
 
@@ -7,53 +9,175 @@
 #include <micromouse_cli/commands/ti84_control.hpp>
 
 #include <unistd.h>
+#include <cassert>
 #include <csignal>
+#include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
-static volatile sig_atomic_t signal_received = 0;
+using namespace std::chrono_literals;
 
-static void register_commands(Prompt& prompt);
-static bool process_command(Command* command);
+class Main {
+  enum {
+    OPTION_HELP,
+    OPTION_PERIPH_NAME,
+    OPTION_ADAPTER,
+  };
+
+  static const inline std::vector<Option> s_options{
+      {OPTION_HELP, OptionName("help", "h"), false},
+      {OPTION_PERIPH_NAME, OptionName("peripheral-name", "name", "p"), true},
+      {OPTION_ADAPTER, OptionName("adapter", "a"), true},
+  };
+
+  static volatile inline sig_atomic_t s_signal_received = 0;
+
+  std::string_view m_periph_name = DEFAULT_PERIPHERAL_NAME;
+  int m_adapter_idx = DEFAULT_ADAPTER_INDEX;
+
+  std::unique_ptr<BLEManager> m_ble_manager;
+
+  std::span<std::string> m_args;
+  const char* m_program_name;
+  ArgumentParser m_arg_parser;
+  Prompt m_prompt;
+  Command* m_command = nullptr;
+
+ public:
+  Main(std::span<std::string> args)
+      : m_args(args),
+        m_program_name(m_args[0].c_str()),
+        m_arg_parser(m_args, s_options) {
+    signal(SIGINT, [](int) { s_signal_received = 1; });
+  }
+
+  int run() {
+    if (!validate_args())
+      return 1;
+
+    register_commands();
+
+    m_ble_manager = std::make_unique<BLEManager>(m_periph_name, m_adapter_idx);
+    if (!m_ble_manager->is_initialized())
+      return 1;
+
+    // Stop the prompt when the BLE connection is dropped.
+    m_ble_manager->set_on_disconnect_callback([&]() {
+      m_prompt.stop();
+      std::this_thread::sleep_for(1ms);  // Nothing to see here...
+    });
+
+    bool should_exit = false;
+    while (!should_exit) {
+      // Make sure it's connected.
+
+      should_exit = process_ble_connection();
+      if (should_exit)
+        break;
+
+      // Prompt for input and process the command.
+
+      using enum Prompt::Result;
+
+      Prompt::Result result = m_prompt.readline(&m_command);
+      if (result == SIGNAL_OR_ERROR)
+        return 0;
+      if (result == STOPPED)
+        continue;
+
+      should_exit = process_command();
+      delete m_command;
+    }
+
+    return 0;
+  }
+
+  void print_usage() {
+    // clang-format off
+    printf("Usage: %s [options]\n", m_args.front().c_str());
+    puts("");
+    puts("mm is a shell for controlling the MicroMouse wirelessly.");
+    puts("When the shell is running, a BLE connection is established to the MicroMouse.");
+    puts("In the shell, run the `help` command to see a list of available commands.");
+    puts("");
+    puts("Options:");
+    puts("\t--help          Show this help message");
+    puts("\t--name=<name>   Specify the name of the BLE peripheral to connect to");
+    puts("\t--adapter=<id>  Specify the index of the BLE adapter to use");
+    // clang-format on
+  }
+
+  bool validate_args() {
+    const auto& options = m_arg_parser.parsed_options();
+    const auto& parsed_option_values = m_arg_parser.parsed_option_values();
+
+    if (m_arg_parser.has_error() || options.contains(OPTION_HELP)) {
+      print_usage();
+      return false;
+    }
+
+    if (options.contains(OPTION_PERIPH_NAME)) {
+      m_periph_name = parsed_option_values.at(OPTION_PERIPH_NAME);
+    }
+    if (options.contains(OPTION_ADAPTER)) {
+      std::string_view adapter = parsed_option_values.at(OPTION_ADAPTER);
+      try {
+        m_adapter_idx = std::stoi(adapter.data());
+        if (m_adapter_idx < 0)
+          throw std::invalid_argument("negative index");
+      } catch (std::invalid_argument& e) {
+        report_error(m_program_name, "invalid adapter index: %s",
+                     adapter.data());
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  void register_commands() {
+    m_prompt.register_command<HelpCommand>();
+    m_prompt.register_command<ClearCommand>();
+    m_prompt.register_command<ExitCommand>();
+    m_prompt.register_command<TI84ControlCommand>();
+  }
+
+  // Returns true if the program should exit.
+  bool process_ble_connection() {
+    if (m_ble_manager->is_connected())
+      return false;
+
+    while (!m_ble_manager->is_connected()) {
+      if (s_signal_received)
+        return true;
+      m_ble_manager->process_events();
+    }
+
+    return false;
+  }
+
+  // Returns true if the program should exit.
+  bool process_command() {
+    assert(m_command != nullptr);
+
+    s_signal_received = 0;
+
+    while (!s_signal_received && m_ble_manager->is_connected() &&
+           !m_command->is_done()) {
+      CommandProcessResult result = m_command->process();
+      if (result == CommandProcessResult::EXIT_ALL)
+        return true;
+      if (result != CommandProcessResult::CONTINUE)
+        break;
+    }
+
+    return false;
+  }
+};
 
 int main(int argc, const char** argv) {
-  signal(SIGINT, [](int) {
-    write(STDOUT_FILENO, "Signal received, stopping current command...\n", 45);
-    signal_received = 1;
-  });
-
-  std::vector<std::string> args{argv, argv + argc};
-
-  Prompt prompt;
-  register_commands(prompt);
-
-  Command* command;
-  bool done = false;
-  while (!done && (command = prompt.readline())) {
-    done = process_command(command);
-    delete command;
-  }
-
-  return 0;
-}
-
-static void register_commands(Prompt& prompt) {
-  prompt.register_command<HelpCommand>();
-  prompt.register_command<ClearCommand>();
-  prompt.register_command<ExitCommand>();
-  prompt.register_command<TI84ControlCommand>();
-}
-
-static bool process_command(Command* command) {
-  signal_received = 0;
-
-  while (!signal_received && !command->is_done()) {
-    CommandProcessResult result = command->process();
-    if (result == CommandProcessResult::EXIT_ALL)
-      return true;
-    if (result != CommandProcessResult::CONTINUE)
-      break;
-  }
-
-  return false;
+  std::vector<std::string> args(argv, argv + argc);
+  Main main(args);
+  return main.run();
 }

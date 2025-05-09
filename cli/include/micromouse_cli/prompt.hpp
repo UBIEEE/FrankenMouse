@@ -21,6 +21,8 @@ class Prompt final {
   std::unordered_map<std::string, CommandInfo> m_commands;
   using CommandIterator = decltype(m_commands)::const_iterator;
 
+  bool m_stopped = false;
+
  public:
   Prompt(std::string_view text = "") {
     configure();
@@ -64,15 +66,38 @@ class Prompt final {
                         bool can_accept_file_paths,
                         MakeCommandFunc make_command);
 
+  enum class Result {
+    // A command was successfully invoked from the prompt.
+    COMMAND,
+
+    // Signal received, or error occurred.
+    SIGNAL_OR_ERROR,
+
+    // The prompt was stopped.
+    STOPPED,
+  };
+
   /**
-   * @brief Prompts the user for input and returns an instance of the
-   *        invoked command.
+   * @brief Prompts the user for input. The input is parsed and the
+   *        corresponding command is invoked.
    *
-   * @return A heap-allocated instance of the invoked command, or nullptr if an
-   *         exit signal was caught or an error occurred. User must free the
-   *         returned object.
+   *        This function will block until the user enters a command, a signal
+   *        is received, or an error occurs. To manually stop the prompt, use
+   *        the stop() method.
+   *
+   * @param command On success, this will be set to a newly allocated instance
+   *                of the invoked command. The caller is responsible for
+   *                freeing this instance.
+   *
+   * @return The result of the prompt.
    */
-  Command* readline();
+  Result readline(Command** command);
+
+  /**
+   * @brief Stops the prompt. This will cause the readline() method to return
+   *        immediately with a Result::STOPPED value.
+   */
+  void stop();
 
  private:
   static std::optional<std::string> get_history_filename();
