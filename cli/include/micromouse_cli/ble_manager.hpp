@@ -48,6 +48,12 @@ class BLEManager final {
     return m_peripheral->is_connected().value_or(false);
   }
 
+  int peripheral_rssi() const {
+    if (!m_peripheral.has_value())
+      return 0;
+    return m_peripheral->rssi().value_or(0);
+  }
+
   /**
    * @brief Since SimpleBLE does not allow for connecting to a peripheral from a
    *        callback (feature not a bug), this function must be called

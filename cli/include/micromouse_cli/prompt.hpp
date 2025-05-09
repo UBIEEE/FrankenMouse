@@ -1,16 +1,19 @@
 #pragma once
 
+#include <micromouse_cli/ble_manager.hpp>
 #include <micromouse_cli/commands/command.hpp>
 #include <optional>
 #include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <functional>
 
-using MakeCommandFunc = Command* (*)(CommandArguments);
+using MakeCommandFunc = std::function<Command*(CommandArguments)>;
 
 class Prompt final {
-  std::string m_prompt_text = "micromouse";
+  BLEManager& m_ble_manager;
+  std::string m_prompt_text;
 
   struct CommandInfo {
     std::span<const char* const> options;
@@ -21,13 +24,12 @@ class Prompt final {
   std::unordered_map<std::string, CommandInfo> m_commands;
   using CommandIterator = decltype(m_commands)::const_iterator;
 
-  bool m_stopped = false;
+  bool m_ble_disconnect_stop = false;
 
  public:
-  Prompt(std::string_view text = "") {
+  Prompt(BLEManager& ble_manager, std::string_view text = "micromouse")
+      : m_ble_manager(ble_manager), m_prompt_text(text) {
     configure();
-    if (!text.empty())
-      set_text(text);
   }
   ~Prompt() = default;
 
@@ -56,9 +58,16 @@ class Prompt final {
       can_accept_file_paths = T::can_accept_file_paths();
     }
 
-    register_command(
-        name, options, can_accept_file_paths,
-        [](CommandArguments args) -> Command* { return new T(args); });
+    MakeCommandFunc command_factory = [&](CommandArguments args) -> Command* {
+      if constexpr (CommandType_ConstructibleFromArgsAndBLEManager<T>) {
+        return new T(args, m_ble_manager);
+      } else {
+        return new T(args);
+      }
+    };
+
+    register_command(name, options, can_accept_file_paths,
+                     std::move(command_factory));
   }
 
   void register_command(const char* name,
@@ -73,17 +82,18 @@ class Prompt final {
     // Signal received, or error occurred.
     SIGNAL_OR_ERROR,
 
-    // The prompt was stopped.
-    STOPPED,
+    BLE_NOT_CONNECTED,
   };
 
   /**
    * @brief Prompts the user for input. The input is parsed and the
    *        corresponding command is invoked.
    *
-   *        This function will block until the user enters a command, a signal
-   *        is received, or an error occurs. To manually stop the prompt, use
-   *        the stop() method.
+   *        This function will block until one of the following occurs:
+   *        1. The user enters a command.
+   *        2. A signal is received.
+   *        3. An error occurs.
+   *        4. The BLE connection is lost.
    *
    * @param command On success, this will be set to a newly allocated instance
    *                of the invoked command. The caller is responsible for
@@ -93,16 +103,12 @@ class Prompt final {
    */
   Result readline(Command** command);
 
-  /**
-   * @brief Stops the prompt. This will cause the readline() method to return
-   *        immediately with a Result::STOPPED value.
-   */
-  void stop();
-
  private:
   static std::optional<std::string> get_history_filename();
 
   void configure();
+
+  void configure_ble_disconnect_callback();
 
   void enable_history();
   void configure_colors();

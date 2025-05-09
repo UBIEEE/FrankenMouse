@@ -6,6 +6,7 @@
 #include <micromouse_cli/commands/clear.hpp>
 #include <micromouse_cli/commands/exit.hpp>
 #include <micromouse_cli/commands/help.hpp>
+#include <micromouse_cli/commands/rssi.hpp>
 #include <micromouse_cli/commands/ti84_control.hpp>
 
 #include <unistd.h>
@@ -13,10 +14,7 @@
 #include <csignal>
 #include <memory>
 #include <string>
-#include <thread>
 #include <vector>
-
-using namespace std::chrono_literals;
 
 class Main {
   enum {
@@ -36,12 +34,13 @@ class Main {
   std::string_view m_periph_name = DEFAULT_PERIPHERAL_NAME;
   int m_adapter_idx = DEFAULT_ADAPTER_INDEX;
 
+  std::unique_ptr<Prompt> m_prompt;
   std::unique_ptr<BLEManager> m_ble_manager;
 
   std::span<std::string> m_args;
   const char* m_program_name;
   ArgumentParser m_arg_parser;
-  Prompt m_prompt;
+
   Command* m_command = nullptr;
 
  public:
@@ -56,17 +55,13 @@ class Main {
     if (!validate_args())
       return 1;
 
-    register_commands();
-
     m_ble_manager = std::make_unique<BLEManager>(m_periph_name, m_adapter_idx);
     if (!m_ble_manager->is_initialized())
       return 1;
 
-    // Stop the prompt when the BLE connection is dropped.
-    m_ble_manager->set_on_disconnect_callback([&]() {
-      m_prompt.stop();
-      std::this_thread::sleep_for(1ms);  // Nothing to see here...
-    });
+    m_prompt = std::make_unique<Prompt>(*m_ble_manager);
+
+    register_commands();
 
     bool should_exit = false;
     while (!should_exit) {
@@ -80,11 +75,11 @@ class Main {
 
       using enum Prompt::Result;
 
-      Prompt::Result result = m_prompt.readline(&m_command);
+      Prompt::Result result = m_prompt->readline(&m_command);
       if (result == SIGNAL_OR_ERROR)
-        return 0;
-      if (result == STOPPED)
-        continue;
+        return 0;  // Exit the program
+      if (result == BLE_NOT_CONNECTED)
+        continue;  // Try to reconnect
 
       should_exit = process_command();
       delete m_command;
@@ -137,10 +132,11 @@ class Main {
   }
 
   void register_commands() {
-    m_prompt.register_command<HelpCommand>();
-    m_prompt.register_command<ClearCommand>();
-    m_prompt.register_command<ExitCommand>();
-    m_prompt.register_command<TI84ControlCommand>();
+    m_prompt->register_command<HelpCommand>();
+    m_prompt->register_command<ClearCommand>();
+    m_prompt->register_command<ExitCommand>();
+    m_prompt->register_command<TI84ControlCommand>();
+    m_prompt->register_command<RSSICommand>();
   }
 
   // Returns true if the program should exit.

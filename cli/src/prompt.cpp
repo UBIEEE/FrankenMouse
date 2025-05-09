@@ -5,6 +5,9 @@
 #include <isocline.h>
 #include <cassert>
 #include <filesystem>
+#include <thread>
+
+using namespace std::chrono_literals;
 
 void Prompt::register_command(const char* name,
                               std::span<const char* const> options,
@@ -23,12 +26,18 @@ Prompt::Result Prompt::readline(Command** command) {
   assert(command != nullptr);
   *command = nullptr;
 
-  m_stopped = false;
+  if (!m_ble_manager.is_connected())
+    return Result::BLE_NOT_CONNECTED;
+
+  m_ble_disconnect_stop = false;
 
 REPEAT:
   char* input = ic_readline(m_prompt_text.c_str());
   if (!input) {
-    return m_stopped ? Result::STOPPED : Result::SIGNAL_OR_ERROR;
+    // Determine if the prompt was stopped due to ble disconnection or signal
+    // caught by isocline.
+    return m_ble_disconnect_stop ? Result::BLE_NOT_CONNECTED
+                                 : Result::SIGNAL_OR_ERROR;
   }
 
   CommandInvocation result = parse_command_invocation(input);
@@ -45,11 +54,6 @@ REPEAT:
   return Result::COMMAND;
 }
 
-void Prompt::stop() {
-  m_stopped = true;
-  ic_async_stop();
-}
-
 std::optional<std::string> Prompt::get_history_filename() {
   const char* home_dir = getenv("HOME");
   if (!home_dir)
@@ -59,12 +63,22 @@ std::optional<std::string> Prompt::get_history_filename() {
 }
 
 void Prompt::configure() {
+  configure_ble_disconnect_callback();
   enable_history();
   configure_colors();
   configure_completer();
   configure_highlighter();
   enable_auto_completion();
   enable_inline_hints();
+}
+
+void Prompt::configure_ble_disconnect_callback() {
+  // Stop the prompt when the BLE connection is dropped.
+  m_ble_manager.set_on_disconnect_callback([&]() {
+    ic_async_stop();
+    m_ble_disconnect_stop = true;
+    std::this_thread::sleep_for(1ms);  // Nothing to see here...
+  });
 }
 
 void Prompt::enable_history() {

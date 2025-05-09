@@ -35,19 +35,29 @@ class Command {
   explicit operator bool() const { return is_done(); }
 };
 
+template <typename T>
+concept CommandType_ConstructibleFromArgs =
+    std::constructible_from<T, CommandArguments>;
+
+template <typename T>
+concept CommandType_ConstructibleFromArgsAndBLEManager =
+    std::constructible_from<T, CommandArguments, class BLEManager&>;
+
 /**
  * @brief Base concept that all command types must satisfy.
  *        1. Must be derived from Command.
- *        2. Must be constructible from CommandArguments.
+ *        2. Must be constructible from CommandArguments and optionally
+ *           BLEManager&.
  *        3. Must have a static method `name()` that returns the command's name
  *           (const char*).
  */
 template <typename T>
-concept CommandType =
-    std::derived_from<T, Command> &&
-    std::constructible_from<T, CommandArguments> && requires(T t) {
-      { T::name() } -> std::same_as<const char*>;
-    };
+concept CommandType = std::derived_from<T, Command> &&
+                      (CommandType_ConstructibleFromArgs<T> ||
+                       CommandType_ConstructibleFromArgsAndBLEManager<T>) &&
+                      requires(T t) {
+                        { T::name() } -> std::same_as<const char*>;
+                      };
 
 /**
  * @brief Commands may implement a static method `options()` that returns a span
