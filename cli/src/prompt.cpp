@@ -44,7 +44,8 @@ REPEAT:
   free(input);
 
   if (result.command == m_commands.end()) {
-    report_error(nullptr, "unknown command: '%s'", result.args[0].c_str());
+    if (!result.args.empty())
+      report_error(nullptr, "unknown command: '%s'", result.args[0].c_str());
     goto REPEAT;
   }
 
@@ -244,6 +245,8 @@ void Prompt::highlighter(ic_highlight_env_t* henv, const char* input_begin) {
 
 Prompt::CommandInvocation Prompt::parse_command_invocation(
     const char* input_begin) {
+  assert(input_begin != nullptr);
+
   CommandInvocation invocation;
 
   const char* input = input_begin;
