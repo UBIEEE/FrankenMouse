@@ -94,7 +94,7 @@ endif()
 
 # SimpleBLE
 if(BUILD_WITH_BLE)
-  find_package(simpleble)
+  find_package(simpleble QUIET)
   if(NOT simpleble_FOUND)
     message(STATUS "simpleble not found, fetching from git")
 
@@ -104,6 +104,8 @@ if(BUILD_WITH_BLE)
         GIT_TAG v0.9.1
         GIT_SHALLOW YES
     )
+
+    cmake_policy(SET CMP0169 OLD)
 
     FetchContent_GetProperties(simpleble)
     if(NOT simpleble_POPULATED)
