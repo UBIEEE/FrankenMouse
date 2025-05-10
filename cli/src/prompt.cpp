@@ -276,7 +276,7 @@ void Prompt::complete_command_options(ic_completion_env_t* cenv,
         continue;
 
       const char* prefix = single_dash_option ? "-" : "--";
-      const char* suffix = option.requires_value ? "=" : "";
+      const char* suffix = option.requires_value ? " " : "";
 
       std::string option_name = std::string(prefix) + name + suffix;
 
