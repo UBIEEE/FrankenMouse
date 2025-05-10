@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdarg>
+#include <micromouse_cli/macros.hpp>
 #include <mutex>
 
 static std::mutex s_mutex;
@@ -25,11 +26,7 @@ void report_warning(const char* tag, const char* fmt, ...) {
   va_list args;
   va_start(args, fmt);
 
-  report(stderr, tag,
-         "\033[33;1m"
-         "warning: "
-         "\033[m",
-         fmt, args);
+  report(stderr, tag, BOLD(YELLOW("warning: ")), fmt, args);
 
   va_end(args);
 }
@@ -38,11 +35,7 @@ void report_error(const char* tag, const char* fmt, ...) {
   va_list args;
   va_start(args, fmt);
 
-  report(stderr, tag,
-         "\033[31;1m"
-         "error: "
-         "\033[m",
-         fmt, args);
+  report(stderr, tag, BOLD(RED("error: ")), fmt, args);
 
   va_end(args);
 }
@@ -58,10 +51,10 @@ static void report(FILE* stream,
 
   std::lock_guard<std::mutex> lock(s_mutex);
 
-  (void)fputs("\r\033[K\033[m", stream);  // Clear line, reset style
+  (void)fputs(CLEAR_LINE(), stream);  // Clear line, reset style
 
   if (tag) {
-    (void)fprintf(stream, "\033[1m%s\033[1;m: \033[m", tag);
+    (void)fprintf(stream, BOLD("%s: "), tag);
   }
 
   if (prefix) {
