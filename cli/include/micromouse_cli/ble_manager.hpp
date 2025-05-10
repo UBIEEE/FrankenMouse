@@ -17,6 +17,7 @@ class BLEManager final {
   SimpleBLE::Adapter m_adapter;
   mutable std::optional<SimpleBLE::Safe::Peripheral> m_peripheral;
 
+  bool m_dummy = false;
   bool m_initialized = false;
 
  public:
@@ -36,13 +37,16 @@ class BLEManager final {
 
  public:
   BLEManager(std::string_view peripheral_name = DEFAULT_PERIPHERAL_NAME,
-             int adapter_index = DEFAULT_ADAPTER_INDEX);
+             int adapter_index = DEFAULT_ADAPTER_INDEX,
+             bool dummy = false);
   ~BLEManager();
 
   static const char* name() { return "ble"; }
 
   bool is_initialized() const { return m_initialized; }
   bool is_connected() const {
+    if (m_dummy)
+      return true;
     if (!m_peripheral.has_value())
       return false;
     return m_peripheral->is_connected().value_or(false);

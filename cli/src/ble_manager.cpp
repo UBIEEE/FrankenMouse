@@ -4,9 +4,15 @@
 
 using namespace std::placeholders;
 
-BLEManager::BLEManager(std::string_view peripheral_name, int adapter_index)
+BLEManager::BLEManager(std::string_view peripheral_name, int adapter_index, bool dummy)
     : m_peripheral_search_name(peripheral_name),
-      m_adapter_index(adapter_index) {
+      m_adapter_index(adapter_index), m_dummy(dummy) {
+
+  if (m_dummy) {
+    m_initialized = true;
+    return;
+  }
+
   if (!(m_initialized = initialize_adapter()))
     return;
 
@@ -16,7 +22,7 @@ BLEManager::BLEManager(std::string_view peripheral_name, int adapter_index)
 }
 
 BLEManager::~BLEManager() {
-  if (!m_initialized)
+  if (!m_initialized || m_dummy)
     return;
 
   if (!is_connected()) {
@@ -34,7 +40,7 @@ BLEManager::~BLEManager() {
 }
 
 void BLEManager::process_events() {
-  if (!m_initialized)
+  if (!m_initialized || m_dummy)
     return;
 
   if (!m_peripheral.has_value())
@@ -83,7 +89,7 @@ void BLEManager::configure_scan_callbacks() {
 }
 
 void BLEManager::begin_scan() {
-  if (!m_initialized)
+  if (!m_initialized || m_dummy)
     return;
 
   report_status(name(), "scanning for '%s'", m_peripheral_search_name.c_str());
@@ -92,7 +98,7 @@ void BLEManager::begin_scan() {
 }
 
 void BLEManager::end_scan() {
-  if (!m_initialized)
+  if (!m_initialized || m_dummy)
     return;
 
   report_status(name(), "stopping scan");

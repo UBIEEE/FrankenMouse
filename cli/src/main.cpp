@@ -5,7 +5,6 @@
 
 #include <micromouse_cli/commands/clear.hpp>
 #include <micromouse_cli/commands/exit.hpp>
-#include <micromouse_cli/commands/help.hpp>
 #include <micromouse_cli/commands/rssi.hpp>
 #include <micromouse_cli/commands/ti84_control.hpp>
 
@@ -21,18 +20,21 @@ class Main {
     OPTION_HELP,
     OPTION_PERIPH_NAME,
     OPTION_ADAPTER,
+    OPTION_DUMMY_PERIPHERAL,
   };
 
   static const inline std::vector<Option> s_options{
       {OPTION_HELP, OptionName("help", "h"), false},
       {OPTION_PERIPH_NAME, OptionName("peripheral-name", "name", "p"), true},
       {OPTION_ADAPTER, OptionName("adapter", "a"), true},
+      {OPTION_DUMMY_PERIPHERAL, OptionName("dummy"), false},
   };
 
   static volatile inline sig_atomic_t s_signal_received = 0;
 
   std::string_view m_periph_name = DEFAULT_PERIPHERAL_NAME;
   int m_adapter_idx = DEFAULT_ADAPTER_INDEX;
+  bool m_dummy_peripheral = false;
 
   std::unique_ptr<Prompt> m_prompt;
   std::unique_ptr<BLEManager> m_ble_manager;
@@ -55,7 +57,8 @@ class Main {
     if (!validate_args())
       return 1;
 
-    m_ble_manager = std::make_unique<BLEManager>(m_periph_name, m_adapter_idx);
+    m_ble_manager = std::make_unique<BLEManager>(m_periph_name, m_adapter_idx,
+                                                 m_dummy_peripheral);
     if (!m_ble_manager->is_initialized())
       return 1;
 
@@ -126,6 +129,10 @@ class Main {
                      adapter.data());
         return false;
       }
+    }
+
+    if (options.contains(OPTION_DUMMY_PERIPHERAL)) {
+      m_dummy_peripheral = true;
     }
 
     return true;
