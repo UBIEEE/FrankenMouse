@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <micromouse_cli/ble_manager.hpp>
 #include <micromouse_cli/commands/command.hpp>
 #include <optional>
@@ -7,35 +8,30 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <functional>
 
 using MakeCommandFunc = std::function<Command*(CommandArguments)>;
 
 class Prompt final {
   BLEManager& m_ble_manager;
-  std::string m_prompt_text;
 
+ public:
   struct CommandInfo {
-    std::span<const char* const> options;
-    bool can_accept_file_paths;
+    Command::PromptInfo prompt_info;
     MakeCommandFunc make_command_func;
   };
 
+ private:
   std::unordered_map<std::string, CommandInfo> m_commands;
-  using CommandIterator = decltype(m_commands)::const_iterator;
+  std::vector<std::string> m_command_names;
 
   bool m_ble_disconnect_stop = false;
 
  public:
-  Prompt(BLEManager& ble_manager, std::string_view text = "micromouse")
-      : m_ble_manager(ble_manager), m_prompt_text(text) {
-    configure();
-  }
-  ~Prompt() = default;
+  using CommandIterator = decltype(m_commands)::const_iterator;
 
-  void set_text(std::string_view prompt_text) { m_prompt_text = prompt_text; }
-  void set_text(const std::string& prompt_text) { m_prompt_text = prompt_text; }
-  std::string_view get_prompt_text() const { return m_prompt_text; }
+ public:
+  Prompt(BLEManager& ble_manager) : m_ble_manager(ble_manager) { configure(); }
+  ~Prompt() = default;
 
   /**
    * @brief Adds a command to the list of available input commands for this
@@ -48,31 +44,25 @@ class Prompt final {
   void register_command() {
     const char* name = T::name();
 
-    std::span<const char* const> options;
-    if constexpr (CommandType_WithOptions<T>) {
-      options = T::options();
+    Command::PromptInfo prompt_info;
+    if constexpr (CommandType_WithPromptInfo<T>) {
+      prompt_info = T::prompt_info();
     }
 
-    bool can_accept_file_paths = false;
-    if constexpr (CommandType_WithCanAcceptFilePaths<T>) {
-      can_accept_file_paths = T::can_accept_file_paths();
-    }
-
-    MakeCommandFunc command_factory = [&](CommandArguments args) -> Command* {
-      if constexpr (CommandType_ConstructibleFromArgsAndBLEManager<T>) {
+    MakeCommandFunc make_command_func = [&](CommandArguments args) -> Command* {
+      if constexpr (CommandType_ConstructibleFromArgumentsAndBLEManager<T>) {
         return new T(args, m_ble_manager);
       } else {
         return new T(args);
       }
     };
 
-    register_command(name, options, can_accept_file_paths,
-                     std::move(command_factory));
+    register_command(name, std::move(prompt_info),
+                     std::move(make_command_func));
   }
 
   void register_command(const char* name,
-                        std::span<const char* const> options,
-                        bool can_accept_file_paths,
+                        Command::PromptInfo prompt_info,
                         MakeCommandFunc make_command);
 
   enum class Result {
@@ -108,6 +98,8 @@ class Prompt final {
 
   void configure();
 
+  void add_help_command();
+
   void configure_ble_disconnect_callback();
 
   void enable_history();
@@ -124,6 +116,9 @@ class Prompt final {
   void complete_command_options(struct ic_completion_env_s* cenv,
                                 CommandIterator command_it,
                                 const char* word);
+  void complete_command_non_options(struct ic_completion_env_s* cenv,
+                                    CommandIterator command_it,
+                                    const char* word);
 
   void highlighter(struct ic_highlight_env_s* henv, const char* input);
 

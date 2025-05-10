@@ -29,4 +29,6 @@ struct Option {
   int id;
   OptionName name;
   bool requires_value;
+  const char* value_text;
+  const char* help;
 };

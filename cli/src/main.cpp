@@ -139,7 +139,6 @@ class Main {
   }
 
   void register_commands() {
-    m_prompt->register_command<HelpCommand>();
     m_prompt->register_command<ClearCommand>();
     m_prompt->register_command<ExitCommand>();
     m_prompt->register_command<TI84ControlCommand>();

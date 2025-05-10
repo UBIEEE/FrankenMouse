@@ -9,17 +9,73 @@
 
 using namespace std::chrono_literals;
 
-void Prompt::register_command(const char* name,
-                              std::span<const char* const> options,
-                              bool can_accept_file_paths,
-                              MakeCommandFunc make_command) {
-  CommandInfo info{
-      .options = options,
-      .can_accept_file_paths = can_accept_file_paths,
-      .make_command_func = make_command,
-  };
+#define HELP_COMMAND_INDENT 4
+#define HELP_COMMAND_DESCRIPTION_COLUMN 20
 
-  m_commands.emplace(std::string(name), std::move(info));
+/**
+ * @brief The help command is special because it shows usage information for
+ *        every command registered with the prompt.
+ */
+class HelpCommand final : public Command {
+  COMMAND_NAME("help");
+
+ public:
+  HelpCommand(
+      const CommandArguments args,
+      const std::unordered_map<std::string, Prompt::CommandInfo>& commands)
+      : Command(args) {
+    if (args.size() > 1) {
+      Prompt::CommandIterator it = commands.find(args[1]);
+      if (it != commands.end()) {
+        const auto& [name, info] = *it;
+        const Command::PromptInfo& prompt_info = info.prompt_info;
+        Command::help(name.c_str(), prompt_info);
+        return;
+      }
+    }
+
+    // clang-format off
+    puts("Usage: help [command]");
+    puts("");
+    puts("What you see here is a shell for controlling the MicroMouse.");
+    puts("");
+    puts("When this shell is running, a BLE connection is established to the MicroMouse.");
+    puts("");
+    puts("There are a number of commands for controlling and reading data from the\n"
+         "MicroMouse. You can display detailed usage information for a command by passing\n"
+         "the command name as an argument to the help command.");
+    puts("");
+    // clang-format on
+
+    puts("Commands:");
+    for (const auto& [name, info] : commands) {
+      printf("%*s%s", HELP_COMMAND_INDENT, "", name.c_str());
+      const char* description = info.prompt_info.description_text;
+      if (!description) {
+        putchar('\n');
+        continue;
+      }
+
+      int remaining_space = HELP_COMMAND_DESCRIPTION_COLUMN -
+                            static_cast<int>(name.length()) -
+                            HELP_COMMAND_INDENT;
+      if (remaining_space > 0) {
+        printf("%*s", remaining_space, "");
+      } else {
+        printf("\n%*s", HELP_COMMAND_DESCRIPTION_COLUMN, "");
+      }
+      printf("%s\n", description);
+    }
+  }
+
+  bool is_done() const override { return true; }
+};
+
+void Prompt::register_command(const char* name,
+                              Command::PromptInfo prompt_info,
+                              MakeCommandFunc make_command) {
+  m_command_names.emplace_back(name);
+  m_commands.emplace(std::string(name), CommandInfo{prompt_info, make_command});
 }
 
 Prompt::Result Prompt::readline(Command** command) {
@@ -31,23 +87,26 @@ Prompt::Result Prompt::readline(Command** command) {
 
   m_ble_disconnect_stop = false;
 
-REPEAT:
-  char* input = ic_readline(m_prompt_text.c_str());
-  if (!input) {
-    // Determine if the prompt was stopped due to ble disconnection or signal
-    // caught by isocline.
-    return m_ble_disconnect_stop ? Result::BLE_NOT_CONNECTED
-                                 : Result::SIGNAL_OR_ERROR;
-  }
+  CommandInvocation result;
 
-  CommandInvocation result = parse_command_invocation(input);
-  free(input);
+  bool repeat;
+  do {
+    char* input = ic_readline("micromouse");
+    if (!input) {
+      // Determine if the prompt was stopped due to ble disconnection or signal
+      // caught by isocline.
+      return m_ble_disconnect_stop ? Result::BLE_NOT_CONNECTED
+                                   : Result::SIGNAL_OR_ERROR;
+    }
 
-  if (result.command == m_commands.end()) {
-    if (!result.args.empty())
+    result = parse_command_invocation(input);
+    free(input);
+
+    repeat = (result.command == m_commands.end());
+    if (repeat && !result.args.empty()) {
       report_error(nullptr, "unknown command: '%s'", result.args[0].c_str());
-    goto REPEAT;
-  }
+    }
+  } while (repeat);
 
   const auto& [name, info] = *result.command;
   *command = info.make_command_func(std::move(result.args));
@@ -64,6 +123,7 @@ std::optional<std::string> Prompt::get_history_filename() {
 }
 
 void Prompt::configure() {
+  add_help_command();
   configure_ble_disconnect_callback();
   enable_history();
   configure_colors();
@@ -71,6 +131,19 @@ void Prompt::configure() {
   configure_highlighter();
   enable_auto_completion();
   enable_inline_hints();
+}
+
+void Prompt::add_help_command() {
+  Command::PromptInfo prompt_info;
+  prompt_info.usage_text = "help [command]";
+  prompt_info.description_text = "Show usage information for a command.";
+  prompt_info.non_options = &m_command_names;
+
+  MakeCommandFunc make_command_func = [&](CommandArguments args) -> Command* {
+    return new HelpCommand(args, m_commands);
+  };
+
+  register_command(HelpCommand::name(), prompt_info, make_command_func);
 }
 
 void Prompt::configure_ble_disconnect_callback() {
@@ -153,7 +226,7 @@ void Prompt::completer(ic_completion_env_t* cenv, const char* input) {
     return;
 
   const auto& [name, info] = *it;
-  if (info.can_accept_file_paths) {
+  if (info.prompt_info.can_accept_file_paths) {
     ic_complete_filename(cenv, input, 0, ".", nullptr);
   }
 }
@@ -168,7 +241,10 @@ void Prompt::word_completer(ic_completion_env_t* cenv, const char* word) {
   }
 
   if (auto it = match_current_command(input); it != m_commands.end()) {
-    complete_command_options(cenv, it, word);
+    if (!*word || *word == '-') {
+      complete_command_options(cenv, it, word);
+    }
+    complete_command_non_options(cenv, it, word);
   }
 }
 
@@ -187,13 +263,49 @@ void Prompt::complete_command_options(ic_completion_env_t* cenv,
   const auto& [name, info] = *command_it;
   const size_t word_len = strlen(word);
 
-  for (const char* option : info.options) {
-    assert(option != nullptr);
-    if (word_len >= strlen(option))
+  bool double_dash = strncmp(word, "--", 2) == 0;
+
+  for (const Option& option : info.prompt_info.options) {
+    for (const char* name : option.name.names()) {
+      if (name == nullptr)
+        continue;
+
+      size_t name_len = strlen(name);
+      bool single_dash_option = name_len == 1;
+      if (double_dash && single_dash_option)
+        continue;
+
+      const char* prefix = single_dash_option ? "-" : "--";
+      const char* suffix = option.requires_value ? "=" : "";
+
+      std::string option_name = std::string(prefix) + name + suffix;
+
+      if (word_len >= option_name.length())
+        continue;
+
+      if (strncmp(option_name.c_str(), word, word_len) == 0) {
+        ic_add_completion(cenv, option_name.c_str());
+      }
+    }
+  }
+}
+
+void Prompt::complete_command_non_options(struct ic_completion_env_s* cenv,
+                                          CommandIterator command_it,
+                                          const char* word) {
+  const auto& [name, info] = *command_it;
+  const size_t word_len = strlen(word);
+
+  const auto non_options = info.prompt_info.non_options;
+  if (!non_options)
+    return;
+
+  for (const std::string& non_option : *non_options) {
+    if (non_option.length() < word_len)
       continue;
 
-    if (strncmp(option, word, word_len) == 0) {
-      ic_add_completion(cenv, option);
+    if (non_option.starts_with(word)) {
+      ic_add_completion(cenv, non_option.c_str());
     }
   }
 }
