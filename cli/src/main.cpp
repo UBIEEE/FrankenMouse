@@ -24,10 +24,12 @@ class Main {
   };
 
   static const inline std::vector<Option> s_options{
-      {OPTION_HELP, OptionName("help", "h"), false},
-      {OPTION_PERIPH_NAME, OptionName("peripheral-name", "name", "p"), true},
-      {OPTION_ADAPTER, OptionName("adapter", "a"), true},
-      {OPTION_DUMMY_PERIPHERAL, OptionName("dummy"), false},
+      // clang-format off
+      {OPTION_HELP,             OptionName("help", "h"),                    false},
+      {OPTION_PERIPH_NAME,      OptionName("peripheral-name", "name", "p"), true},
+      {OPTION_ADAPTER,          OptionName("adapter", "a"),                 true},
+      {OPTION_DUMMY_PERIPHERAL, OptionName("dummy"),                        false},
+      // clang-format on
   };
 
   static volatile inline sig_atomic_t s_signal_received = 0;
@@ -100,9 +102,10 @@ class Main {
     puts("In the shell, run the `help` command to see a list of available commands.");
     puts("");
     puts("Options:");
-    puts("\t--help          Show this help message");
-    puts("\t--name=<name>   Specify the name of the BLE peripheral to connect to");
-    puts("\t--adapter=<id>  Specify the index of the BLE adapter to use");
+    puts("    --help          Show this help message");
+    puts("    --name=<name>   Specify the name of the BLE peripheral to connect to");
+    puts("    --adapter=<id>  Specify the index of the BLE adapter to use");
+    puts("    --dummy         (Debug) Pretend like the connection is established");
     // clang-format on
   }
 
