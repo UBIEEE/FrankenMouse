@@ -1,10 +1,12 @@
 #include <micromouse_cli/commands/ti84_control.hpp>
 
 #include <micromouse_cli/diagnostics.hpp>
+#include <micromouse_cli/macros.hpp>
 
 #include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
+#include <cassert>
 #include <cerrno>
 #include <filesystem>
 
@@ -17,6 +19,13 @@ union ControlMessage {
     uint8_t turn_ccw : 1;
     uint8_t speed : 4;
   };
+
+  ControlMessage() : data(0) {}
+  /*implicit*/ ControlMessage(uint8_t data) : data(data) {}
+  ControlMessage(uint8_t directions, uint8_t speed)
+      : data((directions & 0xF) | (speed << 4)) {}
+
+  /*implicit*/ operator uint8_t() const { return data; }
 };
 
 TI84ControlCommand::TI84ControlCommand(const CommandArguments args)
@@ -43,9 +52,9 @@ CommandProcessResult TI84ControlCommand::process() {
   if (!m_connected)
     return CommandProcessResult::DONE;
 
-  char buf[1];
+  uint8_t data;
 
-  int bytes_read = read(m_serial_fd, &buf, sizeof(buf));
+  int bytes_read = read(m_serial_fd, &data, sizeof(data));
   if (bytes_read < 0) {
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
       // No data available, continue waiting
@@ -56,15 +65,19 @@ CommandProcessResult TI84ControlCommand::process() {
                  strerror(errno));
     return CommandProcessResult::DONE;
 
-  } else if (bytes_read == 0) {
-    report_warning(name(), "read 0 bytes?");
+  } else if (bytes_read != sizeof(data)) {
+    report_warning(name(), "read %d bytes?", bytes_read);
     return CommandProcessResult::CONTINUE;
   }
 
-  uint8_t data = static_cast<uint8_t>(buf[0]);
-  display_control_message(data);
+  if (!validate_control_message(data)) {
+    data = ControlMessage(0, 1);  // Stop
+  }
 
-  // TODO: Convert to ChassisSpeeds and send to the MicroMouse
+  drive::ChassisSpeeds speeds = to_chassis_speeds(data);
+  display_control_message(data, speeds);
+
+  // TODO: Send chassis speeds to the MicroMouse
 
   return CommandProcessResult::CONTINUE;
 }
@@ -136,7 +149,7 @@ void TI84ControlCommand::close_serial_port() {
     return;
 
   report_status(name(), "closing serial port %s", m_port.c_str());
-  close(m_serial_fd);
+  (void)close(m_serial_fd);
   m_serial_fd = -1;
 }
 
@@ -212,26 +225,102 @@ bool TI84ControlCommand::is_standard_baudrate(int baudrate) {
   return false;
 }
 
-void TI84ControlCommand::display_control_message(uint8_t data) {
-  ControlMessage msg{.data = data};
+bool TI84ControlCommand::validate_control_message(uint8_t data) {
+  ControlMessage msg = data;
 
-  const char* linear_str = "X";
-  const char* angular_str = "X";
+  bool invalid = false;
+  const char* reason = nullptr;
 
-  if (msg.forward) {
-    linear_str = "↑";
-  } else if (msg.backward) {
-    linear_str = "↓";
+  if (msg.forward && msg.backward) {
+    invalid = true;
+    reason = "forward and backward are mutually exclusive";
   }
-  if (msg.turn_cw) {
-    angular_str = "↻";
-  } else if (msg.turn_ccw) {
-    angular_str = "↺";
+  if (msg.turn_cw && msg.turn_ccw) {
+    invalid = true;
+    reason = "turn_cw and turn_ccw are mutually exclusive";
+  }
+  if (msg.speed < 1 || msg.speed > 5) {
+    invalid = true;
+    reason = "speed must be between 1 and 5";
   }
 
-  printf("\rRaw Byte: 0x%02x Speed: %d Linear: %s Angular: %s", data, msg.speed,
-         linear_str, angular_str);
-  fflush(stdout);
+  if (invalid) {
+    report_warning(name(), "invalid control message: 0x%02x (%s)", data,
+                   reason);
+    return false;
+  }
+
+  return true;
 }
 
-// ChassisSpeeds TI84ControlCommand::to_chassis_speeds(uint8_t data) {}
+void TI84ControlCommand::display_control_message(
+    uint8_t data,
+    const drive::ChassisSpeeds& speeds) {
+  ControlMessage msg = data;
+
+  (void)printf(CLEAR_LINE());
+
+  (void)printf("Raw Byte: " BOLD("0x%02x "), data);
+  (void)printf("Speed: " BOLD("%d "), msg.speed);
+
+  const char* motion_str = "X";
+
+  if (msg.forward) {
+    motion_str = "↑";
+    if (msg.turn_cw)
+      motion_str = "↗";
+    else if (msg.turn_ccw)
+      motion_str = "↖";
+  } else if (msg.backward) {
+    motion_str = "↓";
+    if (msg.turn_cw)
+      motion_str = "↘";
+    else if (msg.turn_ccw)
+      motion_str = "↙";
+  } else if (msg.turn_cw) {
+    motion_str = "↻";
+  } else if (msg.turn_ccw) {
+    motion_str = "↺";
+  }
+
+  (void)printf("Motion: " BOLD("%s "), motion_str);
+
+  (void)printf("Linear: " BOLD("%.1f mm/s "), speeds.linear_velocity_mmps);
+  (void)printf("Angular: " BOLD("%.1f deg/s "), speeds.angular_velocity_dps);
+
+  (void)fflush(stdout);
+}
+
+static const float s_linear_speed_presets_mmps[5] = {
+    50.f, 100.f, 150.f, 200.f, 250.f,
+};
+
+static const float s_angular_speed_presets_dps[5] = {
+    45.f, 90.f, 135.f, 180.f, 360.f,
+};
+
+drive::ChassisSpeeds TI84ControlCommand::to_chassis_speeds(uint8_t data) {
+  ControlMessage msg = data;
+
+  int linear_coeff = 0;
+  if (msg.forward)
+    linear_coeff = +1;
+  else if (msg.backward)
+    linear_coeff = -1;
+
+  int angular_coeff = 0;
+  if (msg.turn_ccw)
+    angular_coeff = +1;
+  else if (msg.turn_cw)
+    angular_coeff = -1;
+
+  assert(msg.speed > 0 && msg.speed < 6);
+
+  drive::ChassisSpeeds speeds;
+  speeds.linear_velocity_mmps =
+      linear_coeff * s_linear_speed_presets_mmps[msg.speed - 1];
+  speeds.angular_velocity_dps =
+      angular_coeff * s_angular_speed_presets_dps[msg.speed - 1];
+
+  return speeds;
+}

@@ -2,6 +2,7 @@
 
 #include <micromouse_cli/commands/command.hpp>
 #include <micromouse_cli/options/argument_parser.hpp>
+#include <micromouse_cli/drive/chassis_speeds.hpp>
 
 /**
  * @brief This command is used to control the MicroMouse using a TI-84 Plus CE
@@ -62,6 +63,8 @@ class TI84ControlCommand final : public Command {
   static bool is_standard_baudrate(int baudrate);
 
  private:
-  static void display_control_message(uint8_t data);
-  // static ChassisSpeeds to_chassis_speeds(uint8_t data);
+  static bool validate_control_message(uint8_t data);
+
+  static drive::ChassisSpeeds to_chassis_speeds(uint8_t data);
+  static void display_control_message(uint8_t data, const drive::ChassisSpeeds& speeds);
 };
