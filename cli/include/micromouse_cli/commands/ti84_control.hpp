@@ -22,14 +22,14 @@ class TI84ControlCommand final : public Command {
       // clang-format on
   };
 
+ public:
   COMMAND_NAME("ti84-control")
 
- public:
   static PromptInfo prompt_info() {
     return PromptInfo{
         .options = s_options,
         .usage_text = "ti84-control [port] [options]",
-        .description_text = "Control the MicroMouse using a TI-84 Plus CE",
+        .short_description_text = "Control the MicroMouse using a TI-84 Plus CE",
         .can_accept_file_paths = true,
     };
   }

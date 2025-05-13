@@ -7,6 +7,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <cstdio>
+#include <functional>
 
 using CommandArguments = std::vector<std::string>;
 
@@ -41,33 +43,35 @@ class Command {
    *        completion, and help descriptions.
    */
   struct PromptInfo {
+    const char* usage_text = nullptr;
+    const char* short_description_text = nullptr;
+    const char* long_description_text = nullptr;
+
     std::span<const Option> options = {};
-    const std::vector<std::string>* non_options = nullptr;  // Janky, ok for now
+
+    const char* non_options_title = nullptr;
+    std::span<const std::string> non_options = {};
 
     bool can_accept_file_paths = false;
 
-    const char* usage_text = nullptr;
-    const char* description_text = nullptr;
+    // Instead of calling the default help function, use this function instead
+    // to emit usage information.
+    std::function<void(FILE*)> custom_help_func;
+
+    // When using the default help function, this function will be called
+    // after to display any additional information.
+    std::function<void(FILE*)> supplemental_help_func;
   };
 
   /**
-   * @brief Emit usage information for the command.
+   * @brief Emit usage information for the command. Calls the custom_help_func
+   *        if it is set, otherwise it uses the information from prompt_info to
+   *        construct the help message.
    *
-   * @param command_name     The name of the command (how it is invoked).
-   * @param usage_text       How the command should be invoked, ex.
-   *                         "command [options] [files...]"
-   * @param description_text A short blurb about the command.
-   * @param options          A span of options that the command accepts.
+   * @param command_name The name of the command.
+   * @param prompt_info The prompt information for the command.
    */
-  static void help(const char* command_name,
-                   const char* usage_text,
-                   const char* description_text,
-                   std::span<const Option> options);
-
-  static void help(const char* command_name, const PromptInfo& prompt_info) {
-    help(command_name, prompt_info.usage_text, prompt_info.description_text,
-         prompt_info.options);
-  }
+  void help(const char* command_name, const PromptInfo& prompt_info, FILE* stream);
 };
 
 /**
@@ -99,7 +103,7 @@ class Command {
     return PromptInfo{                                            \
         .options = options_span,                                  \
         .usage_text = usage_text_str,                             \
-        .description_text = description_text_str,                 \
+        .short_description_text = description_text_str,           \
     };                                                            \
   }
 

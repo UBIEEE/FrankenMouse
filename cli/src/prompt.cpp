@@ -1,6 +1,7 @@
 #include <micromouse_cli/prompt.hpp>
 
 #include <micromouse_cli/diagnostics.hpp>
+#include <micromouse_cli/print_utils.hpp>
 
 #include <isocline.h>
 #include <cassert>
@@ -8,9 +9,6 @@
 #include <thread>
 
 using namespace std::chrono_literals;
-
-#define HELP_COMMAND_INDENT 4
-#define HELP_COMMAND_DESCRIPTION_COLUMN 20
 
 /**
  * @brief The help command is special because it shows usage information for
@@ -29,43 +27,14 @@ class HelpCommand final : public Command {
       if (it != commands.end()) {
         const auto& [name, info] = *it;
         const Command::PromptInfo& prompt_info = info.prompt_info;
-        Command::help(name.c_str(), prompt_info);
+        help(name.c_str(), prompt_info, stdout);
         return;
       }
     }
 
-    // clang-format off
-    puts("Usage: help [command]");
-    puts("");
-    puts("What you see here is a shell for controlling the MicroMouse.");
-    puts("");
-    puts("When this shell is running, a BLE connection is established to the MicroMouse.");
-    puts("");
-    puts("There are a number of commands for controlling and reading data from the\n"
-         "MicroMouse. You can display detailed usage information for a command by passing\n"
-         "the command name as an argument to the help command.");
-    puts("");
-    // clang-format on
+    assert(commands.contains(name()));
 
-    puts("Commands:");
-    for (const auto& [name, info] : commands) {
-      printf("%*s%s", HELP_COMMAND_INDENT, "", name.c_str());
-      const char* description = info.prompt_info.description_text;
-      if (!description) {
-        putchar('\n');
-        continue;
-      }
-
-      int remaining_space = HELP_COMMAND_DESCRIPTION_COLUMN -
-                            static_cast<int>(name.length()) -
-                            HELP_COMMAND_INDENT;
-      if (remaining_space > 0) {
-        printf("%*s", remaining_space, "");
-      } else {
-        printf("\n%*s", HELP_COMMAND_DESCRIPTION_COLUMN, "");
-      }
-      printf("%s\n", description);
-    }
+    help(name(), commands.at(name()).prompt_info, stdout);
   }
 
   bool is_done() const override { return true; }
@@ -75,6 +44,13 @@ void Prompt::register_command(const char* name,
                               Command::PromptInfo prompt_info,
                               MakeCommandFunc make_command) {
   m_command_names.emplace_back(name);
+
+  // Update non-options for help command, a little janky
+  if (m_commands.contains(HelpCommand::name())) {
+    m_commands.at(HelpCommand::name()).prompt_info.non_options =
+        m_command_names;
+  }
+
   m_commands.emplace(std::string(name), CommandInfo{prompt_info, make_command});
 }
 
@@ -136,8 +112,21 @@ void Prompt::configure() {
 void Prompt::add_help_command() {
   Command::PromptInfo prompt_info;
   prompt_info.usage_text = "help [command]";
-  prompt_info.description_text = "Show usage information for a command.";
-  prompt_info.non_options = &m_command_names;
+  prompt_info.short_description_text = "Show usage information for a command.";
+  prompt_info.long_description_text =
+      "What you see here is a shell for controlling the MicroMouse. When this "
+      "shell is running, a BLE connection is established to the MicroMouse. "
+      "There are a number of commands for controlling and reading data from "
+      "the MicroMouse. You can display detailed usage information for a "
+      "command by passing the command name as an argument to the help command.";
+  prompt_info.non_options = m_command_names;
+  prompt_info.supplemental_help_func = [&](FILE* stream) {
+    puts("Commands:");
+    for (const auto& [name, info] : m_commands) {
+      const char* description = info.prompt_info.short_description_text;
+      print_wrapped_named_field(stream, name, description ? description : "");
+    }
+  };
 
   MakeCommandFunc make_command_func = [&](CommandArguments args) -> Command* {
     return new HelpCommand(args, m_commands);
@@ -296,11 +285,7 @@ void Prompt::complete_command_non_options(struct ic_completion_env_s* cenv,
   const auto& [name, info] = *command_it;
   const size_t word_len = strlen(word);
 
-  const auto non_options = info.prompt_info.non_options;
-  if (!non_options)
-    return;
-
-  for (const std::string& non_option : *non_options) {
+  for (const std::string& non_option : info.prompt_info.non_options) {
     if (non_option.length() < word_len)
       continue;
 

@@ -93,7 +93,7 @@ bool TI84ControlCommand::validate_args() {
   // Help
 
   if (options.contains(OPTION_HELP)) {
-    help(name(), prompt_info());
+    help(name(), prompt_info(), stdout);
     return false;
   }
 

@@ -1,68 +1,69 @@
 #include <micromouse_cli/commands/command.hpp>
 
+#include <micromouse_cli/print_utils.hpp>
+
 #include <cassert>
-#include <cstdio>
 #include <format>
 
-#define INDENT 4
-#define OPTION_HELP_TEXT_COLUMN 20
-
 void Command::help(const char* command_name,
-                   const char* usage_text,
-                   const char* description_text,
-                   std::span<const Option> options) {
+                   const PromptInfo& info,
+                   FILE* stream) {
   assert(command_name != nullptr);
+  assert(stream != nullptr);
 
-  printf("Usage: %s\n\n", usage_text ? usage_text : command_name);
-  if (description_text) {
-    printf("%s\n", description_text);
+  if (info.custom_help_func) {
+    info.custom_help_func(stream);
+    return;
   }
 
-  if (options.empty())
-    return;
+  (void)fprintf(stream, "Usage: %s\n\n",
+                info.usage_text ? info.usage_text : command_name);
 
-  puts("\nOptions:");
+  const char* description = info.long_description_text;
+  if (!description)
+    description = info.short_description_text;
 
-  for (const Option& option : options) {
-    const char* primary_name = option.name.primary();
-    if (primary_name == nullptr)
-      continue;
+  if (description) {
+    print_line_wrapped(stream, description, DEFAULT_WRAP_WIDTH, 0);
+  }
 
-    size_t name_len = strlen(primary_name);
+  if (!info.options.empty()) {
+    (void)fputs("\nOptions:\n", stream);
 
-    std::string prefix = name_len == 1 ? "-" : "--";
+    for (const Option& option : info.options) {
+      const char* primary_name = option.name.primary();
+      if (primary_name == nullptr)
+        continue;
 
-    std::string suffix;
-    if (option.requires_value) {
-      const char* value_text = option.value_text;
-      if (!value_text)
-        value_text = "value";
+      size_t name_len = strlen(primary_name);
 
-      suffix = std::format("=<{}>", value_text);
+      std::string prefix = name_len == 1 ? "-" : "--";
+
+      std::string suffix;
+      if (option.requires_value) {
+        const char* value_text = option.value_text;
+        if (!value_text)
+          value_text = "value";
+
+        suffix = std::format("=<{}>", value_text);
+      }
+
+      std::string text = prefix + primary_name + suffix;
+      std::string_view help = option.help ? option.help : "";
+
+      print_wrapped_named_field(stream, text, help);
     }
+  }
 
-    std::string text = prefix + primary_name + suffix;
-
-    // Indent
-    printf("%*s", INDENT, "");
-    printf("%s", text.c_str());
-
-    if (!option.help) {
-      putchar('\n');
-      continue;
+  if (info.non_options_title && !info.non_options.empty()) {
+    (void)fprintf(stream, "\n%s:\n", info.non_options_title);
+    for (const std::string& non_option : info.non_options) {
+      print_wrapped_named_field(stream, non_option, "");
     }
+  }
 
-    int remaining_space =
-        OPTION_HELP_TEXT_COLUMN - static_cast<int>(text.length()) - INDENT;
-
-    if (remaining_space > 0) {
-      printf("%*s", remaining_space, "");
-    } else {
-      // If the text is too long, print the text on the next line
-      printf("\n%*s", OPTION_HELP_TEXT_COLUMN, "");
-    }
-
-    // TODO: Wrap?
-    printf("%s\n", option.help);
+  if (info.supplemental_help_func) {
+    (void)fputs("\n", stream);
+    info.supplemental_help_func(stream);
   }
 }
