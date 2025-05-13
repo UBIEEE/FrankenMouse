@@ -3,6 +3,7 @@
 #include <micromouse_cli/commands/command.hpp>
 #include <micromouse_cli/options/argument_parser.hpp>
 #include <micromouse_cli/drive/chassis_speeds.hpp>
+#include <micromouse_cli/ble_manager.hpp>
 
 /**
  * @brief This command is used to control the MicroMouse using a TI-84 Plus CE
@@ -36,6 +37,8 @@ class TI84ControlCommand final : public Command {
 
  private:
   ArgumentParser m_arg_parser;
+  BLEManager& m_ble_manager;
+
   bool m_connected = false;
 
   std::string m_port;
@@ -44,7 +47,7 @@ class TI84ControlCommand final : public Command {
   int m_serial_fd = -1;
 
  public:
-  TI84ControlCommand(const CommandArguments args);
+  TI84ControlCommand(const CommandArguments args, BLEManager& ble_manager);
   ~TI84ControlCommand();
 
   bool is_done() const override { return !m_connected; }

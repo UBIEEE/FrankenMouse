@@ -28,8 +28,8 @@ union ControlMessage {
   /*implicit*/ operator uint8_t() const { return data; }
 };
 
-TI84ControlCommand::TI84ControlCommand(const CommandArguments args)
-    : Command(args), m_arg_parser(m_args, s_options) {
+TI84ControlCommand::TI84ControlCommand(const CommandArguments args, BLEManager& ble_manager)
+    : Command(args), m_arg_parser(m_args, s_options), m_ble_manager(ble_manager) {
   if (!validate_args())
     return;
 
@@ -41,11 +41,16 @@ TI84ControlCommand::TI84ControlCommand(const CommandArguments args)
     return;
   }
 
+  m_ble_manager.write<BLETopicWrite::MAIN_TASK>(Task::MANUAL_CHASSIS_SPEEDS);
   m_connected = true;
 }
 
 TI84ControlCommand::~TI84ControlCommand() {
   close_serial_port();
+
+  if (m_connected) {
+    m_ble_manager.write<BLETopicWrite::MAIN_TASK>(Task::STOPPED);
+  }
 }
 
 CommandProcessResult TI84ControlCommand::process() {
@@ -77,7 +82,7 @@ CommandProcessResult TI84ControlCommand::process() {
   drive::ChassisSpeeds speeds = to_chassis_speeds(data);
   display_control_message(data, speeds);
 
-  // TODO: Send chassis speeds to the MicroMouse
+  m_ble_manager.write<BLETopicWrite::DRIVE_CHASSIS_SPEEDS>(speeds);
 
   return CommandProcessResult::CONTINUE;
 }
