@@ -51,6 +51,7 @@ typedef enum
   CUSTOM_STM_DRIVE_DATA_CHAR,
   CUSTOM_STM_DRIVE_IMUDATA_CHAR,
   CUSTOM_STM_DRIVE_PIDCONSTANTS_CHAR,
+  CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR,
   /* mazeService */
   CUSTOM_STM_MAZE_RESET_CHAR,
   CUSTOM_STM_MAZE_CELL_CHAR,
@@ -93,6 +94,10 @@ typedef enum
   CUSTOM_STM_DRIVE_PIDCONSTANTS_CHAR_WRITE_EVT,
   CUSTOM_STM_DRIVE_PIDCONSTANTS_CHAR_NOTIFY_ENABLED_EVT,
   CUSTOM_STM_DRIVE_PIDCONSTANTS_CHAR_NOTIFY_DISABLED_EVT,
+  /* drive_chassisSpeeds_writeNotifyChar */
+  CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR_WRITE_EVT,
+  CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR_NOTIFY_ENABLED_EVT,
+  CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR_NOTIFY_DISABLED_EVT,
   /* maze_reset_writeChar */
   CUSTOM_STM_MAZE_RESET_CHAR_WRITE_EVT,
   /* maze_cell_notifyChar */
@@ -137,6 +142,7 @@ extern uint8_t SizeMain_Errorcode_Char;
 extern uint8_t SizeDrive_Data_Char;
 extern uint8_t SizeDrive_Imudata_Char;
 extern uint8_t SizeDrive_Pidconstants_Char;
+extern uint8_t SizeDrive_Chassisspeeds_Char;
 extern uint8_t SizeMaze_Reset_Char;
 extern uint8_t SizeMaze_Cell_Char;
 extern uint8_t SizeMaze_Mousepos_Char;

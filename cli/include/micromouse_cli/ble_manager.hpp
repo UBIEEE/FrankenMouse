@@ -4,6 +4,7 @@
 
 #include <micromouse_cli/audio/song.hpp>
 #include <micromouse_cli/diagnostics.hpp>
+#include <micromouse_cli/drive/chassis_speeds.hpp>
 
 #include <functional>
 #include <optional>
@@ -40,6 +41,7 @@ enum BLECharacteristic {
   CHAR_DRIVE_MOTOR_DATA,
   CHAR_DRIVE_IMU_DATA,
   CHAR_DRIVE_PID_CONSTANTS,
+  CHAR_DRIVE_CHASSIS_SPEEDS,
 
   CHAR_MAZE_RESET,
   CHAR_MAZE_CELL,
@@ -53,6 +55,8 @@ enum class BLETopicWrite {
   MAIN_APP_READY = CHAR_MAIN_APP_READY,
 
   DRIVE_PID = CHAR_DRIVE_PID_CONSTANTS,
+  DRIVE_CHASSIS_SPEEDS = CHAR_DRIVE_CHASSIS_SPEEDS,
+
   VISION_CALIBRATE = CHAR_VISION_CALIBRATE,
 
   MAZE_RESET = CHAR_MAZE_RESET,
@@ -66,6 +70,11 @@ struct BLETopicWriteData;
 template <>
 struct BLETopicWriteData<BLETopicWrite::DRIVE_PID> {
   using type = float[3 + 3];
+};
+
+template <>
+struct BLETopicWriteData<BLETopicWrite::DRIVE_CHASSIS_SPEEDS> {
+  using type = drive::ChassisSpeeds;
 };
 
 template <>
@@ -86,6 +95,7 @@ enum class BLETopicNotify {
   DRIVE_MOTOR_DATA = CHAR_DRIVE_MOTOR_DATA,
   DRIVE_IMU_DATA = CHAR_DRIVE_IMU_DATA,
   DRIVE_PID = CHAR_DRIVE_PID_CONSTANTS,
+  DRIVE_CHASSIS_SPEEDS = CHAR_DRIVE_CHASSIS_SPEEDS,
 
   VISION_RAW_READINGS = CHAR_VISION_RAW_READINGS,
   VISION_DISTANCES = CHAR_VISION_DISTANCES,
@@ -111,6 +121,10 @@ struct BLETopicNotifyData<BLETopicNotify::DRIVE_IMU_DATA> {
 template <>
 struct BLETopicNotifyData<BLETopicNotify::DRIVE_PID> {
   using type = float[3 + 3];
+};
+template <>
+struct BLETopicNotifyData<BLETopicNotify::DRIVE_CHASSIS_SPEEDS> {
+  using type = drive::ChassisSpeeds;
 };
 template <>
 struct BLETopicNotifyData<BLETopicNotify::VISION_RAW_READINGS> {
@@ -221,6 +235,7 @@ class BLEManager final {
     float motor_data[4 + 3] = {0};
     float imu_data[3 + 3] = {0};
     float pid_data[3 + 3] = {0};
+    drive::ChassisSpeeds chassis_speeds = {};
   };
   const DriveNotifyData& drive_data() const { return m_drive_data; }
 
@@ -249,6 +264,8 @@ class BLEManager final {
       return m_drive_data.imu_data;
     } else if constexpr (Topic == DRIVE_PID) {
       return m_drive_data.pid_data;
+    } else if constexpr (Topic == DRIVE_CHASSIS_SPEEDS) {
+      return m_drive_data.chassis_speeds;
     } else if constexpr (Topic == VISION_RAW_READINGS) {
       return m_vision_data.raw_readings;
     } else if constexpr (Topic == VISION_DISTANCES) {

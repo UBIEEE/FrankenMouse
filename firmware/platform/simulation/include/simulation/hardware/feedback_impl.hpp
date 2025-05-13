@@ -26,6 +26,8 @@ class FeedbackImpl : public hardware::Feedback, public rclcpp::Node {
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr
       m_drive_pid_data_pub;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr
+      m_drive_chassis_speeds_pub;
+  rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr
       m_vision_raw_readings_pub;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr
       m_vision_distances_pub;

@@ -53,6 +53,9 @@ FeedbackImpl::FeedbackImpl() : Node("micromouse_feedback") {
   m_drive_pid_data_pub =
       this->create_publisher<std_msgs::msg::Float32MultiArray>(
           "/robot/drive/pid", 10);
+  m_drive_chassis_speeds_pub =
+      this->create_publisher<std_msgs::msg::Float32MultiArray>(
+          "/robot/drive/chassis_speeds", 10);
   m_vision_raw_readings_pub =
       this->create_publisher<std_msgs::msg::Float32MultiArray>(
           "/robot/vision/raw_readings", 10);
@@ -93,6 +96,11 @@ void FeedbackImpl::publish_topic(FeedbackTopicSend topic, uint8_t* data) {
       msg.data = std::vector<float>((float*)data, (float*)data + 6);
       m_drive_pid_data_pub->publish(msg);
     } break;
+    case DRIVE_CHASSIS_SPEEDS: {
+      std_msgs::msg::Float32MultiArray msg;
+      msg.data = std::vector<float>((float*)data, (float*)data + 2);
+      m_chassis_speeds_pub->publish(msg);
+    }
     case VISION_RAW_READINGS: {
       std_msgs::msg::Float32MultiArray msg;
       msg.data = std::vector<float>((float*)data, (float*)data + 4);

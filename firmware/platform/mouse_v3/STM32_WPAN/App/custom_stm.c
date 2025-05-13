@@ -46,6 +46,7 @@ typedef struct{
   uint16_t  CustomDrive_Data_CharHdle;                  /**< drive_data_notifyChar handle */
   uint16_t  CustomDrive_Imudata_CharHdle;                  /**< drive_imuData_notifyChar handle */
   uint16_t  CustomDrive_Pidconstants_CharHdle;                  /**< drive_pidConstants_writeNotifyChar handle */
+  uint16_t  CustomDrive_Chassisspeeds_CharHdle;                  /**< drive_chassisSpeeds_writeNotifyChar handle */
   uint16_t  CustomMazeserviceHdle;                    /**< mazeService handle */
   uint16_t  CustomMaze_Reset_CharHdle;                  /**< maze_reset_writeChar handle */
   uint16_t  CustomMaze_Cell_CharHdle;                  /**< maze_cell_notifyChar handle */
@@ -91,9 +92,10 @@ uint8_t SizeVision_Calibrate_Char = 1;
 uint8_t SizeMain_Task_Char = 2;
 uint8_t SizeMain_Appready_Char = 1;
 uint8_t SizeMain_Errorcode_Char = 1;
-uint8_t SizeDrive_Data_Char = 4*4+3*4;
-uint8_t SizeDrive_Imudata_Char = 4*6;
-uint8_t SizeDrive_Pidconstants_Char = 4*6;
+uint8_t SizeDrive_Data_Char = 4*sizeof(float)+3*sizeof(float);
+uint8_t SizeDrive_Imudata_Char = 6*sizeof(float);
+uint8_t SizeDrive_Pidconstants_Char = 6*sizeof(float);
+uint8_t SizeDrive_Chassisspeeds_Char = 2*sizeof(float);
 uint8_t SizeMaze_Reset_Char = 1;
 uint8_t SizeMaze_Cell_Char = 2;
 uint8_t SizeMaze_Mousepos_Char = 2;
@@ -176,6 +178,7 @@ do {\
 #define COPY_DRIVE_DATA_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x0f,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 #define COPY_DRIVE_IMUDATA_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x10,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 #define COPY_DRIVE_PIDCONSTANTS_WRITENOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x11,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_DRIVE_CHASSISSPEEDS_WRITENOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x12,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 #define COPY_MAZESERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x04,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
 #define COPY_MAZE_RESET_WRITECHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x14,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 #define COPY_MAZE_CELL_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x15,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
@@ -612,6 +615,50 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
             }
           }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Pidconstants_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
 
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Chassisspeeds_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+            /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4 */
+
+            /* USER CODE END CUSTOM_STM_Service_4_Char_4 */
+            switch (attribute_modified->Attr_Data[0])
+            {
+              /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_attribute_modified */
+
+              /* USER CODE END CUSTOM_STM_Service_4_Char_4_attribute_modified */
+
+              /* Disabled Notification management */
+              case (!(COMSVC_Notification)):
+                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_Disabled_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_4_Char_4_Disabled_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR_NOTIFY_DISABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_Disabled_END */
+
+                /* USER CODE END CUSTOM_STM_Service_4_Char_4_Disabled_END */
+                break;
+
+              /* Enabled Notification management */
+              case COMSVC_Notification:
+                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_COMSVC_Notification_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_4_Char_4_COMSVC_Notification_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR_NOTIFY_ENABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_COMSVC_Notification_END */
+
+                /* USER CODE END CUSTOM_STM_Service_4_Char_4_COMSVC_Notification_END */
+                break;
+
+              default:
+                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_default */
+
+                /* USER CODE END CUSTOM_STM_Service_4_Char_4_default */
+              break;
+            }
+          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Chassisspeeds_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
+
           else if (attribute_modified->Attr_Handle == (CustomContext.CustomMaze_Cell_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
@@ -748,13 +795,24 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
             return_value = SVCCTL_EvtAckFlowEnable;
             /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_3_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
             
-            if (attribute_modified->Attr_Data_Length == 4*6) {
+            if (attribute_modified->Attr_Data_Length == 6 * sizeof(float)) {
               const float* pid = (const float*)attribute_modified->Attr_Data;
               DrivetrainImpl_UpdatePIDValues(pid);
             }
 
             /* USER CODE END CUSTOM_STM_Service_4_Char_3_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
           } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Pidconstants_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Chassisspeeds_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+            /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+
+            if (attribute_modified->Attr_Data_Length == 2 * sizeof(float)) {
+              Robot_DelegateReceivedFeedback(FB_TOPIC_RECEIVE_DRIVE_CHASSIS_SPEEDS, attribute_modified->Attr_Data);
+            }
+
+            /* USER CODE END CUSTOM_STM_Service_4_Char_4_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+          } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Chassisspeeds_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
           else if (attribute_modified->Attr_Handle == (CustomContext.CustomMaze_Reset_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
@@ -1181,20 +1239,22 @@ void SVCCTL_InitCustomSvc(void)
   /**
    *          driveService
    *
-   * Max_Attribute_Records = 1 + 2*3 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
+   * Max_Attribute_Records = 1 + 2*4 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
    * service_max_attribute_record = 1 for driveService +
    *                                2 for drive_data_notifyChar +
    *                                2 for drive_imuData_notifyChar +
    *                                2 for drive_pidConstants_writeNotifyChar +
+   *                                2 for drive_chassisSpeeds_writeNotifyChar +
    *                                1 for drive_data_notifyChar configuration descriptor +
    *                                1 for drive_imuData_notifyChar configuration descriptor +
    *                                1 for drive_pidConstants_writeNotifyChar configuration descriptor +
-   *                              = 10
+   *                                1 for drive_chassisSpeeds_writeNotifyChar configuration descriptor +
+   *                              = 13
    *
    * This value doesn't take into account number of descriptors manually added
    * In case of descriptors added, please update the max_attr_record value accordingly in the next SVCCTL_InitService User Section
    */
-  max_attr_record = 10;
+  max_attr_record = 13;
 
   /* USER CODE BEGIN SVCCTL_InitService */
   /* max_attr_record to be updated if descriptors have been added */
@@ -1294,6 +1354,32 @@ void SVCCTL_InitCustomSvc(void)
   /* Place holder for Characteristic Descriptors */
 
   /* USER CODE END SVCCTL_Init_Service4_Char3 */
+  /**
+   *  drive_chassisSpeeds_writeNotifyChar
+   */
+  COPY_DRIVE_CHASSISSPEEDS_WRITENOTIFYCHAR_UUID(uuid.Char_UUID_128);
+  ret = aci_gatt_add_char(CustomContext.CustomDriveserviceHdle,
+                          UUID_TYPE_128, &uuid,
+                          SizeDrive_Chassisspeeds_Char,
+                          CHAR_PROP_WRITE | CHAR_PROP_NOTIFY,
+                          ATTR_PERMISSION_NONE,
+                          GATT_NOTIFY_ATTRIBUTE_WRITE,
+                          0x10,
+                          CHAR_VALUE_LEN_CONSTANT,
+                          &(CustomContext.CustomDrive_Chassisspeeds_CharHdle));
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : DRIVE_CHASSISSPEEDS_CHAR, error code: 0x%x \n\r", ret);
+  }
+  else
+  {
+    APP_DBG_MSG("  Success: aci_gatt_add_char command   : DRIVE_CHASSISSPEEDS_CHAR \n\r");
+  }
+
+  /* USER CODE BEGIN SVCCTL_Init_Service4_Char4/ */
+  /* Place holder for Characteristic Descriptors */
+
+  /* USER CODE END SVCCTL_Init_Service4_Char4 */
 
   /**
    *          mazeService
@@ -1641,6 +1727,25 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
       /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_4_Char_3*/
 
       /* USER CODE END CUSTOM_STM_App_Update_Service_4_Char_3*/
+      break;
+
+    case CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR:
+      ret = aci_gatt_update_char_value(CustomContext.CustomDriveserviceHdle,
+                                       CustomContext.CustomDrive_Chassisspeeds_CharHdle,
+                                       0, /* charValOffset */
+                                       SizeDrive_Chassisspeeds_Char, /* charValueLen */
+                                       (uint8_t *)  pPayload);
+      if (ret != BLE_STATUS_SUCCESS)
+      {
+        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value DRIVE_CHASSISSPEEDS_CHAR command, result : 0x%x \n\r", ret);
+      }
+      else
+      {
+        APP_DBG_MSG("  Success: aci_gatt_update_char_value DRIVE_CHASSISSPEEDS_CHAR command\n\r");
+      }
+      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_4_Char_4*/
+
+      /* USER CODE END CUSTOM_STM_App_Update_Service_4_Char_4*/
       break;
 
     case CUSTOM_STM_MAZE_RESET_CHAR:

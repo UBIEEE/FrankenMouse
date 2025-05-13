@@ -21,6 +21,9 @@ void FeedbackImpl::publish_topic(FeedbackTopicSend topic, uint8_t* data) {
   case DRIVE_PID:
     Custom_STM_App_Update_Char(CUSTOM_STM_DRIVE_PIDCONSTANTS_CHAR, data);
     break;
+  case DRIVE_CHASSIS_SPEEDS:
+    Custom_STM_App_Update_Char(CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR, data);
+    break;
   case VISION_RAW_READINGS:
     Custom_STM_App_Update_Char(CUSTOM_STM_VISION_RAWREADINGS_CHAR, data);
     break;

@@ -38,6 +38,7 @@ class AppConstants {
       static let MotorDataUUID = CBUUID(string: "0000000F-8E22-4541-9D4C-21EDAE82ED19")  // Notify
       static let IMUDataUUID = CBUUID(string: "00000010-8E22-4541-9D4C-21EDAE82ED19")  // Notify
       static let PIDConstantsUUID = CBUUID(string: "00000011-8E22-4541-9D4C-21EDAE82ED19")  // Write & Notify
+      static let ChassisSpeedsUUID = CBUUID(string: "00000012-8E22-4541-9D4C-21EDAE82ED19")  // Write & Notify
     }
 
     class MazeService {
