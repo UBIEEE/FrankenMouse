@@ -6,6 +6,7 @@
 #include <micromouse_cli/commands/clear.hpp>
 #include <micromouse_cli/commands/exit.hpp>
 #include <micromouse_cli/commands/rssi.hpp>
+#include <micromouse_cli/commands/song_play.hpp>
 #include <micromouse_cli/commands/ti84_control.hpp>
 
 #include <unistd.h>
@@ -146,6 +147,7 @@ class Main {
     m_prompt->register_command<ExitCommand>();
     m_prompt->register_command<TI84ControlCommand>();
     m_prompt->register_command<RSSICommand>();
+    m_prompt->register_command<SongPlayCommand>();
   }
 
   // Returns true if the program should exit.

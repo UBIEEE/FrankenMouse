@@ -2,6 +2,7 @@
 
 #include <simpleble/SimpleBLE.h>
 
+#include <micromouse_cli/audio/song.hpp>
 #include <micromouse_cli/diagnostics.hpp>
 
 #include <functional>
@@ -65,6 +66,11 @@ struct BLETopicWriteData;
 template <>
 struct BLETopicWriteData<BLETopicWrite::DRIVE_PID> {
   using type = float[3 + 3];
+};
+
+template <>
+struct BLETopicWriteData<BLETopicWrite::MUSIC_PLAY_SONG> {
+  using type = Song;
 };
 
 template <BLETopicWrite Topic>
