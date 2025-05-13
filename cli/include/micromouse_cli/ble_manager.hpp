@@ -5,6 +5,7 @@
 #include <micromouse_cli/audio/song.hpp>
 #include <micromouse_cli/diagnostics.hpp>
 #include <micromouse_cli/drive/chassis_speeds.hpp>
+#include <micromouse_cli/main/task.hpp>
 
 #include <functional>
 #include <optional>
@@ -68,15 +69,17 @@ template <BLETopicWrite Topic, typename Default = void>
 struct BLETopicWriteData;
 
 template <>
+struct BLETopicWriteData<BLETopicWrite::MAIN_TASK> {
+  using type = Task;
+};
+template <>
 struct BLETopicWriteData<BLETopicWrite::DRIVE_PID> {
   using type = float[3 + 3];
 };
-
 template <>
 struct BLETopicWriteData<BLETopicWrite::DRIVE_CHASSIS_SPEEDS> {
   using type = drive::ChassisSpeeds;
 };
-
 template <>
 struct BLETopicWriteData<BLETopicWrite::MUSIC_PLAY_SONG> {
   using type = Song;
@@ -110,6 +113,10 @@ enum class BLETopicNotify {
 template <BLETopicNotify Topic, typename Default = void>
 struct BLETopicNotifyData;
 
+template <>
+struct BLETopicNotifyData<BLETopicNotify::MAIN_TASK> {
+  using type = Task;
+};
 template <>
 struct BLETopicNotifyData<BLETopicNotify::DRIVE_MOTOR_DATA> {
   using type = float[4 + 3];
@@ -240,7 +247,7 @@ class BLEManager final {
   const DriveNotifyData& drive_data() const { return m_drive_data; }
 
   struct MainNotifyData {
-    uint8_t task = 0;
+    Task task = Task::STOPPED;
     uint8_t error_code = 0;
   };
   const MainNotifyData& main_data() const { return m_main_data; }

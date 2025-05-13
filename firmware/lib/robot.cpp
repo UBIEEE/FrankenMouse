@@ -189,6 +189,9 @@ void Robot::start_next_task() {
     case TEST_DRIVE_STRAIGHT_VISION_ALIGN:
       start_task_test_drive_straight_vision_align();
       break;
+    case MANUAL_CHASSIS_SPEEDS:
+      // TODO
+      break;
     case ARMED:
       start_task_armed();
       break;
@@ -338,6 +341,9 @@ void Robot::process_current_task() {
     case TEST_GYRO:
       break;
     case TEST_DRIVE_STRAIGHT_VISION_ALIGN:
+      break;
+    case MANUAL_CHASSIS_SPEEDS:
+      // TODO
       break;
     case ARMED:
       process_task_armed();

@@ -16,6 +16,9 @@ struct MainPage: View {
     case testDriveTurn180 = 14
     case testGyro = 15
     case testDriveStraightVisionAlign = 16
+    
+    // 21-30: Manual control tasks.
+    case manualChassisSpeeds = 21
 
     // 100+: Other
 
@@ -27,6 +30,9 @@ struct MainPage: View {
 
     var id: Self { self }
   }
+  
+  // Tasks before the cutoff are selectable by the user.
+  let userSelectionCutoff = Task.manualChassisSpeeds
 
   private let taskNames: [Task: String] = [
     .mazeSearch: "Maze Search",
@@ -39,6 +45,8 @@ struct MainPage: View {
     .testDriveTurn180: "TEST - Turn 180˚",
     .testGyro: "TEST - Gyro",
     .testDriveStraightVisionAlign: "TEST - Drive Straight Vision Align",
+    
+    .manualChassisSpeeds: "Manual Control - Chassis Speeds",
 
     .armed: "Armed",
     .armedTriggering: "Armed Triggering",
@@ -104,7 +112,7 @@ struct MainPage: View {
 
           Picker("Task", selection: $selectedTask) {
             ForEach(Task.allCases, id: \.self) { task in
-              if task.rawValue < Task.armed.rawValue {
+              if task.rawValue < userSelectionCutoff.rawValue {
                 Text(taskNames[task]!)
               }
             }

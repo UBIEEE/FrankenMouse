@@ -104,6 +104,12 @@ class Robot : public Singleton<Robot> {
     TEST_DRIVE_STRAIGHT_VISION_ALIGN = 16,
 
     //
+    // 21-30: Manual control tasks.
+    //
+    
+    MANUAL_CHASSIS_SPEEDS = 21,
+
+    //
     // 100+: other
     //
 
