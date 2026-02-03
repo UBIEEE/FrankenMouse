@@ -7,17 +7,17 @@ class ROS2AppFeedback: NSObject, AppFeedbackBase, ObservableObject {
     var deviceFound = false
     var deviceConnected = false
 
-    var musicServiceFound = true
-    var musicServiceReady = true
+    var mainServiceFound = true
+    var mainServiceReady = true
 
     var visionServiceFound = true
     var visionServiceReady = true
 
-    var mainServiceFound = true
-    var mainServiceReady = true
-
     var driveServiceFound = true
     var driveServiceReady = true
+    
+    var mazeServiceFound = true
+    var mazeServiceReady = true
 
     var isReady = true
   }
@@ -26,16 +26,28 @@ class ROS2AppFeedback: NSObject, AppFeedbackBase, ObservableObject {
 
   @Published var rssi = 0
 
-  struct MusicService {
-    var isPlaying = false
+  struct MainService {
+    var currentTask: Task = .none
+    var startingPosition: StartingPosition = .westOfGoal
+    
+    struct Error {
+      var timestamp: UInt32 = 0
+      var errorCategory: UInt8 = 0
+      var errorCode: UInt8 = 0
+    }
+    
+    var errorCodes: [UInt32: Error] = [:]
+    
+    var song: Song = .none
+    
+    var statusTopics: [StatusTopic: UInt8] = [:]
   }
 
-  @Published var musicService = MusicService()
+  @Published var mainService = MainService()
 
   struct VisionService {
     var rawSensorData = [Float32](repeating: 0, count: 4)
     var sensorDistances = [Float32](repeating: 0, count: 4)
-    var isCalibrated = false
 
     var rawFarRightReading: Float32 {
       return rawSensorData[0]
@@ -72,18 +84,12 @@ class ROS2AppFeedback: NSObject, AppFeedbackBase, ObservableObject {
 
   @Published var visionService = VisionService()
 
-  struct MainService {
-    var currentTask: UInt8 = 0
-    var startingPosition: UInt8 = 0
-    var errorCodes: [UInt8] = []
-  }
-
-  @Published var mainService = MainService()
-
   struct DriveService {
     var driveData = [Float32](repeating: 0, count: 4 + 3)
     var imuData = [Float32](repeating: 0, count: 6)
-    var pidConstants = [Float32](repeating: 0, count: 6)
+    var pid = [Float32](repeating: 0, count: 6)
+    var linearVelocity: Float32 = 0
+    var angularVelocity: Float32 = 0
 
     var motorLeftPosition: Float32 {
       return driveData[0]
@@ -115,17 +121,50 @@ class ROS2AppFeedback: NSObject, AppFeedbackBase, ObservableObject {
   }
 
   @Published var driveService = DriveService()
+  
+  struct MazeService {
+    struct Cell {
+      var north : Bool = false
+      var east : Bool = false
+      var south : Bool = false
+      var west : Bool = false
+      var visited : Bool = false
+    }
+    
+    var grid: [[Cell]] = Array(repeating: Array(repeating: .init(), count: 16), count: 16)
+    
+    var mousePosition: (x: Int, y: Int) = (0, 0)
+  }
+  
+  @Published var mazeService = MazeService()
 
   override init() {
     super.init()
 
     isEnabled = ros2Init(
       self,
-      { _self, task in
-        _self!.mainService.currentTask = task
+      { _self, task, startingPosition in
+        _self!.mainService.currentTask = Task(rawValue: task) ?? .unknown
+        _self!.mainService.startingPosition = StartingPosition(rawValue: startingPosition) ?? .westOfGoal;
       },
-      { _self, error in
-        _self!.mainService.errorCodes.append(error)
+      { _self, timestamp, errorCategory, errorCode in
+        let error = MainService.Error(timestamp: timestamp, errorCategory: errorCategory, errorCode: errorCode)
+        _self!.mainService.errorCodes[timestamp] = error;
+      },
+      { _self, song in
+        _self!.mainService.song = Song(rawValue: song) ?? .unknown
+      },
+      { _self, _statusTopic, value in
+        let statusTopic = StatusTopic(rawValue: _statusTopic)!
+        _self!.mainService.statusTopics[statusTopic] = value;
+      },
+      { _self, _data in
+        let data = _data!.compactMap { $0 as? Float32 }
+        _self!.visionService.rawSensorData = data
+      },
+      { _self, _data in
+        let data = _data!.compactMap { $0 as? Float32 }
+        _self!.visionService.sensorDistances = data
       },
       { _self, _data in
         let data = _data!.compactMap { $0 as? Float32 }
@@ -137,21 +176,18 @@ class ROS2AppFeedback: NSObject, AppFeedbackBase, ObservableObject {
       },
       { _self, _data in
         let data = _data!.compactMap { $0 as? Float32 }
-        _self!.driveService.pidConstants = data
+        _self!.driveService.pid = data
       },
-      { _self, _data in
-        let data = _data!.compactMap { $0 as? Float32 }
-        _self!.visionService.rawSensorData = data
+      { _self, linear, angular in
+        _self!.driveService.linearVelocity = linear;
+        _self!.driveService.angularVelocity = angular;
       },
-      { _self, _data in
-        let data = _data!.compactMap { $0 as? Float32 }
-        _self!.visionService.sensorDistances = data
+      { _self, x, y, north, east, south, west, visited in
+        let cell = MazeService.Cell(north: north.boolValue, east: east.boolValue, south: south.boolValue, west: west.boolValue, visited: visited.boolValue)
+        _self!.mazeService.grid[Int(x)][Int(y)] = cell
       },
-      { _self, isCalibrated in
-        _self!.visionService.isCalibrated = isCalibrated.boolValue
-      },
-      { _self, isPlaying in
-        _self!.musicService.isPlaying = isPlaying.boolValue
+      { _self, x, y in
+        _self!.mazeService.mousePosition = (Int(x), Int(y))
       }
     )
   }
@@ -177,32 +213,24 @@ class ROS2AppFeedback: NSObject, AppFeedbackBase, ObservableObject {
 
   func readRSSI() {}
 
-  func publishMainTask(_ task: UInt8, _ startingPosition: UInt8) {
-    ros2PublishMainTask(task, startingPosition)
+  func publishMainTask(_ task: Task, _ startingPosition: StartingPosition) {
+    ros2PublishMainTask(task.rawValue, startingPosition.rawValue)
   }
 
-  func publishAppReady() {
-    ros2PublishAppReady()
+  func publishMainCommand(_ command: Command) {
+    ros2PublishMainCommand(command.rawValue)
+  }
+  
+  func publishMainSong(_ song: Song) {
+    ros2PublishMainSong(song.rawValue)
   }
 
   func publishDrivePID(_ values: [Float32]) {
     ros2PublishDrivePID(values)
   }
 
-  func publishVisionCalibrate() {
-    ros2PublishVisionCalibrate()
-  }
-
-  func publishVisionCalibrateReset() {
-    ros2PublishVisionCalibrateReset()
-  }
-
-  func publishMazeReset() {
-    ros2PublishMazeReset()
-  }
-
-  func publishMusicSong(_ song: UInt8) {
-    ros2PublishMusicSong(song)
+  func publishDriveChassisSpeeds(_ linear: Float32, _ angular: Float32) {
+    ros2PublishDriveChassisSpeeds(linear, angular)
   }
 }
 

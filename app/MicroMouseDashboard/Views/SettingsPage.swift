@@ -18,7 +18,7 @@ struct SettingsPage: View {
           )
         ) {
           Button("Update All Values") {
-            feedback.publishAppReady()
+            feedback.publishMainCommand(.resendAllFeedback)
           }
         }
       }
@@ -43,7 +43,7 @@ struct Settings_DrivePIDConstantsPage: View {
   private func sendValues() {
     guard Utilities.isPreviewRunning() == false else { return }
 
-    feedback.publishDrivePID(feedback.driveService.pidConstants)
+    feedback.publishDrivePID(feedback.driveService.pid)
   }
 
   private func menuItems(index: Int) -> some View {
@@ -60,17 +60,17 @@ struct Settings_DrivePIDConstantsPage: View {
   }
 
   private func stepperValueText(index: Int) -> some View {
-    return Text("\(feedback.driveService.pidConstants[index])")
+    return Text("\(feedback.driveService.pid[index])")
   }
 
   private func stepperValueTextEdit(index: Int) -> some View {
     func updateTextFromValue() {
-      pidConstantsText[index] = String(feedback.driveService.pidConstants[index])
+      pidConstantsText[index] = String(feedback.driveService.pid[index])
     }
 
     func updateValueFromText() {
       if let newValue = Float32(pidConstantsText[index]) {
-        feedback.driveService.pidConstants[index] = newValue
+        feedback.driveService.pid[index] = newValue
       }
     }
 
@@ -87,7 +87,7 @@ struct Settings_DrivePIDConstantsPage: View {
         #endif
       }
       #if os(macOS)
-        .onChange(of: feedback.driveService.pidConstants) { _, _ in
+        .onChange(of: feedback.driveService.pid) { _, _ in
           updateTextFromValue()
         }
       #else
@@ -108,7 +108,7 @@ struct Settings_DrivePIDConstantsPage: View {
 
   private func stepper(_ title: String, index: Int) -> some View {
     return Stepper(
-      value: $feedback.driveService.pidConstants[index], in: 0...Float32.greatestFiniteMagnitude,
+      value: $feedback.driveService.pid[index], in: 0...Float32.greatestFiniteMagnitude,
       step: 0.001,
       label: {
 

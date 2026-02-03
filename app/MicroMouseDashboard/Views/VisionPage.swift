@@ -66,16 +66,18 @@ struct VisionPage: View {
           )
         ) {
           VStack(alignment: .leading) {
-            Text("\(feedback.visionService.isCalibrated ? "Calibrated" : "Not Calibrated")")
+            let isCalibrated = feedback.mainService.statusTopics[.isCalibrated] ?? 0
+            
+            Text("\(isCalibrated > 0 ? "Calibrated" : "Not Calibrated")")
             Text("Is Calibrated?")
               .font(.subheadline)
               .foregroundColor(.secondary)
           }
           Button("Reset") {
-            feedback.publishVisionCalibrateReset()
+            feedback.publishMainCommand(.resetVisionCalibration)
           }
           Button("Calibrate") {
-            feedback.publishVisionCalibrate()
+            feedback.publishMainCommand(.calibrateVision)
           }
         }
 

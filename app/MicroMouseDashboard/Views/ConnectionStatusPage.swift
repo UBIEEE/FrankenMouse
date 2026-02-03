@@ -15,13 +15,13 @@ struct ConnectionStatusPage: View {
           "\(Utilities.boolToEmoji(feedback.connectionState.mainServiceReady)) Main Service discovered"
         )
         Text(
-          "\(Utilities.boolToEmoji(feedback.connectionState.musicServiceReady)) Music Service discovered"
-        )
-        Text(
           "\(Utilities.boolToEmoji(feedback.connectionState.visionServiceReady)) Vision Service discovered"
         )
         Text(
           "\(Utilities.boolToEmoji(feedback.connectionState.driveServiceReady)) Drive Service discovered"
+        )
+        Text(
+          "\(Utilities.boolToEmoji(feedback.connectionState.mazeServiceReady)) Maze Service discovered"
         )
       }
       .padding()

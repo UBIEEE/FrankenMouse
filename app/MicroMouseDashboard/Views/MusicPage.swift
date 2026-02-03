@@ -3,13 +3,6 @@ import SwiftUI
 struct MusicPage: View {
   @EnvironmentObject var feedback: AppFeedback
 
-  enum Song: UInt8, CaseIterable, Identifiable {
-    case homeDepot = 4
-    case nokiaRingtone = 5
-
-    var id: Self { self }
-  }
-
   @State private var selectedSong: Song = .homeDepot
 
   var body: some View {
@@ -17,7 +10,7 @@ struct MusicPage: View {
       List {
         Section("Status") {
           // Show whether the MicroMouse is currently playing anything!
-          Text("\(feedback.musicService.isPlaying ? "Playing" : "Not Playing")")
+          Text("\(feedback.mainService.song != .none ? "Playing" : "Not Playing")")
         }
         Section("User Controls") {
           // Select the song to play.
@@ -25,16 +18,16 @@ struct MusicPage: View {
             Text("Home Depot").tag(Song.homeDepot)
             Text("Nokia Ringtone").tag(Song.nokiaRingtone)
           }
-          Button("\(feedback.musicService.isPlaying ? "Restart" : "Play")") {
+          Button("\(feedback.mainService.song != .none ? "Restart" : "Play")") {
             // Tell the MicroMouse to play the selected song.
-            feedback.publishMusicSong(selectedSong.rawValue)
+            feedback.publishMainSong(selectedSong)
           }
           Button("Stop") {
             // Tell the MicroMouse to be quiet.
-            feedback.publishMusicSong(0)
+            feedback.publishMainSong(.none)
           }
           // Disable stop button when nothing is playing.
-          .disabled(!feedback.musicService.isPlaying)
+          .disabled(feedback.mainService.song == .none)
         }
       }
       .navigationTitle("Music")

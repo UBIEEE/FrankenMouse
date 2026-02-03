@@ -17,8 +17,9 @@ struct ErrorInfoPage: View {
           }
         }
         Section("Errors") {
-          ForEach(feedback.mainService.errorCodes, id: \.self) { errorCode in
-            Text("\(errorCode)")
+          ForEach(Array(feedback.mainService.errorCodes.keys), id: \.self) { timestamp in
+            var error = feedback.mainService.errorCodes[timestamp]!
+            Text("\(timestamp): \(error.errorCategory)-\(error.errorCode)")
           }
         }
       }

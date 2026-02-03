@@ -39,7 +39,7 @@ struct NavigationView: View {
         // Don't crash the preview!
         guard Utilities.isPreviewRunning() == false else { return }
 
-        feedback.publishAppReady()
+        feedback.publishMainCommand(.resendAllFeedback)
       })
     )
     // Sidebar on ipadOS and macOS.

@@ -2,14 +2,11 @@ import Foundation
 
 enum FeedbackTopicWrite: UInt8, CaseIterable, Identifiable {
   case mainTask
-  case mainAppReady
-
-  case drivePIDData
-  case visionCalibrate
-
-  case mazeReset
-
-  case musicPlaySong
+  case mainCommand
+  case mainSong
+  
+  case drivePID
+  case driveChassisSpeeds
 
   var id: Self { self }
 }
@@ -17,19 +14,19 @@ enum FeedbackTopicWrite: UInt8, CaseIterable, Identifiable {
 enum FeedbackTopicReceive: UInt8, CaseIterable, Identifiable {
   case mainTask
   case mainError
+  case mainSong
+  case mainStatus
+
+  case visionRawReadings
+  case visionDistances
 
   case driveMotorData
   case driveIMUData
-  case drivePIDData
-
-  case visionRawData
-  case visionNormData
-  case visionCalibrate
+  case drivePID
+  case driveChassisSpeeds
 
   case mazeCell
-  case mousePosition
-
-  case musicIsPlaying
+  case mazeCoordinates
 
   var id: Self { self }
 }
