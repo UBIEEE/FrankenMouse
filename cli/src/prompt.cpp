@@ -352,9 +352,6 @@ Prompt::CommandInvocation Prompt::parse_command_invocation(
   size_t word_len;
   bool first_word = true;
   while ((word_begin = get_next_word(&input, &word_len))) {
-    size_t word_begin_index = word_begin - input_begin;
-    size_t word_end_index = word_begin_index + word_len;
-
     std::string word(word_begin, word_len);
 
     if (first_word) {

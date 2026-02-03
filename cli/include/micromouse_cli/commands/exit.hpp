@@ -10,7 +10,7 @@ class ExitCommand final : public Command {
                                {})
 
  public:
-  ExitCommand(const CommandArguments args) : Command(args) {}
+  explicit ExitCommand(const CommandArguments args) : Command(args) {}
 
   CommandProcessResult process() override {
     return CommandProcessResult::EXIT_ALL;

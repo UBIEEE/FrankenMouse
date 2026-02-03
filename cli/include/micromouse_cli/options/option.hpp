@@ -7,7 +7,7 @@ class OptionName {
   const char* m_names[3] = {};
 
  public:
-  OptionName(const char* primary) : OptionName(primary, nullptr, nullptr) {}
+  explicit OptionName(const char* primary) : OptionName(primary, nullptr, nullptr) {}
 
   OptionName(const char* primary, const char* secondary)
       : OptionName(primary, secondary, nullptr) {}

@@ -9,7 +9,7 @@ class ClearCommand final : public Command {
   COMMAND_INSTANT();
 
  public:
-  ClearCommand(const CommandArguments args) : Command(args) {
+  explicit ClearCommand(const CommandArguments args) : Command(args) {
     (void)fprintf(stdout, CLEAR_SCREEN());
     (void)fflush(stdout);
   }

@@ -22,7 +22,7 @@ class Command {
  protected:
   const CommandArguments m_args;
 
-  Command(CommandArguments args) : m_args(args) {}
+  explicit Command(CommandArguments args) : m_args(args) {}
 
  public:
   virtual ~Command() = default;
@@ -56,11 +56,11 @@ class Command {
 
     // Instead of calling the default help function, use this function instead
     // to emit usage information.
-    std::function<void(FILE*)> custom_help_func;
+    std::function<void(FILE*)> custom_help_func = nullptr;
 
     // When using the default help function, this function will be called
     // after to display any additional information.
-    std::function<void(FILE*)> supplemental_help_func;
+    std::function<void(FILE*)> supplemental_help_func = nullptr;
   };
 
   /**
@@ -101,9 +101,9 @@ class Command {
  public:                                                          \
   static PromptInfo prompt_info() {                               \
     return PromptInfo{                                            \
-        .options = options_span,                                  \
         .usage_text = usage_text_str,                             \
         .short_description_text = description_text_str,           \
+        .options = options_span,                                  \
     };                                                            \
   }
 

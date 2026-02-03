@@ -30,7 +30,7 @@ class Prompt final {
   using CommandIterator = decltype(m_commands)::const_iterator;
 
  public:
-  Prompt(BLEManager& ble_manager) : m_ble_manager(ble_manager) { configure(); }
+  explicit Prompt(BLEManager& ble_manager) : m_ble_manager(ble_manager) { configure(); }
   ~Prompt() = default;
 
   /**
