@@ -36,9 +36,9 @@ class FeedbackNode : public rclcpp::Node {
         });
 
     m_button1_pub = create_publisher<std_msgs::msg::Bool>(
-        "/simulation/buttons/button1", 10);
+        "/simulation/buttons/button_1", 10);
     m_button2_pub = create_publisher<std_msgs::msg::Bool>(
-        "/simulation/buttons/button2", 10);
+        "/simulation/buttons/button_2", 10);
   }
 
   void process() {
