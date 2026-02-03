@@ -36,70 +36,63 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 typedef enum
 {
-  /* musicService */
-  CUSTOM_STM_MUSIC_PLAYSONG_CHAR,
-  CUSTOM_STM_MUSIC_ISPLAYING_CHAR,
+  /* mainService */
+  CUSTOM_STM_MAIN_TASK_CHAR,
+  CUSTOM_STM_MAIN_COMMAND_CHAR,
+  CUSTOM_STM_MAIN_ERROR_CHAR,
+  CUSTOM_STM_MAIN_SONG_CHAR,
+  CUSTOM_STM_MAIN_STATUS_CHAR,
   /* visionService */
   CUSTOM_STM_VISION_RAWREADINGS_CHAR,
   CUSTOM_STM_VISION_DISTANCES_CHAR,
-  CUSTOM_STM_VISION_CALIBRATE_CHAR,
-  /* mainService */
-  CUSTOM_STM_MAIN_TASK_CHAR,
-  CUSTOM_STM_MAIN_APPREADY_CHAR,
-  CUSTOM_STM_MAIN_ERRORCODE_CHAR,
   /* driveService */
   CUSTOM_STM_DRIVE_DATA_CHAR,
   CUSTOM_STM_DRIVE_IMUDATA_CHAR,
-  CUSTOM_STM_DRIVE_PIDCONSTANTS_CHAR,
+  CUSTOM_STM_DRIVE_PID_CHAR,
   CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR,
   /* mazeService */
-  CUSTOM_STM_MAZE_RESET_CHAR,
   CUSTOM_STM_MAZE_CELL_CHAR,
   CUSTOM_STM_MAZE_MOUSEPOS_CHAR,
 } Custom_STM_Char_Opcode_t;
 
 typedef enum
 {
-  /* music_playSong_writeChar */
-  CUSTOM_STM_MUSIC_PLAYSONG_CHAR_WRITE_EVT,
-  /* music_isPlaying_notifyChar */
-  CUSTOM_STM_MUSIC_ISPLAYING_CHAR_NOTIFY_ENABLED_EVT,
-  CUSTOM_STM_MUSIC_ISPLAYING_CHAR_NOTIFY_DISABLED_EVT,
+  /* main_task_writeNotifyChar */
+  CUSTOM_STM_MAIN_TASK_CHAR_WRITE_EVT,
+  CUSTOM_STM_MAIN_TASK_CHAR_NOTIFY_ENABLED_EVT,
+  CUSTOM_STM_MAIN_TASK_CHAR_NOTIFY_DISABLED_EVT,
+  /* main_command_writeChar */
+  CUSTOM_STM_MAIN_COMMAND_CHAR_WRITE_EVT,
+  /* main_error_notifyChar */
+  CUSTOM_STM_MAIN_ERROR_CHAR_NOTIFY_ENABLED_EVT,
+  CUSTOM_STM_MAIN_ERROR_CHAR_NOTIFY_DISABLED_EVT,
+  /* main_song_writeNotifyChar */
+  CUSTOM_STM_MAIN_SONG_CHAR_WRITE_EVT,
+  CUSTOM_STM_MAIN_SONG_CHAR_NOTIFY_ENABLED_EVT,
+  CUSTOM_STM_MAIN_SONG_CHAR_NOTIFY_DISABLED_EVT,
+  /* main_status_notifyChar */
+  CUSTOM_STM_MAIN_STATUS_CHAR_NOTIFY_ENABLED_EVT,
+  CUSTOM_STM_MAIN_STATUS_CHAR_NOTIFY_DISABLED_EVT,
   /* vision_rawReadings_notifyChar */
   CUSTOM_STM_VISION_RAWREADINGS_CHAR_NOTIFY_ENABLED_EVT,
   CUSTOM_STM_VISION_RAWREADINGS_CHAR_NOTIFY_DISABLED_EVT,
   /* vision_distances_notifyChar */
   CUSTOM_STM_VISION_DISTANCES_CHAR_NOTIFY_ENABLED_EVT,
   CUSTOM_STM_VISION_DISTANCES_CHAR_NOTIFY_DISABLED_EVT,
-  /* vision_calibrate_writeNotifyChar */
-  CUSTOM_STM_VISION_CALIBRATE_CHAR_WRITE_EVT,
-  CUSTOM_STM_VISION_CALIBRATE_CHAR_NOTIFY_ENABLED_EVT,
-  CUSTOM_STM_VISION_CALIBRATE_CHAR_NOTIFY_DISABLED_EVT,
-  /* main_task_writeNotifyChar */
-  CUSTOM_STM_MAIN_TASK_CHAR_WRITE_EVT,
-  CUSTOM_STM_MAIN_TASK_CHAR_NOTIFY_ENABLED_EVT,
-  CUSTOM_STM_MAIN_TASK_CHAR_NOTIFY_DISABLED_EVT,
-  /* main_appReady_writeChar */
-  CUSTOM_STM_MAIN_APPREADY_CHAR_WRITE_EVT,
-  /* main_errorCode_notifyChar */
-  CUSTOM_STM_MAIN_ERRORCODE_CHAR_NOTIFY_ENABLED_EVT,
-  CUSTOM_STM_MAIN_ERRORCODE_CHAR_NOTIFY_DISABLED_EVT,
   /* drive_data_notifyChar */
   CUSTOM_STM_DRIVE_DATA_CHAR_NOTIFY_ENABLED_EVT,
   CUSTOM_STM_DRIVE_DATA_CHAR_NOTIFY_DISABLED_EVT,
   /* drive_imuData_notifyChar */
   CUSTOM_STM_DRIVE_IMUDATA_CHAR_NOTIFY_ENABLED_EVT,
   CUSTOM_STM_DRIVE_IMUDATA_CHAR_NOTIFY_DISABLED_EVT,
-  /* drive_pidConstants_writeNotifyChar */
-  CUSTOM_STM_DRIVE_PIDCONSTANTS_CHAR_WRITE_EVT,
-  CUSTOM_STM_DRIVE_PIDCONSTANTS_CHAR_NOTIFY_ENABLED_EVT,
-  CUSTOM_STM_DRIVE_PIDCONSTANTS_CHAR_NOTIFY_DISABLED_EVT,
+  /* drive_pid_writeNotifyChar */
+  CUSTOM_STM_DRIVE_PID_CHAR_WRITE_EVT,
+  CUSTOM_STM_DRIVE_PID_CHAR_NOTIFY_ENABLED_EVT,
+  CUSTOM_STM_DRIVE_PID_CHAR_NOTIFY_DISABLED_EVT,
   /* drive_chassisSpeeds_writeNotifyChar */
   CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR_WRITE_EVT,
   CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR_NOTIFY_ENABLED_EVT,
   CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR_NOTIFY_DISABLED_EVT,
-  /* maze_reset_writeChar */
-  CUSTOM_STM_MAZE_RESET_CHAR_WRITE_EVT,
   /* maze_cell_notifyChar */
   CUSTOM_STM_MAZE_CELL_CHAR_NOTIFY_ENABLED_EVT,
   CUSTOM_STM_MAZE_CELL_CHAR_NOTIFY_DISABLED_EVT,
@@ -131,19 +124,17 @@ typedef struct
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
-extern uint8_t SizeMusic_Playsong_Char;
-extern uint8_t SizeMusic_Isplaying_Char;
+extern uint8_t SizeMain_Task_Char;
+extern uint8_t SizeMain_Command_Char;
+extern uint8_t SizeMain_Error_Char;
+extern uint8_t SizeMain_Song_Char;
+extern uint8_t SizeMain_Status_Char;
 extern uint8_t SizeVision_Rawreadings_Char;
 extern uint8_t SizeVision_Distances_Char;
-extern uint8_t SizeVision_Calibrate_Char;
-extern uint8_t SizeMain_Task_Char;
-extern uint8_t SizeMain_Appready_Char;
-extern uint8_t SizeMain_Errorcode_Char;
 extern uint8_t SizeDrive_Data_Char;
 extern uint8_t SizeDrive_Imudata_Char;
-extern uint8_t SizeDrive_Pidconstants_Char;
+extern uint8_t SizeDrive_Pid_Char;
 extern uint8_t SizeDrive_Chassisspeeds_Char;
-extern uint8_t SizeMaze_Reset_Char;
 extern uint8_t SizeMaze_Cell_Char;
 extern uint8_t SizeMaze_Mousepos_Char;
 

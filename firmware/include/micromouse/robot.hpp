@@ -107,14 +107,14 @@ class Robot : public Singleton<Robot> {
     //
     // 21-30: Manual control tasks.
     //
-    
+
     MANUAL_CHASSIS_SPEEDS = 21,
 
     //
-    // 100+: other
+    // 128+: other
     //
 
-    ARMED = 100,
+    ARMED = 128,
     ARMED_TRIGGERING,
     ARMED_TRIGGERED,
 
@@ -152,6 +152,10 @@ class Robot : public Singleton<Robot> {
     GOAL_TO_START = 1,
   } m_solve_stage = SolveStage::START_TO_GOAL;
 
+  drive::ChassisSpeeds m_chassis_speeds {};
+  std::unique_ptr<hardware::Timer> m_chassis_speeds_timer =
+      make_platform_timer();
+
  public:
   Task current_task() const { return m_task; }
 
@@ -182,6 +186,8 @@ class Robot : public Singleton<Robot> {
   void start_task_test_gyro();
   void start_task_test_drive_straight_vision_align();
 
+  void start_task_manual_chassis_speeds();
+
   void start_task_armed();
   void start_task_armed_triggering();
   void start_task_armed_triggered();
@@ -192,6 +198,8 @@ class Robot : public Singleton<Robot> {
   void process_task_maze_solve(bool fast);
 
   void process_task_test_drive();
+
+  void process_task_manual_chassis_speeds();
 
   void process_task_armed();
   void process_task_armed_triggering();

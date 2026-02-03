@@ -17,9 +17,7 @@ void AudioPlayer::periodic() {
   }
 
   if (m_note_index == 0 && m_note_ticks == 0) {
-    m_is_playing = true;
-    m_feedback.publish_topic(FeedbackTopicSend::MUSIC_IS_PLAYING,
-                             &m_is_playing);
+    publish_current_song();
   }
 
   if (m_note_ticks++ == 0) {
@@ -44,7 +42,7 @@ void AudioPlayer::periodic() {
 }
 
 void AudioPlayer::publish_extra_feedback() {
-  m_feedback.publish_topic(FeedbackTopicSend::MUSIC_IS_PLAYING, &m_is_playing);
+  publish_current_song();
 }
 
 void AudioPlayer::play_song(Song song, bool repeat) {
@@ -56,6 +54,7 @@ void AudioPlayer::play_song(Song song, bool repeat) {
   m_note_index = 0;
   m_note_ticks = 0;
   m_should_stop = song == Song::NONE;
+  m_current_song = song;
 }
 
 void AudioPlayer::end_song() {
@@ -69,9 +68,13 @@ void AudioPlayer::end_song() {
   }
 
   if (m_song_handle != nullptr) {
-    m_is_playing = false;
+    m_current_song = Song::NONE;
     m_song_handle = nullptr;
-    m_feedback.publish_topic(FeedbackTopicSend::MUSIC_IS_PLAYING,
-                             &m_is_playing);
+    publish_current_song();
   }
+}
+
+void AudioPlayer::publish_current_song() {
+  m_feedback.publish_topic(FeedbackTopicSend::MAIN_SONG,
+                           reinterpret_cast<uint8_t*>(&m_current_song));
 }

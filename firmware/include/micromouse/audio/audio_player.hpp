@@ -30,7 +30,8 @@ class AudioPlayer : public Subsystem {
   uint16_t m_note_ticks = 0;
 
   bool m_should_stop = false;
-  uint8_t m_is_playing = false;
+  // uint8_t m_is_playing = false;
+  Song m_current_song = Song::NONE;
 
  public:
   AudioPlayer();
@@ -55,6 +56,8 @@ class AudioPlayer : public Subsystem {
 
  private:
   void end_song();
+
+  void publish_current_song();
 };
 
 }  // namespace audio

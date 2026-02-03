@@ -10,8 +10,8 @@ class Buttons : public Component {
   Buttons() = default;
 
  public:
-  virtual void register_btn1_callback(std::function<void()> cb) = 0;
-  virtual void register_btn2_callback(std::function<void()> cb) = 0;
+  virtual void register_button_1_callback(std::function<void()> cb) = 0;
+  virtual void register_button_2_callback(std::function<void()> cb) = 0;
 };
 
 }  // namespace hardware

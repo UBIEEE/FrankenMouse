@@ -31,24 +31,21 @@
 
 /* Private typedef -----------------------------------------------------------*/
 typedef struct{
-  uint16_t  CustomMusicserviceHdle;                    /**< musicService handle */
-  uint16_t  CustomMusic_Playsong_CharHdle;                  /**< music_playSong_writeChar handle */
-  uint16_t  CustomMusic_Isplaying_CharHdle;                  /**< music_isPlaying_notifyChar handle */
+  uint16_t  CustomMainserviceHdle;                    /**< mainService handle */
+  uint16_t  CustomMain_Task_CharHdle;                  /**< main_task_writeNotifyChar handle */
+  uint16_t  CustomMain_Command_CharHdle;                  /**< main_command_writeChar handle */
+  uint16_t  CustomMain_Error_CharHdle;                  /**< main_error_notifyChar handle */
+  uint16_t  CustomMain_Song_CharHdle;                  /**< main_song_writeNotifyChar handle */
+  uint16_t  CustomMain_Status_CharHdle;                  /**< main_status_notifyChar handle */
   uint16_t  CustomVisionserviceHdle;                    /**< visionService handle */
   uint16_t  CustomVision_Rawreadings_CharHdle;                  /**< vision_rawReadings_notifyChar handle */
   uint16_t  CustomVision_Distances_CharHdle;                  /**< vision_distances_notifyChar handle */
-  uint16_t  CustomVision_Calibrate_CharHdle;                  /**< vision_calibrate_writeNotifyChar handle */
-  uint16_t  CustomMainserviceHdle;                    /**< mainService handle */
-  uint16_t  CustomMain_Task_CharHdle;                  /**< main_task_writeNotifyChar handle */
-  uint16_t  CustomMain_Appready_CharHdle;                  /**< main_appReady_writeChar handle */
-  uint16_t  CustomMain_Errorcode_CharHdle;                  /**< main_errorCode_notifyChar handle */
   uint16_t  CustomDriveserviceHdle;                    /**< driveService handle */
   uint16_t  CustomDrive_Data_CharHdle;                  /**< drive_data_notifyChar handle */
   uint16_t  CustomDrive_Imudata_CharHdle;                  /**< drive_imuData_notifyChar handle */
-  uint16_t  CustomDrive_Pidconstants_CharHdle;                  /**< drive_pidConstants_writeNotifyChar handle */
+  uint16_t  CustomDrive_Pid_CharHdle;                  /**< drive_pid_writeNotifyChar handle */
   uint16_t  CustomDrive_Chassisspeeds_CharHdle;                  /**< drive_chassisSpeeds_writeNotifyChar handle */
   uint16_t  CustomMazeserviceHdle;                    /**< mazeService handle */
-  uint16_t  CustomMaze_Reset_CharHdle;                  /**< maze_reset_writeChar handle */
   uint16_t  CustomMaze_Cell_CharHdle;                  /**< maze_cell_notifyChar handle */
   uint16_t  CustomMaze_Mousepos_CharHdle;                  /**< maze_mousePos_notifyChar handle */
 /* USER CODE BEGIN Context */
@@ -84,21 +81,19 @@ typedef struct{
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-uint8_t SizeMusic_Playsong_Char = 1;
-uint8_t SizeMusic_Isplaying_Char = 1;
+uint8_t SizeMain_Task_Char = 2;
+uint8_t SizeMain_Command_Char = 1;
+uint8_t SizeMain_Error_Char = 6;
+uint8_t SizeMain_Song_Char = 1;
+uint8_t SizeMain_Status_Char = 2;
 uint8_t SizeVision_Rawreadings_Char = 4*4;
 uint8_t SizeVision_Distances_Char = 4*4;
-uint8_t SizeVision_Calibrate_Char = 1;
-uint8_t SizeMain_Task_Char = 2;
-uint8_t SizeMain_Appready_Char = 1;
-uint8_t SizeMain_Errorcode_Char = 1;
-uint8_t SizeDrive_Data_Char = 4*sizeof(float)+3*sizeof(float);
-uint8_t SizeDrive_Imudata_Char = 6*sizeof(float);
-uint8_t SizeDrive_Pidconstants_Char = 6*sizeof(float);
-uint8_t SizeDrive_Chassisspeeds_Char = 2*sizeof(float);
-uint8_t SizeMaze_Reset_Char = 1;
+uint8_t SizeDrive_Data_Char = 7*4;
+uint8_t SizeDrive_Imudata_Char = 6*4;
+uint8_t SizeDrive_Pid_Char = 6*4;
+uint8_t SizeDrive_Chassisspeeds_Char = 2*4;
 uint8_t SizeMaze_Cell_Char = 2;
-uint8_t SizeMaze_Mousepos_Char = 2;
+uint8_t SizeMaze_Mousepos_Char = 1;
 
 /**
  * START of Section BLE_DRIVER_CONTEXT
@@ -155,34 +150,24 @@ do {\
     uuid_struct[8] = uuid_8; uuid_struct[9] = uuid_9; uuid_struct[10] = uuid_10; uuid_struct[11] = uuid_11; \
     uuid_struct[12] = uuid_12; uuid_struct[13] = uuid_13; uuid_struct[14] = uuid_14; uuid_struct[15] = uuid_15; \
 }while(0)
-#define COPY_UUID_128(uuid_struct, uuid_15, uuid_14, uuid_13, uuid_12, uuid_11, uuid_10, uuid_9, uuid_8, uuid_7, uuid_6, uuid_5, uuid_4, uuid_3, uuid_2, uuid_1, uuid_0) \
-do {\
-    uuid_struct[0] = uuid_0; uuid_struct[1] = uuid_1; uuid_struct[2] = uuid_2; uuid_struct[3] = uuid_3; \
-    uuid_struct[4] = uuid_4; uuid_struct[5] = uuid_5; uuid_struct[6] = uuid_6; uuid_struct[7] = uuid_7; \
-    uuid_struct[8] = uuid_8; uuid_struct[9] = uuid_9; uuid_struct[10] = uuid_10; uuid_struct[11] = uuid_11; \
-    uuid_struct[12] = uuid_12; uuid_struct[13] = uuid_13; uuid_struct[14] = uuid_14; uuid_struct[15] = uuid_15; \
-}while(0)
 
-#define COPY_MUSICSERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
-#define COPY_MUSIC_PLAYSONG_WRITECHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
-#define COPY_MUSIC_ISPLAYING_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x01,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_MAINSERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
+#define COPY_MAIN_TASK_WRITENOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_MAIN_COMMAND_WRITECHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x01,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_MAIN_ERROR_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x02,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_MAIN_SONG_WRITENOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x03,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_MAIN_STATUS_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x04,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 #define COPY_VISIONSERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x01,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
-#define COPY_VISION_RAWREADINGS_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x05,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
-#define COPY_VISION_DISTANCES_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x06,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
-#define COPY_VISION_CALIBRATE_WRITENOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x07,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
-#define COPY_MAINSERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x02,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
-#define COPY_MAIN_TASK_WRITENOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x0a,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
-#define COPY_MAIN_APPREADY_WRITECHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x0b,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
-#define COPY_MAIN_ERRORCODE_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x0c,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
-#define COPY_DRIVESERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x03,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
+#define COPY_VISION_RAWREADINGS_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x0a,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_VISION_DISTANCES_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x0b,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_DRIVESERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x02,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
 #define COPY_DRIVE_DATA_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x0f,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 #define COPY_DRIVE_IMUDATA_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x10,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
-#define COPY_DRIVE_PIDCONSTANTS_WRITENOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x11,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_DRIVE_PID_WRITENOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x11,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 #define COPY_DRIVE_CHASSISSPEEDS_WRITENOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x12,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
-#define COPY_MAZESERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x04,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
-#define COPY_MAZE_RESET_WRITECHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x14,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
-#define COPY_MAZE_CELL_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x15,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
-#define COPY_MAZE_MOUSEPOS_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x16,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_MAZESERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x03,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
+#define COPY_MAZE_CELL_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x14,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_MAZE_MOUSEPOS_NOTIFYCHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x15,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 
 /* USER CODE BEGIN PF */
 
@@ -219,49 +204,181 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
 
           /* USER CODE END EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_BEGIN */
           attribute_modified = (aci_gatt_attribute_modified_event_rp0*)blecore_evt->data;
-          if (attribute_modified->Attr_Handle == (CustomContext.CustomMusic_Isplaying_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Task_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2 */
+            /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1 */
 
-            /* USER CODE END CUSTOM_STM_Service_1_Char_2 */
+            /* USER CODE END CUSTOM_STM_Service_1_Char_1 */
             switch (attribute_modified->Attr_Data[0])
             {
-              /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_attribute_modified */
+              /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1_attribute_modified */
 
-              /* USER CODE END CUSTOM_STM_Service_1_Char_2_attribute_modified */
+              /* USER CODE END CUSTOM_STM_Service_1_Char_1_attribute_modified */
 
               /* Disabled Notification management */
               case (!(COMSVC_Notification)):
-                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_Disabled_BEGIN */
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1_Disabled_BEGIN */
 
-                /* USER CODE END CUSTOM_STM_Service_1_Char_2_Disabled_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_MUSIC_ISPLAYING_CHAR_NOTIFY_DISABLED_EVT;
+                /* USER CODE END CUSTOM_STM_Service_1_Char_1_Disabled_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAIN_TASK_CHAR_NOTIFY_DISABLED_EVT;
                 Custom_STM_App_Notification(&Notification);
-                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_Disabled_END */
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1_Disabled_END */
 
-                /* USER CODE END CUSTOM_STM_Service_1_Char_2_Disabled_END */
+                /* USER CODE END CUSTOM_STM_Service_1_Char_1_Disabled_END */
                 break;
 
               /* Enabled Notification management */
               case COMSVC_Notification:
-                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_COMSVC_Notification_BEGIN */
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1_COMSVC_Notification_BEGIN */
 
-                /* USER CODE END CUSTOM_STM_Service_1_Char_2_COMSVC_Notification_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_MUSIC_ISPLAYING_CHAR_NOTIFY_ENABLED_EVT;
+                /* USER CODE END CUSTOM_STM_Service_1_Char_1_COMSVC_Notification_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAIN_TASK_CHAR_NOTIFY_ENABLED_EVT;
                 Custom_STM_App_Notification(&Notification);
-                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_COMSVC_Notification_END */
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1_COMSVC_Notification_END */
 
-                /* USER CODE END CUSTOM_STM_Service_1_Char_2_COMSVC_Notification_END */
+                /* USER CODE END CUSTOM_STM_Service_1_Char_1_COMSVC_Notification_END */
                 break;
 
               default:
-                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_default */
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1_default */
 
-                /* USER CODE END CUSTOM_STM_Service_1_Char_2_default */
+                /* USER CODE END CUSTOM_STM_Service_1_Char_1_default */
               break;
             }
-          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMusic_Isplaying_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
+          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Task_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
+
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Error_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+            /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_3 */
+
+            /* USER CODE END CUSTOM_STM_Service_1_Char_3 */
+            switch (attribute_modified->Attr_Data[0])
+            {
+              /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_3_attribute_modified */
+
+              /* USER CODE END CUSTOM_STM_Service_1_Char_3_attribute_modified */
+
+              /* Disabled Notification management */
+              case (!(COMSVC_Notification)):
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_3_Disabled_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_3_Disabled_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAIN_ERROR_CHAR_NOTIFY_DISABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_3_Disabled_END */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_3_Disabled_END */
+                break;
+
+              /* Enabled Notification management */
+              case COMSVC_Notification:
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_3_COMSVC_Notification_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_3_COMSVC_Notification_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAIN_ERROR_CHAR_NOTIFY_ENABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_3_COMSVC_Notification_END */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_3_COMSVC_Notification_END */
+                break;
+
+              default:
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_3_default */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_3_default */
+              break;
+            }
+          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Error_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
+
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Song_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+            /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_4 */
+
+            /* USER CODE END CUSTOM_STM_Service_1_Char_4 */
+            switch (attribute_modified->Attr_Data[0])
+            {
+              /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_4_attribute_modified */
+
+              /* USER CODE END CUSTOM_STM_Service_1_Char_4_attribute_modified */
+
+              /* Disabled Notification management */
+              case (!(COMSVC_Notification)):
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_4_Disabled_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_4_Disabled_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAIN_SONG_CHAR_NOTIFY_DISABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_4_Disabled_END */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_4_Disabled_END */
+                break;
+
+              /* Enabled Notification management */
+              case COMSVC_Notification:
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_4_COMSVC_Notification_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_4_COMSVC_Notification_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAIN_SONG_CHAR_NOTIFY_ENABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_4_COMSVC_Notification_END */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_4_COMSVC_Notification_END */
+                break;
+
+              default:
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_4_default */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_4_default */
+              break;
+            }
+          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Song_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
+
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Status_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+            /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_5 */
+
+            /* USER CODE END CUSTOM_STM_Service_1_Char_5 */
+            switch (attribute_modified->Attr_Data[0])
+            {
+              /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_5_attribute_modified */
+
+              /* USER CODE END CUSTOM_STM_Service_1_Char_5_attribute_modified */
+
+              /* Disabled Notification management */
+              case (!(COMSVC_Notification)):
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_5_Disabled_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_5_Disabled_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAIN_STATUS_CHAR_NOTIFY_DISABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_5_Disabled_END */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_5_Disabled_END */
+                break;
+
+              /* Enabled Notification management */
+              case COMSVC_Notification:
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_5_COMSVC_Notification_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_5_COMSVC_Notification_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAIN_STATUS_CHAR_NOTIFY_ENABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_5_COMSVC_Notification_END */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_5_COMSVC_Notification_END */
+                break;
+
+              default:
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_5_default */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_5_default */
+              break;
+            }
+          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Status_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
 
           else if (attribute_modified->Attr_Handle == (CustomContext.CustomVision_Rawreadings_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
           {
@@ -351,51 +468,7 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
             }
           }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomVision_Distances_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
 
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomVision_Calibrate_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
-          {
-            return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3 */
-
-            /* USER CODE END CUSTOM_STM_Service_2_Char_3 */
-            switch (attribute_modified->Attr_Data[0])
-            {
-              /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_attribute_modified */
-
-              /* USER CODE END CUSTOM_STM_Service_2_Char_3_attribute_modified */
-
-              /* Disabled Notification management */
-              case (!(COMSVC_Notification)):
-                /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_Disabled_BEGIN */
-
-                /* USER CODE END CUSTOM_STM_Service_2_Char_3_Disabled_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_VISION_CALIBRATE_CHAR_NOTIFY_DISABLED_EVT;
-                Custom_STM_App_Notification(&Notification);
-                /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_Disabled_END */
-
-                /* USER CODE END CUSTOM_STM_Service_2_Char_3_Disabled_END */
-                break;
-
-              /* Enabled Notification management */
-              case COMSVC_Notification:
-                /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_COMSVC_Notification_BEGIN */
-
-                /* USER CODE END CUSTOM_STM_Service_2_Char_3_COMSVC_Notification_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_VISION_CALIBRATE_CHAR_NOTIFY_ENABLED_EVT;
-                Custom_STM_App_Notification(&Notification);
-                /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_COMSVC_Notification_END */
-
-                /* USER CODE END CUSTOM_STM_Service_2_Char_3_COMSVC_Notification_END */
-                break;
-
-              default:
-                /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_default */
-
-                /* USER CODE END CUSTOM_STM_Service_2_Char_3_default */
-              break;
-            }
-          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomVision_Calibrate_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
-
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Task_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Data_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
             /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_1 */
@@ -412,7 +485,7 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                 /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_1_Disabled_BEGIN */
 
                 /* USER CODE END CUSTOM_STM_Service_3_Char_1_Disabled_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAIN_TASK_CHAR_NOTIFY_DISABLED_EVT;
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_DATA_CHAR_NOTIFY_DISABLED_EVT;
                 Custom_STM_App_Notification(&Notification);
                 /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_1_Disabled_END */
 
@@ -424,7 +497,7 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                 /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_1_COMSVC_Notification_BEGIN */
 
                 /* USER CODE END CUSTOM_STM_Service_3_Char_1_COMSVC_Notification_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAIN_TASK_CHAR_NOTIFY_ENABLED_EVT;
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_DATA_CHAR_NOTIFY_ENABLED_EVT;
                 Custom_STM_App_Notification(&Notification);
                 /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_1_COMSVC_Notification_END */
 
@@ -437,9 +510,53 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                 /* USER CODE END CUSTOM_STM_Service_3_Char_1_default */
               break;
             }
-          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Task_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
+          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Data_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
 
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Errorcode_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Imudata_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+            /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_2 */
+
+            /* USER CODE END CUSTOM_STM_Service_3_Char_2 */
+            switch (attribute_modified->Attr_Data[0])
+            {
+              /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_2_attribute_modified */
+
+              /* USER CODE END CUSTOM_STM_Service_3_Char_2_attribute_modified */
+
+              /* Disabled Notification management */
+              case (!(COMSVC_Notification)):
+                /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_2_Disabled_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_3_Char_2_Disabled_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_IMUDATA_CHAR_NOTIFY_DISABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_2_Disabled_END */
+
+                /* USER CODE END CUSTOM_STM_Service_3_Char_2_Disabled_END */
+                break;
+
+              /* Enabled Notification management */
+              case COMSVC_Notification:
+                /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_2_COMSVC_Notification_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_3_Char_2_COMSVC_Notification_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_IMUDATA_CHAR_NOTIFY_ENABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_2_COMSVC_Notification_END */
+
+                /* USER CODE END CUSTOM_STM_Service_3_Char_2_COMSVC_Notification_END */
+                break;
+
+              default:
+                /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_2_default */
+
+                /* USER CODE END CUSTOM_STM_Service_3_Char_2_default */
+              break;
+            }
+          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Imudata_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
+
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Pid_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
             /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_3 */
@@ -456,7 +573,7 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                 /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_3_Disabled_BEGIN */
 
                 /* USER CODE END CUSTOM_STM_Service_3_Char_3_Disabled_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAIN_ERRORCODE_CHAR_NOTIFY_DISABLED_EVT;
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_PID_CHAR_NOTIFY_DISABLED_EVT;
                 Custom_STM_App_Notification(&Notification);
                 /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_3_Disabled_END */
 
@@ -468,7 +585,7 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                 /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_3_COMSVC_Notification_BEGIN */
 
                 /* USER CODE END CUSTOM_STM_Service_3_Char_3_COMSVC_Notification_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAIN_ERRORCODE_CHAR_NOTIFY_ENABLED_EVT;
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_PID_CHAR_NOTIFY_ENABLED_EVT;
                 Custom_STM_App_Notification(&Notification);
                 /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_3_COMSVC_Notification_END */
 
@@ -481,9 +598,53 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                 /* USER CODE END CUSTOM_STM_Service_3_Char_3_default */
               break;
             }
-          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Errorcode_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
+          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Pid_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
 
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Data_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Chassisspeeds_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+            /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_4 */
+
+            /* USER CODE END CUSTOM_STM_Service_3_Char_4 */
+            switch (attribute_modified->Attr_Data[0])
+            {
+              /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_4_attribute_modified */
+
+              /* USER CODE END CUSTOM_STM_Service_3_Char_4_attribute_modified */
+
+              /* Disabled Notification management */
+              case (!(COMSVC_Notification)):
+                /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_4_Disabled_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_3_Char_4_Disabled_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR_NOTIFY_DISABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_4_Disabled_END */
+
+                /* USER CODE END CUSTOM_STM_Service_3_Char_4_Disabled_END */
+                break;
+
+              /* Enabled Notification management */
+              case COMSVC_Notification:
+                /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_4_COMSVC_Notification_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_3_Char_4_COMSVC_Notification_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR_NOTIFY_ENABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_4_COMSVC_Notification_END */
+
+                /* USER CODE END CUSTOM_STM_Service_3_Char_4_COMSVC_Notification_END */
+                break;
+
+              default:
+                /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_4_default */
+
+                /* USER CODE END CUSTOM_STM_Service_3_Char_4_default */
+              break;
+            }
+          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Chassisspeeds_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
+
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMaze_Cell_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
             /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_1 */
@@ -500,7 +661,7 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                 /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_1_Disabled_BEGIN */
 
                 /* USER CODE END CUSTOM_STM_Service_4_Char_1_Disabled_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_DATA_CHAR_NOTIFY_DISABLED_EVT;
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAZE_CELL_CHAR_NOTIFY_DISABLED_EVT;
                 Custom_STM_App_Notification(&Notification);
                 /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_1_Disabled_END */
 
@@ -512,7 +673,7 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                 /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_1_COMSVC_Notification_BEGIN */
 
                 /* USER CODE END CUSTOM_STM_Service_4_Char_1_COMSVC_Notification_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_DATA_CHAR_NOTIFY_ENABLED_EVT;
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAZE_CELL_CHAR_NOTIFY_ENABLED_EVT;
                 Custom_STM_App_Notification(&Notification);
                 /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_1_COMSVC_Notification_END */
 
@@ -525,9 +686,9 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                 /* USER CODE END CUSTOM_STM_Service_4_Char_1_default */
               break;
             }
-          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Data_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
+          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMaze_Cell_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
 
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Imudata_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMaze_Mousepos_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
             /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_2 */
@@ -544,7 +705,7 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                 /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_2_Disabled_BEGIN */
 
                 /* USER CODE END CUSTOM_STM_Service_4_Char_2_Disabled_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_IMUDATA_CHAR_NOTIFY_DISABLED_EVT;
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAZE_MOUSEPOS_CHAR_NOTIFY_DISABLED_EVT;
                 Custom_STM_App_Notification(&Notification);
                 /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_2_Disabled_END */
 
@@ -556,7 +717,7 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                 /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_2_COMSVC_Notification_BEGIN */
 
                 /* USER CODE END CUSTOM_STM_Service_4_Char_2_COMSVC_Notification_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_IMUDATA_CHAR_NOTIFY_ENABLED_EVT;
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAZE_MOUSEPOS_CHAR_NOTIFY_ENABLED_EVT;
                 Custom_STM_App_Notification(&Notification);
                 /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_2_COMSVC_Notification_END */
 
@@ -569,259 +730,64 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                 /* USER CODE END CUSTOM_STM_Service_4_Char_2_default */
               break;
             }
-          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Imudata_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
-
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Pidconstants_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
-          {
-            return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_3 */
-
-            /* USER CODE END CUSTOM_STM_Service_4_Char_3 */
-            switch (attribute_modified->Attr_Data[0])
-            {
-              /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_3_attribute_modified */
-
-              /* USER CODE END CUSTOM_STM_Service_4_Char_3_attribute_modified */
-
-              /* Disabled Notification management */
-              case (!(COMSVC_Notification)):
-                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_3_Disabled_BEGIN */
-
-                /* USER CODE END CUSTOM_STM_Service_4_Char_3_Disabled_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_PIDCONSTANTS_CHAR_NOTIFY_DISABLED_EVT;
-                Custom_STM_App_Notification(&Notification);
-                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_3_Disabled_END */
-
-                /* USER CODE END CUSTOM_STM_Service_4_Char_3_Disabled_END */
-                break;
-
-              /* Enabled Notification management */
-              case COMSVC_Notification:
-                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_3_COMSVC_Notification_BEGIN */
-
-                /* USER CODE END CUSTOM_STM_Service_4_Char_3_COMSVC_Notification_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_PIDCONSTANTS_CHAR_NOTIFY_ENABLED_EVT;
-                Custom_STM_App_Notification(&Notification);
-                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_3_COMSVC_Notification_END */
-
-                /* USER CODE END CUSTOM_STM_Service_4_Char_3_COMSVC_Notification_END */
-                break;
-
-              default:
-                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_3_default */
-
-                /* USER CODE END CUSTOM_STM_Service_4_Char_3_default */
-              break;
-            }
-          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Pidconstants_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
-
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Chassisspeeds_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
-          {
-            return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4 */
-
-            /* USER CODE END CUSTOM_STM_Service_4_Char_4 */
-            switch (attribute_modified->Attr_Data[0])
-            {
-              /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_attribute_modified */
-
-              /* USER CODE END CUSTOM_STM_Service_4_Char_4_attribute_modified */
-
-              /* Disabled Notification management */
-              case (!(COMSVC_Notification)):
-                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_Disabled_BEGIN */
-
-                /* USER CODE END CUSTOM_STM_Service_4_Char_4_Disabled_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR_NOTIFY_DISABLED_EVT;
-                Custom_STM_App_Notification(&Notification);
-                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_Disabled_END */
-
-                /* USER CODE END CUSTOM_STM_Service_4_Char_4_Disabled_END */
-                break;
-
-              /* Enabled Notification management */
-              case COMSVC_Notification:
-                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_COMSVC_Notification_BEGIN */
-
-                /* USER CODE END CUSTOM_STM_Service_4_Char_4_COMSVC_Notification_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR_NOTIFY_ENABLED_EVT;
-                Custom_STM_App_Notification(&Notification);
-                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_COMSVC_Notification_END */
-
-                /* USER CODE END CUSTOM_STM_Service_4_Char_4_COMSVC_Notification_END */
-                break;
-
-              default:
-                /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_default */
-
-                /* USER CODE END CUSTOM_STM_Service_4_Char_4_default */
-              break;
-            }
-          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Chassisspeeds_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
-
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMaze_Cell_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
-          {
-            return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_2 */
-
-            /* USER CODE END CUSTOM_STM_Service_5_Char_2 */
-            switch (attribute_modified->Attr_Data[0])
-            {
-              /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_2_attribute_modified */
-
-              /* USER CODE END CUSTOM_STM_Service_5_Char_2_attribute_modified */
-
-              /* Disabled Notification management */
-              case (!(COMSVC_Notification)):
-                /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_2_Disabled_BEGIN */
-
-                /* USER CODE END CUSTOM_STM_Service_5_Char_2_Disabled_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAZE_CELL_CHAR_NOTIFY_DISABLED_EVT;
-                Custom_STM_App_Notification(&Notification);
-                /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_2_Disabled_END */
-
-                /* USER CODE END CUSTOM_STM_Service_5_Char_2_Disabled_END */
-                break;
-
-              /* Enabled Notification management */
-              case COMSVC_Notification:
-                /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_2_COMSVC_Notification_BEGIN */
-
-                /* USER CODE END CUSTOM_STM_Service_5_Char_2_COMSVC_Notification_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAZE_CELL_CHAR_NOTIFY_ENABLED_EVT;
-                Custom_STM_App_Notification(&Notification);
-                /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_2_COMSVC_Notification_END */
-
-                /* USER CODE END CUSTOM_STM_Service_5_Char_2_COMSVC_Notification_END */
-                break;
-
-              default:
-                /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_2_default */
-
-                /* USER CODE END CUSTOM_STM_Service_5_Char_2_default */
-              break;
-            }
-          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMaze_Cell_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
-
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMaze_Mousepos_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
-          {
-            return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_3 */
-
-            /* USER CODE END CUSTOM_STM_Service_5_Char_3 */
-            switch (attribute_modified->Attr_Data[0])
-            {
-              /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_3_attribute_modified */
-
-              /* USER CODE END CUSTOM_STM_Service_5_Char_3_attribute_modified */
-
-              /* Disabled Notification management */
-              case (!(COMSVC_Notification)):
-                /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_3_Disabled_BEGIN */
-
-                /* USER CODE END CUSTOM_STM_Service_5_Char_3_Disabled_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAZE_MOUSEPOS_CHAR_NOTIFY_DISABLED_EVT;
-                Custom_STM_App_Notification(&Notification);
-                /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_3_Disabled_END */
-
-                /* USER CODE END CUSTOM_STM_Service_5_Char_3_Disabled_END */
-                break;
-
-              /* Enabled Notification management */
-              case COMSVC_Notification:
-                /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_3_COMSVC_Notification_BEGIN */
-
-                /* USER CODE END CUSTOM_STM_Service_5_Char_3_COMSVC_Notification_BEGIN */
-                Notification.Custom_Evt_Opcode = CUSTOM_STM_MAZE_MOUSEPOS_CHAR_NOTIFY_ENABLED_EVT;
-                Custom_STM_App_Notification(&Notification);
-                /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_3_COMSVC_Notification_END */
-
-                /* USER CODE END CUSTOM_STM_Service_5_Char_3_COMSVC_Notification_END */
-                break;
-
-              default:
-                /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_3_default */
-
-                /* USER CODE END CUSTOM_STM_Service_5_Char_3_default */
-              break;
-            }
           }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMaze_Mousepos_CharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
 
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMusic_Playsong_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
-          {
-            return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-
-            if (attribute_modified->Attr_Data_Length == 1) {
-              Robot_DelegateReceivedFeedback(FB_TOPIC_RECEIVE_MUSIC_PLAY_SONG, attribute_modified->Attr_Data);
-            }
-
-            /* USER CODE END CUSTOM_STM_Service_1_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-          } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMusic_Playsong_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomVision_Calibrate_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
-          {
-            return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_3_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-
-            if (attribute_modified->Attr_Data_Length == 1) {
-              Robot_DelegateReceivedFeedback(FB_TOPIC_RECEIVE_VISION_CALIBRATE, attribute_modified->Attr_Data);
-            }
-
-            /* USER CODE END CUSTOM_STM_Service_2_Char_3_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-          } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomVision_Calibrate_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
           else if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Task_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+            /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
 
             if (attribute_modified->Attr_Data_Length == 2) {
               Robot_DelegateReceivedFeedback(FB_TOPIC_RECEIVE_MAIN_TASK, attribute_modified->Attr_Data);
             }
 
-            /* USER CODE END CUSTOM_STM_Service_3_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+            /* USER CODE END CUSTOM_STM_Service_1_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
           } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Task_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Appready_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Command_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_2_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+            /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
 
-            // When app is ready, refresh all app feedback data.
-            Robot_PublishExtraFeedback();
+            if (attribute_modified->Attr_Data_Length == 1) {
+              Robot_DelegateReceivedFeedback(FB_TOPIC_RECEIVE_MAIN_COMMAND, attribute_modified->Attr_Data);
+            }
 
-            /* USER CODE END CUSTOM_STM_Service_3_Char_2_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-          } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Appready_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Pidconstants_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
+            /* USER CODE END CUSTOM_STM_Service_1_Char_2_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+          } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Command_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Song_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_3_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-            
+            /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_4_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+
+            if (attribute_modified->Attr_Data_Length == 1) {
+              Robot_DelegateReceivedFeedback(FB_TOPIC_RECEIVE_MAIN_SONG, attribute_modified->Attr_Data);
+            }
+
+            /* USER CODE END CUSTOM_STM_Service_1_Char_4_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+          } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMain_Song_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Pid_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+            /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_3_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+
             if (attribute_modified->Attr_Data_Length == 6 * sizeof(float)) {
               const float* pid = (const float*)attribute_modified->Attr_Data;
               DrivetrainImpl_UpdatePIDValues(pid);
             }
 
-            /* USER CODE END CUSTOM_STM_Service_4_Char_3_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-          } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Pidconstants_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
+            /* USER CODE END CUSTOM_STM_Service_3_Char_3_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+          } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Pid_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
           else if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Chassisspeeds_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_4_Char_4_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+            /* USER CODE BEGIN CUSTOM_STM_Service_3_Char_4_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
 
             if (attribute_modified->Attr_Data_Length == 2 * sizeof(float)) {
               Robot_DelegateReceivedFeedback(FB_TOPIC_RECEIVE_DRIVE_CHASSIS_SPEEDS, attribute_modified->Attr_Data);
             }
 
-            /* USER CODE END CUSTOM_STM_Service_4_Char_4_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+            /* USER CODE END CUSTOM_STM_Service_3_Char_4_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
           } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomDrive_Chassisspeeds_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
-          else if (attribute_modified->Attr_Handle == (CustomContext.CustomMaze_Reset_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
-          {
-            return_value = SVCCTL_EvtAckFlowEnable;
-            /* USER CODE BEGIN CUSTOM_STM_Service_5_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-
-            Robot_DelegateReceivedFeedback(FB_TOPIC_RECEIVE_MAZE_RESET, NULL);
-
-            /* USER CODE END CUSTOM_STM_Service_5_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-          } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomMaze_Reset_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
           /* USER CODE BEGIN EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_END */
 
           /* USER CODE END EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_END */
@@ -916,60 +882,66 @@ void SVCCTL_InitCustomSvc(void)
   SVCCTL_RegisterSvcHandler(Custom_STM_Event_Handler);
 
   /**
-   *          musicService
+   *          mainService
    *
-   * Max_Attribute_Records = 1 + 2*2 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
-   * service_max_attribute_record = 1 for musicService +
-   *                                2 for music_playSong_writeChar +
-   *                                2 for music_isPlaying_notifyChar +
-   *                                1 for music_isPlaying_notifyChar configuration descriptor +
-   *                              = 6
+   * Max_Attribute_Records = 1 + 2*5 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
+   * service_max_attribute_record = 1 for mainService +
+   *                                2 for main_task_writeNotifyChar +
+   *                                2 for main_command_writeChar +
+   *                                2 for main_error_notifyChar +
+   *                                2 for main_song_writeNotifyChar +
+   *                                2 for main_status_notifyChar +
+   *                                1 for main_task_writeNotifyChar configuration descriptor +
+   *                                1 for main_error_notifyChar configuration descriptor +
+   *                                1 for main_song_writeNotifyChar configuration descriptor +
+   *                                1 for main_status_notifyChar configuration descriptor +
+   *                              = 15
    *
    * This value doesn't take into account number of descriptors manually added
    * In case of descriptors added, please update the max_attr_record value accordingly in the next SVCCTL_InitService User Section
    */
-  max_attr_record = 6;
+  max_attr_record = 15;
 
   /* USER CODE BEGIN SVCCTL_InitService */
   /* max_attr_record to be updated if descriptors have been added */
 
   /* USER CODE END SVCCTL_InitService */
 
-  COPY_MUSICSERVICE_UUID(uuid.Char_UUID_128);
+  COPY_MAINSERVICE_UUID(uuid.Char_UUID_128);
   ret = aci_gatt_add_service(UUID_TYPE_128,
                              (Service_UUID_t *) &uuid,
                              PRIMARY_SERVICE,
                              max_attr_record,
-                             &(CustomContext.CustomMusicserviceHdle));
+                             &(CustomContext.CustomMainserviceHdle));
   if (ret != BLE_STATUS_SUCCESS)
   {
-    APP_DBG_MSG("  Fail   : aci_gatt_add_service command: musicService, error code: 0x%x \n\r", ret);
+    APP_DBG_MSG("  Fail   : aci_gatt_add_service command: mainService, error code: 0x%x \n\r", ret);
   }
   else
   {
-    APP_DBG_MSG("  Success: aci_gatt_add_service command: musicService \n\r");
+    APP_DBG_MSG("  Success: aci_gatt_add_service command: mainService \n\r");
   }
 
   /**
-   *  music_playSong_writeChar
+   *  main_task_writeNotifyChar
    */
-  COPY_MUSIC_PLAYSONG_WRITECHAR_UUID(uuid.Char_UUID_128);
-  ret = aci_gatt_add_char(CustomContext.CustomMusicserviceHdle,
+  COPY_MAIN_TASK_WRITENOTIFYCHAR_UUID(uuid.Char_UUID_128);
+  ret = aci_gatt_add_char(CustomContext.CustomMainserviceHdle,
                           UUID_TYPE_128, &uuid,
-                          SizeMusic_Playsong_Char,
-                          CHAR_PROP_WRITE,
+                          SizeMain_Task_Char,
+                          CHAR_PROP_WRITE | CHAR_PROP_NOTIFY,
                           ATTR_PERMISSION_NONE,
                           GATT_NOTIFY_ATTRIBUTE_WRITE,
                           0x10,
                           CHAR_VALUE_LEN_CONSTANT,
-                          &(CustomContext.CustomMusic_Playsong_CharHdle));
+                          &(CustomContext.CustomMain_Task_CharHdle));
   if (ret != BLE_STATUS_SUCCESS)
   {
-    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : MUSIC_PLAYSONG_CHAR, error code: 0x%x \n\r", ret);
+    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : MAIN_TASK_CHAR, error code: 0x%x \n\r", ret);
   }
   else
   {
-    APP_DBG_MSG("  Success: aci_gatt_add_char command   : MUSIC_PLAYSONG_CHAR \n\r");
+    APP_DBG_MSG("  Success: aci_gatt_add_char command   : MAIN_TASK_CHAR \n\r");
   }
 
   /* USER CODE BEGIN SVCCTL_Init_Service1_Char1/ */
@@ -977,49 +949,125 @@ void SVCCTL_InitCustomSvc(void)
 
   /* USER CODE END SVCCTL_Init_Service1_Char1 */
   /**
-   *  music_isPlaying_notifyChar
+   *  main_command_writeChar
    */
-  COPY_MUSIC_ISPLAYING_NOTIFYCHAR_UUID(uuid.Char_UUID_128);
-  ret = aci_gatt_add_char(CustomContext.CustomMusicserviceHdle,
+  COPY_MAIN_COMMAND_WRITECHAR_UUID(uuid.Char_UUID_128);
+  ret = aci_gatt_add_char(CustomContext.CustomMainserviceHdle,
                           UUID_TYPE_128, &uuid,
-                          SizeMusic_Isplaying_Char,
-                          CHAR_PROP_NOTIFY,
+                          SizeMain_Command_Char,
+                          CHAR_PROP_WRITE,
                           ATTR_PERMISSION_NONE,
-                          GATT_DONT_NOTIFY_EVENTS,
+                          GATT_NOTIFY_ATTRIBUTE_WRITE,
                           0x10,
                           CHAR_VALUE_LEN_CONSTANT,
-                          &(CustomContext.CustomMusic_Isplaying_CharHdle));
+                          &(CustomContext.CustomMain_Command_CharHdle));
   if (ret != BLE_STATUS_SUCCESS)
   {
-    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : MUSIC_ISPLAYING_CHAR, error code: 0x%x \n\r", ret);
+    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : MAIN_COMMAND_CHAR, error code: 0x%x \n\r", ret);
   }
   else
   {
-    APP_DBG_MSG("  Success: aci_gatt_add_char command   : MUSIC_ISPLAYING_CHAR \n\r");
+    APP_DBG_MSG("  Success: aci_gatt_add_char command   : MAIN_COMMAND_CHAR \n\r");
   }
 
   /* USER CODE BEGIN SVCCTL_Init_Service1_Char2/ */
   /* Place holder for Characteristic Descriptors */
 
   /* USER CODE END SVCCTL_Init_Service1_Char2 */
+  /**
+   *  main_error_notifyChar
+   */
+  COPY_MAIN_ERROR_NOTIFYCHAR_UUID(uuid.Char_UUID_128);
+  ret = aci_gatt_add_char(CustomContext.CustomMainserviceHdle,
+                          UUID_TYPE_128, &uuid,
+                          SizeMain_Error_Char,
+                          CHAR_PROP_NOTIFY,
+                          ATTR_PERMISSION_NONE,
+                          GATT_DONT_NOTIFY_EVENTS,
+                          0x10,
+                          CHAR_VALUE_LEN_CONSTANT,
+                          &(CustomContext.CustomMain_Error_CharHdle));
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : MAIN_ERROR_CHAR, error code: 0x%x \n\r", ret);
+  }
+  else
+  {
+    APP_DBG_MSG("  Success: aci_gatt_add_char command   : MAIN_ERROR_CHAR \n\r");
+  }
+
+  /* USER CODE BEGIN SVCCTL_Init_Service1_Char3/ */
+  /* Place holder for Characteristic Descriptors */
+
+  /* USER CODE END SVCCTL_Init_Service1_Char3 */
+  /**
+   *  main_song_writeNotifyChar
+   */
+  COPY_MAIN_SONG_WRITENOTIFYCHAR_UUID(uuid.Char_UUID_128);
+  ret = aci_gatt_add_char(CustomContext.CustomMainserviceHdle,
+                          UUID_TYPE_128, &uuid,
+                          SizeMain_Song_Char,
+                          CHAR_PROP_WRITE | CHAR_PROP_NOTIFY,
+                          ATTR_PERMISSION_NONE,
+                          GATT_NOTIFY_ATTRIBUTE_WRITE,
+                          0x10,
+                          CHAR_VALUE_LEN_CONSTANT,
+                          &(CustomContext.CustomMain_Song_CharHdle));
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : MAIN_SONG_CHAR, error code: 0x%x \n\r", ret);
+  }
+  else
+  {
+    APP_DBG_MSG("  Success: aci_gatt_add_char command   : MAIN_SONG_CHAR \n\r");
+  }
+
+  /* USER CODE BEGIN SVCCTL_Init_Service1_Char4/ */
+  /* Place holder for Characteristic Descriptors */
+
+  /* USER CODE END SVCCTL_Init_Service1_Char4 */
+  /**
+   *  main_status_notifyChar
+   */
+  COPY_MAIN_STATUS_NOTIFYCHAR_UUID(uuid.Char_UUID_128);
+  ret = aci_gatt_add_char(CustomContext.CustomMainserviceHdle,
+                          UUID_TYPE_128, &uuid,
+                          SizeMain_Status_Char,
+                          CHAR_PROP_NOTIFY,
+                          ATTR_PERMISSION_NONE,
+                          GATT_DONT_NOTIFY_EVENTS,
+                          0x10,
+                          CHAR_VALUE_LEN_CONSTANT,
+                          &(CustomContext.CustomMain_Status_CharHdle));
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : MAIN_STATUS_CHAR, error code: 0x%x \n\r", ret);
+  }
+  else
+  {
+    APP_DBG_MSG("  Success: aci_gatt_add_char command   : MAIN_STATUS_CHAR \n\r");
+  }
+
+  /* USER CODE BEGIN SVCCTL_Init_Service1_Char5/ */
+  /* Place holder for Characteristic Descriptors */
+
+  /* USER CODE END SVCCTL_Init_Service1_Char5 */
 
   /**
    *          visionService
    *
-   * Max_Attribute_Records = 1 + 2*3 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
+   * Max_Attribute_Records = 1 + 2*2 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
    * service_max_attribute_record = 1 for visionService +
    *                                2 for vision_rawReadings_notifyChar +
    *                                2 for vision_distances_notifyChar +
-   *                                2 for vision_calibrate_writeNotifyChar +
    *                                1 for vision_rawReadings_notifyChar configuration descriptor +
    *                                1 for vision_distances_notifyChar configuration descriptor +
-   *                                1 for vision_calibrate_writeNotifyChar configuration descriptor +
-   *                              = 10
+   *                              = 7
    *
    * This value doesn't take into account number of descriptors manually added
    * In case of descriptors added, please update the max_attr_record value accordingly in the next SVCCTL_InitService User Section
    */
-  max_attr_record = 10;
+  max_attr_record = 7;
 
   /* USER CODE BEGIN SVCCTL_InitService */
   /* max_attr_record to be updated if descriptors have been added */
@@ -1093,148 +1141,6 @@ void SVCCTL_InitCustomSvc(void)
   /* Place holder for Characteristic Descriptors */
 
   /* USER CODE END SVCCTL_Init_Service2_Char2 */
-  /**
-   *  vision_calibrate_writeNotifyChar
-   */
-  COPY_VISION_CALIBRATE_WRITENOTIFYCHAR_UUID(uuid.Char_UUID_128);
-  ret = aci_gatt_add_char(CustomContext.CustomVisionserviceHdle,
-                          UUID_TYPE_128, &uuid,
-                          SizeVision_Calibrate_Char,
-                          CHAR_PROP_WRITE | CHAR_PROP_NOTIFY,
-                          ATTR_PERMISSION_NONE,
-                          GATT_NOTIFY_ATTRIBUTE_WRITE,
-                          0x10,
-                          CHAR_VALUE_LEN_CONSTANT,
-                          &(CustomContext.CustomVision_Calibrate_CharHdle));
-  if (ret != BLE_STATUS_SUCCESS)
-  {
-    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : VISION_CALIBRATE_CHAR, error code: 0x%x \n\r", ret);
-  }
-  else
-  {
-    APP_DBG_MSG("  Success: aci_gatt_add_char command   : VISION_CALIBRATE_CHAR \n\r");
-  }
-
-  /* USER CODE BEGIN SVCCTL_Init_Service2_Char3/ */
-  /* Place holder for Characteristic Descriptors */
-
-  /* USER CODE END SVCCTL_Init_Service2_Char3 */
-
-  /**
-   *          mainService
-   *
-   * Max_Attribute_Records = 1 + 2*3 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
-   * service_max_attribute_record = 1 for mainService +
-   *                                2 for main_task_writeNotifyChar +
-   *                                2 for main_appReady_writeChar +
-   *                                2 for main_errorCode_notifyChar +
-   *                                1 for main_task_writeNotifyChar configuration descriptor +
-   *                                1 for main_errorCode_notifyChar configuration descriptor +
-   *                              = 9
-   *
-   * This value doesn't take into account number of descriptors manually added
-   * In case of descriptors added, please update the max_attr_record value accordingly in the next SVCCTL_InitService User Section
-   */
-  max_attr_record = 9;
-
-  /* USER CODE BEGIN SVCCTL_InitService */
-  /* max_attr_record to be updated if descriptors have been added */
-
-  /* USER CODE END SVCCTL_InitService */
-
-  COPY_MAINSERVICE_UUID(uuid.Char_UUID_128);
-  ret = aci_gatt_add_service(UUID_TYPE_128,
-                             (Service_UUID_t *) &uuid,
-                             PRIMARY_SERVICE,
-                             max_attr_record,
-                             &(CustomContext.CustomMainserviceHdle));
-  if (ret != BLE_STATUS_SUCCESS)
-  {
-    APP_DBG_MSG("  Fail   : aci_gatt_add_service command: mainService, error code: 0x%x \n\r", ret);
-  }
-  else
-  {
-    APP_DBG_MSG("  Success: aci_gatt_add_service command: mainService \n\r");
-  }
-
-  /**
-   *  main_task_writeNotifyChar
-   */
-  COPY_MAIN_TASK_WRITENOTIFYCHAR_UUID(uuid.Char_UUID_128);
-  ret = aci_gatt_add_char(CustomContext.CustomMainserviceHdle,
-                          UUID_TYPE_128, &uuid,
-                          SizeMain_Task_Char,
-                          CHAR_PROP_WRITE | CHAR_PROP_NOTIFY,
-                          ATTR_PERMISSION_NONE,
-                          GATT_NOTIFY_ATTRIBUTE_WRITE,
-                          0x10,
-                          CHAR_VALUE_LEN_CONSTANT,
-                          &(CustomContext.CustomMain_Task_CharHdle));
-  if (ret != BLE_STATUS_SUCCESS)
-  {
-    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : MAIN_TASK_CHAR, error code: 0x%x \n\r", ret);
-  }
-  else
-  {
-    APP_DBG_MSG("  Success: aci_gatt_add_char command   : MAIN_TASK_CHAR \n\r");
-  }
-
-  /* USER CODE BEGIN SVCCTL_Init_Service3_Char1/ */
-  /* Place holder for Characteristic Descriptors */
-
-  /* USER CODE END SVCCTL_Init_Service3_Char1 */
-  /**
-   *  main_appReady_writeChar
-   */
-  COPY_MAIN_APPREADY_WRITECHAR_UUID(uuid.Char_UUID_128);
-  ret = aci_gatt_add_char(CustomContext.CustomMainserviceHdle,
-                          UUID_TYPE_128, &uuid,
-                          SizeMain_Appready_Char,
-                          CHAR_PROP_WRITE,
-                          ATTR_PERMISSION_NONE,
-                          GATT_NOTIFY_ATTRIBUTE_WRITE,
-                          0x10,
-                          CHAR_VALUE_LEN_CONSTANT,
-                          &(CustomContext.CustomMain_Appready_CharHdle));
-  if (ret != BLE_STATUS_SUCCESS)
-  {
-    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : MAIN_APPREADY_CHAR, error code: 0x%x \n\r", ret);
-  }
-  else
-  {
-    APP_DBG_MSG("  Success: aci_gatt_add_char command   : MAIN_APPREADY_CHAR \n\r");
-  }
-
-  /* USER CODE BEGIN SVCCTL_Init_Service3_Char2/ */
-  /* Place holder for Characteristic Descriptors */
-
-  /* USER CODE END SVCCTL_Init_Service3_Char2 */
-  /**
-   *  main_errorCode_notifyChar
-   */
-  COPY_MAIN_ERRORCODE_NOTIFYCHAR_UUID(uuid.Char_UUID_128);
-  ret = aci_gatt_add_char(CustomContext.CustomMainserviceHdle,
-                          UUID_TYPE_128, &uuid,
-                          SizeMain_Errorcode_Char,
-                          CHAR_PROP_NOTIFY,
-                          ATTR_PERMISSION_NONE,
-                          GATT_DONT_NOTIFY_EVENTS,
-                          0x10,
-                          CHAR_VALUE_LEN_CONSTANT,
-                          &(CustomContext.CustomMain_Errorcode_CharHdle));
-  if (ret != BLE_STATUS_SUCCESS)
-  {
-    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : MAIN_ERRORCODE_CHAR, error code: 0x%x \n\r", ret);
-  }
-  else
-  {
-    APP_DBG_MSG("  Success: aci_gatt_add_char command   : MAIN_ERRORCODE_CHAR \n\r");
-  }
-
-  /* USER CODE BEGIN SVCCTL_Init_Service3_Char3/ */
-  /* Place holder for Characteristic Descriptors */
-
-  /* USER CODE END SVCCTL_Init_Service3_Char3 */
 
   /**
    *          driveService
@@ -1243,11 +1149,11 @@ void SVCCTL_InitCustomSvc(void)
    * service_max_attribute_record = 1 for driveService +
    *                                2 for drive_data_notifyChar +
    *                                2 for drive_imuData_notifyChar +
-   *                                2 for drive_pidConstants_writeNotifyChar +
+   *                                2 for drive_pid_writeNotifyChar +
    *                                2 for drive_chassisSpeeds_writeNotifyChar +
    *                                1 for drive_data_notifyChar configuration descriptor +
    *                                1 for drive_imuData_notifyChar configuration descriptor +
-   *                                1 for drive_pidConstants_writeNotifyChar configuration descriptor +
+   *                                1 for drive_pid_writeNotifyChar configuration descriptor +
    *                                1 for drive_chassisSpeeds_writeNotifyChar configuration descriptor +
    *                              = 13
    *
@@ -1298,10 +1204,10 @@ void SVCCTL_InitCustomSvc(void)
     APP_DBG_MSG("  Success: aci_gatt_add_char command   : DRIVE_DATA_CHAR \n\r");
   }
 
-  /* USER CODE BEGIN SVCCTL_Init_Service4_Char1/ */
+  /* USER CODE BEGIN SVCCTL_Init_Service3_Char1/ */
   /* Place holder for Characteristic Descriptors */
 
-  /* USER CODE END SVCCTL_Init_Service4_Char1 */
+  /* USER CODE END SVCCTL_Init_Service3_Char1 */
   /**
    *  drive_imuData_notifyChar
    */
@@ -1324,36 +1230,36 @@ void SVCCTL_InitCustomSvc(void)
     APP_DBG_MSG("  Success: aci_gatt_add_char command   : DRIVE_IMUDATA_CHAR \n\r");
   }
 
-  /* USER CODE BEGIN SVCCTL_Init_Service4_Char2/ */
+  /* USER CODE BEGIN SVCCTL_Init_Service3_Char2/ */
   /* Place holder for Characteristic Descriptors */
 
-  /* USER CODE END SVCCTL_Init_Service4_Char2 */
+  /* USER CODE END SVCCTL_Init_Service3_Char2 */
   /**
-   *  drive_pidConstants_writeNotifyChar
+   *  drive_pid_writeNotifyChar
    */
-  COPY_DRIVE_PIDCONSTANTS_WRITENOTIFYCHAR_UUID(uuid.Char_UUID_128);
+  COPY_DRIVE_PID_WRITENOTIFYCHAR_UUID(uuid.Char_UUID_128);
   ret = aci_gatt_add_char(CustomContext.CustomDriveserviceHdle,
                           UUID_TYPE_128, &uuid,
-                          SizeDrive_Pidconstants_Char,
+                          SizeDrive_Pid_Char,
                           CHAR_PROP_WRITE | CHAR_PROP_NOTIFY,
                           ATTR_PERMISSION_NONE,
                           GATT_NOTIFY_ATTRIBUTE_WRITE,
                           0x10,
                           CHAR_VALUE_LEN_CONSTANT,
-                          &(CustomContext.CustomDrive_Pidconstants_CharHdle));
+                          &(CustomContext.CustomDrive_Pid_CharHdle));
   if (ret != BLE_STATUS_SUCCESS)
   {
-    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : DRIVE_PIDCONSTANTS_CHAR, error code: 0x%x \n\r", ret);
+    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : DRIVE_PID_CHAR, error code: 0x%x \n\r", ret);
   }
   else
   {
-    APP_DBG_MSG("  Success: aci_gatt_add_char command   : DRIVE_PIDCONSTANTS_CHAR \n\r");
+    APP_DBG_MSG("  Success: aci_gatt_add_char command   : DRIVE_PID_CHAR \n\r");
   }
 
-  /* USER CODE BEGIN SVCCTL_Init_Service4_Char3/ */
+  /* USER CODE BEGIN SVCCTL_Init_Service3_Char3/ */
   /* Place holder for Characteristic Descriptors */
 
-  /* USER CODE END SVCCTL_Init_Service4_Char3 */
+  /* USER CODE END SVCCTL_Init_Service3_Char3 */
   /**
    *  drive_chassisSpeeds_writeNotifyChar
    */
@@ -1376,27 +1282,26 @@ void SVCCTL_InitCustomSvc(void)
     APP_DBG_MSG("  Success: aci_gatt_add_char command   : DRIVE_CHASSISSPEEDS_CHAR \n\r");
   }
 
-  /* USER CODE BEGIN SVCCTL_Init_Service4_Char4/ */
+  /* USER CODE BEGIN SVCCTL_Init_Service3_Char4/ */
   /* Place holder for Characteristic Descriptors */
 
-  /* USER CODE END SVCCTL_Init_Service4_Char4 */
+  /* USER CODE END SVCCTL_Init_Service3_Char4 */
 
   /**
    *          mazeService
    *
-   * Max_Attribute_Records = 1 + 2*3 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
+   * Max_Attribute_Records = 1 + 2*2 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
    * service_max_attribute_record = 1 for mazeService +
-   *                                2 for maze_reset_writeChar +
    *                                2 for maze_cell_notifyChar +
    *                                2 for maze_mousePos_notifyChar +
    *                                1 for maze_cell_notifyChar configuration descriptor +
    *                                1 for maze_mousePos_notifyChar configuration descriptor +
-   *                              = 9
+   *                              = 7
    *
    * This value doesn't take into account number of descriptors manually added
    * In case of descriptors added, please update the max_attr_record value accordingly in the next SVCCTL_InitService User Section
    */
-  max_attr_record = 9;
+  max_attr_record = 7;
 
   /* USER CODE BEGIN SVCCTL_InitService */
   /* max_attr_record to be updated if descriptors have been added */
@@ -1419,32 +1324,6 @@ void SVCCTL_InitCustomSvc(void)
   }
 
   /**
-   *  maze_reset_writeChar
-   */
-  COPY_MAZE_RESET_WRITECHAR_UUID(uuid.Char_UUID_128);
-  ret = aci_gatt_add_char(CustomContext.CustomMazeserviceHdle,
-                          UUID_TYPE_128, &uuid,
-                          SizeMaze_Reset_Char,
-                          CHAR_PROP_WRITE,
-                          ATTR_PERMISSION_NONE,
-                          GATT_NOTIFY_ATTRIBUTE_WRITE,
-                          0x10,
-                          CHAR_VALUE_LEN_CONSTANT,
-                          &(CustomContext.CustomMaze_Reset_CharHdle));
-  if (ret != BLE_STATUS_SUCCESS)
-  {
-    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : MAZE_RESET_CHAR, error code: 0x%x \n\r", ret);
-  }
-  else
-  {
-    APP_DBG_MSG("  Success: aci_gatt_add_char command   : MAZE_RESET_CHAR \n\r");
-  }
-
-  /* USER CODE BEGIN SVCCTL_Init_Service5_Char1/ */
-  /* Place holder for Characteristic Descriptors */
-
-  /* USER CODE END SVCCTL_Init_Service5_Char1 */
-  /**
    *  maze_cell_notifyChar
    */
   COPY_MAZE_CELL_NOTIFYCHAR_UUID(uuid.Char_UUID_128);
@@ -1466,10 +1345,10 @@ void SVCCTL_InitCustomSvc(void)
     APP_DBG_MSG("  Success: aci_gatt_add_char command   : MAZE_CELL_CHAR \n\r");
   }
 
-  /* USER CODE BEGIN SVCCTL_Init_Service5_Char2/ */
+  /* USER CODE BEGIN SVCCTL_Init_Service4_Char1/ */
   /* Place holder for Characteristic Descriptors */
 
-  /* USER CODE END SVCCTL_Init_Service5_Char2 */
+  /* USER CODE END SVCCTL_Init_Service4_Char1 */
   /**
    *  maze_mousePos_notifyChar
    */
@@ -1492,10 +1371,10 @@ void SVCCTL_InitCustomSvc(void)
     APP_DBG_MSG("  Success: aci_gatt_add_char command   : MAZE_MOUSEPOS_CHAR \n\r");
   }
 
-  /* USER CODE BEGIN SVCCTL_Init_Service5_Char3/ */
+  /* USER CODE BEGIN SVCCTL_Init_Service4_Char2/ */
   /* Place holder for Characteristic Descriptors */
 
-  /* USER CODE END SVCCTL_Init_Service5_Char3 */
+  /* USER CODE END SVCCTL_Init_Service4_Char2 */
 
   /* USER CODE BEGIN SVCCTL_InitCustomSvc_2 */
 
@@ -1520,42 +1399,99 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
   switch (CharOpcode)
   {
 
-    case CUSTOM_STM_MUSIC_PLAYSONG_CHAR:
-      ret = aci_gatt_update_char_value(CustomContext.CustomMusicserviceHdle,
-                                       CustomContext.CustomMusic_Playsong_CharHdle,
+    case CUSTOM_STM_MAIN_TASK_CHAR:
+      ret = aci_gatt_update_char_value(CustomContext.CustomMainserviceHdle,
+                                       CustomContext.CustomMain_Task_CharHdle,
                                        0, /* charValOffset */
-                                       SizeMusic_Playsong_Char, /* charValueLen */
+                                       SizeMain_Task_Char, /* charValueLen */
                                        (uint8_t *)  pPayload);
       if (ret != BLE_STATUS_SUCCESS)
       {
-        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MUSIC_PLAYSONG_CHAR command, result : 0x%x \n\r", ret);
+        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MAIN_TASK_CHAR command, result : 0x%x \n\r", ret);
       }
       else
       {
-        APP_DBG_MSG("  Success: aci_gatt_update_char_value MUSIC_PLAYSONG_CHAR command\n\r");
+        APP_DBG_MSG("  Success: aci_gatt_update_char_value MAIN_TASK_CHAR command\n\r");
       }
       /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_1_Char_1*/
 
       /* USER CODE END CUSTOM_STM_App_Update_Service_1_Char_1*/
       break;
 
-    case CUSTOM_STM_MUSIC_ISPLAYING_CHAR:
-      ret = aci_gatt_update_char_value(CustomContext.CustomMusicserviceHdle,
-                                       CustomContext.CustomMusic_Isplaying_CharHdle,
+    case CUSTOM_STM_MAIN_COMMAND_CHAR:
+      ret = aci_gatt_update_char_value(CustomContext.CustomMainserviceHdle,
+                                       CustomContext.CustomMain_Command_CharHdle,
                                        0, /* charValOffset */
-                                       SizeMusic_Isplaying_Char, /* charValueLen */
+                                       SizeMain_Command_Char, /* charValueLen */
                                        (uint8_t *)  pPayload);
       if (ret != BLE_STATUS_SUCCESS)
       {
-        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MUSIC_ISPLAYING_CHAR command, result : 0x%x \n\r", ret);
+        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MAIN_COMMAND_CHAR command, result : 0x%x \n\r", ret);
       }
       else
       {
-        APP_DBG_MSG("  Success: aci_gatt_update_char_value MUSIC_ISPLAYING_CHAR command\n\r");
+        APP_DBG_MSG("  Success: aci_gatt_update_char_value MAIN_COMMAND_CHAR command\n\r");
       }
       /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_1_Char_2*/
 
       /* USER CODE END CUSTOM_STM_App_Update_Service_1_Char_2*/
+      break;
+
+    case CUSTOM_STM_MAIN_ERROR_CHAR:
+      ret = aci_gatt_update_char_value(CustomContext.CustomMainserviceHdle,
+                                       CustomContext.CustomMain_Error_CharHdle,
+                                       0, /* charValOffset */
+                                       SizeMain_Error_Char, /* charValueLen */
+                                       (uint8_t *)  pPayload);
+      if (ret != BLE_STATUS_SUCCESS)
+      {
+        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MAIN_ERROR_CHAR command, result : 0x%x \n\r", ret);
+      }
+      else
+      {
+        APP_DBG_MSG("  Success: aci_gatt_update_char_value MAIN_ERROR_CHAR command\n\r");
+      }
+      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_1_Char_3*/
+
+      /* USER CODE END CUSTOM_STM_App_Update_Service_1_Char_3*/
+      break;
+
+    case CUSTOM_STM_MAIN_SONG_CHAR:
+      ret = aci_gatt_update_char_value(CustomContext.CustomMainserviceHdle,
+                                       CustomContext.CustomMain_Song_CharHdle,
+                                       0, /* charValOffset */
+                                       SizeMain_Song_Char, /* charValueLen */
+                                       (uint8_t *)  pPayload);
+      if (ret != BLE_STATUS_SUCCESS)
+      {
+        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MAIN_SONG_CHAR command, result : 0x%x \n\r", ret);
+      }
+      else
+      {
+        APP_DBG_MSG("  Success: aci_gatt_update_char_value MAIN_SONG_CHAR command\n\r");
+      }
+      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_1_Char_4*/
+
+      /* USER CODE END CUSTOM_STM_App_Update_Service_1_Char_4*/
+      break;
+
+    case CUSTOM_STM_MAIN_STATUS_CHAR:
+      ret = aci_gatt_update_char_value(CustomContext.CustomMainserviceHdle,
+                                       CustomContext.CustomMain_Status_CharHdle,
+                                       0, /* charValOffset */
+                                       SizeMain_Status_Char, /* charValueLen */
+                                       (uint8_t *)  pPayload);
+      if (ret != BLE_STATUS_SUCCESS)
+      {
+        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MAIN_STATUS_CHAR command, result : 0x%x \n\r", ret);
+      }
+      else
+      {
+        APP_DBG_MSG("  Success: aci_gatt_update_char_value MAIN_STATUS_CHAR command\n\r");
+      }
+      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_1_Char_5*/
+
+      /* USER CODE END CUSTOM_STM_App_Update_Service_1_Char_5*/
       break;
 
     case CUSTOM_STM_VISION_RAWREADINGS_CHAR:
@@ -1596,82 +1532,6 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
       /* USER CODE END CUSTOM_STM_App_Update_Service_2_Char_2*/
       break;
 
-    case CUSTOM_STM_VISION_CALIBRATE_CHAR:
-      ret = aci_gatt_update_char_value(CustomContext.CustomVisionserviceHdle,
-                                       CustomContext.CustomVision_Calibrate_CharHdle,
-                                       0, /* charValOffset */
-                                       SizeVision_Calibrate_Char, /* charValueLen */
-                                       (uint8_t *)  pPayload);
-      if (ret != BLE_STATUS_SUCCESS)
-      {
-        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value VISION_CALIBRATE_CHAR command, result : 0x%x \n\r", ret);
-      }
-      else
-      {
-        APP_DBG_MSG("  Success: aci_gatt_update_char_value VISION_CALIBRATE_CHAR command\n\r");
-      }
-      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_2_Char_3*/
-
-      /* USER CODE END CUSTOM_STM_App_Update_Service_2_Char_3*/
-      break;
-
-    case CUSTOM_STM_MAIN_TASK_CHAR:
-      ret = aci_gatt_update_char_value(CustomContext.CustomMainserviceHdle,
-                                       CustomContext.CustomMain_Task_CharHdle,
-                                       0, /* charValOffset */
-                                       SizeMain_Task_Char, /* charValueLen */
-                                       (uint8_t *)  pPayload);
-      if (ret != BLE_STATUS_SUCCESS)
-      {
-        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MAIN_TASK_CHAR command, result : 0x%x \n\r", ret);
-      }
-      else
-      {
-        APP_DBG_MSG("  Success: aci_gatt_update_char_value MAIN_TASK_CHAR command\n\r");
-      }
-      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_3_Char_1*/
-
-      /* USER CODE END CUSTOM_STM_App_Update_Service_3_Char_1*/
-      break;
-
-    case CUSTOM_STM_MAIN_APPREADY_CHAR:
-      ret = aci_gatt_update_char_value(CustomContext.CustomMainserviceHdle,
-                                       CustomContext.CustomMain_Appready_CharHdle,
-                                       0, /* charValOffset */
-                                       SizeMain_Appready_Char, /* charValueLen */
-                                       (uint8_t *)  pPayload);
-      if (ret != BLE_STATUS_SUCCESS)
-      {
-        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MAIN_APPREADY_CHAR command, result : 0x%x \n\r", ret);
-      }
-      else
-      {
-        APP_DBG_MSG("  Success: aci_gatt_update_char_value MAIN_APPREADY_CHAR command\n\r");
-      }
-      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_3_Char_2*/
-
-      /* USER CODE END CUSTOM_STM_App_Update_Service_3_Char_2*/
-      break;
-
-    case CUSTOM_STM_MAIN_ERRORCODE_CHAR:
-      ret = aci_gatt_update_char_value(CustomContext.CustomMainserviceHdle,
-                                       CustomContext.CustomMain_Errorcode_CharHdle,
-                                       0, /* charValOffset */
-                                       SizeMain_Errorcode_Char, /* charValueLen */
-                                       (uint8_t *)  pPayload);
-      if (ret != BLE_STATUS_SUCCESS)
-      {
-        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MAIN_ERRORCODE_CHAR command, result : 0x%x \n\r", ret);
-      }
-      else
-      {
-        APP_DBG_MSG("  Success: aci_gatt_update_char_value MAIN_ERRORCODE_CHAR command\n\r");
-      }
-      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_3_Char_3*/
-
-      /* USER CODE END CUSTOM_STM_App_Update_Service_3_Char_3*/
-      break;
-
     case CUSTOM_STM_DRIVE_DATA_CHAR:
       ret = aci_gatt_update_char_value(CustomContext.CustomDriveserviceHdle,
                                        CustomContext.CustomDrive_Data_CharHdle,
@@ -1686,9 +1546,9 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
       {
         APP_DBG_MSG("  Success: aci_gatt_update_char_value DRIVE_DATA_CHAR command\n\r");
       }
-      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_4_Char_1*/
+      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_3_Char_1*/
 
-      /* USER CODE END CUSTOM_STM_App_Update_Service_4_Char_1*/
+      /* USER CODE END CUSTOM_STM_App_Update_Service_3_Char_1*/
       break;
 
     case CUSTOM_STM_DRIVE_IMUDATA_CHAR:
@@ -1705,28 +1565,28 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
       {
         APP_DBG_MSG("  Success: aci_gatt_update_char_value DRIVE_IMUDATA_CHAR command\n\r");
       }
-      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_4_Char_2*/
+      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_3_Char_2*/
 
-      /* USER CODE END CUSTOM_STM_App_Update_Service_4_Char_2*/
+      /* USER CODE END CUSTOM_STM_App_Update_Service_3_Char_2*/
       break;
 
-    case CUSTOM_STM_DRIVE_PIDCONSTANTS_CHAR:
+    case CUSTOM_STM_DRIVE_PID_CHAR:
       ret = aci_gatt_update_char_value(CustomContext.CustomDriveserviceHdle,
-                                       CustomContext.CustomDrive_Pidconstants_CharHdle,
+                                       CustomContext.CustomDrive_Pid_CharHdle,
                                        0, /* charValOffset */
-                                       SizeDrive_Pidconstants_Char, /* charValueLen */
+                                       SizeDrive_Pid_Char, /* charValueLen */
                                        (uint8_t *)  pPayload);
       if (ret != BLE_STATUS_SUCCESS)
       {
-        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value DRIVE_PIDCONSTANTS_CHAR command, result : 0x%x \n\r", ret);
+        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value DRIVE_PID_CHAR command, result : 0x%x \n\r", ret);
       }
       else
       {
-        APP_DBG_MSG("  Success: aci_gatt_update_char_value DRIVE_PIDCONSTANTS_CHAR command\n\r");
+        APP_DBG_MSG("  Success: aci_gatt_update_char_value DRIVE_PID_CHAR command\n\r");
       }
-      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_4_Char_3*/
+      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_3_Char_3*/
 
-      /* USER CODE END CUSTOM_STM_App_Update_Service_4_Char_3*/
+      /* USER CODE END CUSTOM_STM_App_Update_Service_3_Char_3*/
       break;
 
     case CUSTOM_STM_DRIVE_CHASSISSPEEDS_CHAR:
@@ -1743,28 +1603,9 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
       {
         APP_DBG_MSG("  Success: aci_gatt_update_char_value DRIVE_CHASSISSPEEDS_CHAR command\n\r");
       }
-      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_4_Char_4*/
+      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_3_Char_4*/
 
-      /* USER CODE END CUSTOM_STM_App_Update_Service_4_Char_4*/
-      break;
-
-    case CUSTOM_STM_MAZE_RESET_CHAR:
-      ret = aci_gatt_update_char_value(CustomContext.CustomMazeserviceHdle,
-                                       CustomContext.CustomMaze_Reset_CharHdle,
-                                       0, /* charValOffset */
-                                       SizeMaze_Reset_Char, /* charValueLen */
-                                       (uint8_t *)  pPayload);
-      if (ret != BLE_STATUS_SUCCESS)
-      {
-        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MAZE_RESET_CHAR command, result : 0x%x \n\r", ret);
-      }
-      else
-      {
-        APP_DBG_MSG("  Success: aci_gatt_update_char_value MAZE_RESET_CHAR command\n\r");
-      }
-      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_5_Char_1*/
-
-      /* USER CODE END CUSTOM_STM_App_Update_Service_5_Char_1*/
+      /* USER CODE END CUSTOM_STM_App_Update_Service_3_Char_4*/
       break;
 
     case CUSTOM_STM_MAZE_CELL_CHAR:
@@ -1781,9 +1622,9 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
       {
         APP_DBG_MSG("  Success: aci_gatt_update_char_value MAZE_CELL_CHAR command\n\r");
       }
-      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_5_Char_2*/
+      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_4_Char_1*/
 
-      /* USER CODE END CUSTOM_STM_App_Update_Service_5_Char_2*/
+      /* USER CODE END CUSTOM_STM_App_Update_Service_4_Char_1*/
       break;
 
     case CUSTOM_STM_MAZE_MOUSEPOS_CHAR:
@@ -1800,9 +1641,9 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
       {
         APP_DBG_MSG("  Success: aci_gatt_update_char_value MAZE_MOUSEPOS_CHAR command\n\r");
       }
-      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_5_Char_3*/
+      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_4_Char_2*/
 
-      /* USER CODE END CUSTOM_STM_App_Update_Service_5_Char_3*/
+      /* USER CODE END CUSTOM_STM_App_Update_Service_4_Char_2*/
       break;
 
     default:

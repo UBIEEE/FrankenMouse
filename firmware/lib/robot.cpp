@@ -3,8 +3,10 @@
 #include <micromouse/robot_cell_positions.hpp>
 
 void Robot::init() {
-  m_buttons.register_btn1_callback(std::bind(&Robot::handle_button_1, this));
-  m_buttons.register_btn2_callback(std::bind(&Robot::handle_button_2, this));
+  m_buttons.register_button_1_callback(
+      std::bind(&Robot::handle_button_1, this));
+  m_buttons.register_button_2_callback(
+      std::bind(&Robot::handle_button_2, this));
 }
 
 void Robot::periodic() {
@@ -69,24 +71,29 @@ void Robot::delegate_received_feedback(FeedbackTopicReceive topic,
         return;
       run_task(Task(data[0]));
       return;
-    case VISION_CALIBRATE:
-      if (data[0] == 0) {
-        m_vision.reset_calibration();
-      } else if (data[0] == 1) {
-        m_vision.calibrate();
+    case MAIN_COMMAND:
+      // TODO:
+      // MAZE_RESET:
+      //   m_maze.reset();
+      //   m_maze.init_start_cell(Maze::StartLocation::WEST_OF_GOAL);
+      //   return;
+      // VISION_CALIBRATE:
+      //   if (data[0] == 0) {
+      //     m_vision.reset_calibration();
+      //   } else if (data[0] == 1) {
+      //     m_vision.calibrate();
+      //   }
+      return;
+    case MAIN_SONG:
+      if (data[0] < static_cast<uint8_t>(audio::Song::_SONG_COUNT)) {
+        m_audio_player.play_song(audio::Song(data[0]));
       }
-      return;
-    case MAZE_RESET:
-      m_maze.reset();
-      m_maze.init_start_cell(Maze::StartLocation::WEST_OF_GOAL);
-      return;
-    case MUSIC_PLAY_SONG:
-      if (data[0] >= static_cast<uint8_t>(audio::Song::_COUNT))
-        return;
-      m_audio_player.play_song(audio::Song(data[0]));
       return;
     case DRIVE_CHASSIS_SPEEDS:
       // TODO:
+      std::memcpy(&m_chassis_speeds, data, sizeof(m_chassis_speeds));
+      m_chassis_speeds_timer->reset();
+      m_chassis_speeds_timer->start();
       return;
     default:
       return;
@@ -190,7 +197,7 @@ void Robot::start_next_task() {
       start_task_test_drive_straight_vision_align();
       break;
     case MANUAL_CHASSIS_SPEEDS:
-      // TODO
+      start_task_manual_chassis_speeds();
       break;
     case ARMED:
       start_task_armed();
@@ -281,6 +288,13 @@ void Robot::start_task_test_drive_straight_vision_align() {
   // TODO
 }
 
+void Robot::start_task_manual_chassis_speeds() {
+  m_drive_controller.reset();
+  m_chassis_speeds = {0.f, 0.f};
+  m_chassis_speeds_timer->reset();
+  m_chassis_speeds_timer->start();
+}
+
 void Robot::start_task_armed() {
   m_audio_player.play_song(audio::Song::ARMED, true);
 }
@@ -343,7 +357,7 @@ void Robot::process_current_task() {
     case TEST_DRIVE_STRAIGHT_VISION_ALIGN:
       break;
     case MANUAL_CHASSIS_SPEEDS:
-      // TODO
+      process_task_manual_chassis_speeds();
       break;
     case ARMED:
       process_task_armed();
@@ -415,6 +429,16 @@ void Robot::process_task_test_drive() {
   if (m_drive_controller.is_done()) {
     end_task();
   }
+}
+
+void Robot::process_task_manual_chassis_speeds() {
+  const float elapsed_time = m_chassis_speeds_timer->elapsed_s();
+
+  if (elapsed_time > 0.5f) {
+    m_chassis_speeds = {0.f, 0.f};
+  }
+
+  m_drivetrain.set_chassis_speeds(m_chassis_speeds);
 }
 
 void Robot::process_task_armed() {
