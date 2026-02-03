@@ -34,14 +34,6 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  list(APPEND CMAKE_CXX_FLAGS "-g -O0")
-  list(APPEND CMAKE_C_FLAGS "-g -O0")
-else()
-  list(APPEND CMAKE_CXX_FLAGS "-O3")
-  list(APPEND CMAKE_C_FLAGS "-O3")
-endif()
-
 # Project name
 set(CMAKE_PROJECT_NAME micromouse-cli)
 
@@ -147,5 +139,8 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC ${DEF_LIST})
 ###
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
-  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic
+  -Wno-c99-designator -Wno-gnu-anonymous-struct -Wno-nested-anon-types # GNU Extensions
+  -Wno-unused-function # SimpleBLE
+  )
 endif()
