@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-enum class Task : uint8_t {
+enum class RobotTask : uint8_t {
   STOPPED = 0,
 
   //

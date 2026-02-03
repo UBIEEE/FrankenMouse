@@ -2,7 +2,7 @@
 
 #include <cstdio>
 #include <map>
-#include <micromouse_cli/audio/song.hpp>
+#include <micromouse_cli/robot/song.hpp>
 #include <micromouse_cli/ble_manager.hpp>
 #include <micromouse_cli/commands/command.hpp>
 #include <micromouse_cli/diagnostics.hpp>
@@ -24,9 +24,9 @@ class SongPlayCommand final : public Command {
   static constexpr const char* s_home_depot_theme = "HomeDepotTheme";
   static constexpr const char* s_nokia_ringtone = "NokiaRingtone";
 
-  static inline const std::map<std::string, Song> s_songs{
-      {s_home_depot_theme, Song::HOME_DEPOT},
-      {s_nokia_ringtone, Song::NOKIA},
+  static inline const std::map<std::string, RobotSong> s_songs{
+      {s_home_depot_theme, RobotSong::HOME_DEPOT},
+      {s_nokia_ringtone, RobotSong::NOKIA},
   };
 
   static inline const std::vector<std::string> s_non_options{
@@ -57,7 +57,7 @@ class SongPlayCommand final : public Command {
 
   bool m_is_done = false;
   bool m_keep_alive = false;
-  Song m_song = Song::NONE;
+  RobotSong m_song = RobotSong::NONE;
 
  public:
   SongPlayCommand(const CommandArguments args, BLEManager& ble_manager);

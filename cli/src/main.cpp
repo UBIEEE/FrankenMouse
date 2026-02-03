@@ -26,10 +26,10 @@ class Main {
 
   static const inline std::vector<Option> s_options{
       // clang-format off
-      {OPTION_HELP,             OptionName("help", "h"),                    false},
-      {OPTION_PERIPH_NAME,      OptionName("peripheral-name", "name", "p"), true},
-      {OPTION_ADAPTER,          OptionName("adapter", "a"),                 true},
-      {OPTION_DUMMY_PERIPHERAL, OptionName("dummy"),                        false},
+      {OPTION_HELP,             OptionName("help", "h"),                    false, nullptr, nullptr},
+      {OPTION_PERIPH_NAME,      OptionName("peripheral-name", "name", "p"), true, nullptr, nullptr},
+      {OPTION_ADAPTER,          OptionName("adapter", "a"),                 true, nullptr, nullptr},
+      {OPTION_DUMMY_PERIPHERAL, OptionName("dummy"),                        false, nullptr, nullptr},
       // clang-format on
   };
 

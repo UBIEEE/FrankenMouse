@@ -2,10 +2,15 @@
 
 #include <simpleble/SimpleBLE.h>
 
-#include <micromouse_cli/audio/song.hpp>
 #include <micromouse_cli/diagnostics.hpp>
 #include <micromouse_cli/drive/chassis_speeds.hpp>
-#include <micromouse_cli/main/task.hpp>
+#include <micromouse_cli/maze/cell.hpp>
+#include <micromouse_cli/maze/coordinate.hpp>
+#include <micromouse_cli/robot/command.hpp>
+#include <micromouse_cli/robot/error.hpp>
+#include <micromouse_cli/robot/song.hpp>
+#include <micromouse_cli/robot/status_topic.hpp>
+#include <micromouse_cli/robot/task.hpp>
 
 #include <functional>
 #include <optional>
@@ -13,39 +18,37 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #define DEFAULT_PERIPHERAL_NAME "PetersMicroMouse"
 #define DEFAULT_ADAPTER_INDEX 0
 
 enum BLEService {
   SERVICE_UNKNOWN = -1,
-  SERVICE_MUSIC,
-  SERVICE_VISION,
   SERVICE_MAIN,
+  SERVICE_VISION,
   SERVICE_DRIVE,
   SERVICE_MAZE,
   _SERVICE_COUNT,
 };
 
 enum BLECharacteristic {
-  CHAR_MUSIC_PLAY_SONG,
-  CHAR_MUSIC_IS_PLAYING,
+  CHAR_MAIN_TASK,
+  CHAR_MAIN_COMMAND,
+  CHAR_MAIN_ERROR,
+  CHAR_MAIN_SONG,
+  CHAR_MAIN_STATUS,
 
   CHAR_VISION_RAW_READINGS,
   CHAR_VISION_DISTANCES,
-  CHAR_VISION_CALIBRATE,
-
-  CHAR_MAIN_TASK,
-  CHAR_MAIN_APP_READY,
-  CHAR_MAIN_ERROR_CODE,
 
   CHAR_DRIVE_MOTOR_DATA,
   CHAR_DRIVE_IMU_DATA,
-  CHAR_DRIVE_PID_CONSTANTS,
+  CHAR_DRIVE_PID,
   CHAR_DRIVE_CHASSIS_SPEEDS,
 
-  CHAR_MAZE_RESET,
   CHAR_MAZE_CELL,
+  CHAR_MAZE_MOUSE_POSITION,
 
   _CHAR_COUNT,
 };
@@ -53,16 +56,11 @@ enum BLECharacteristic {
 // Topics sent to the robot.
 enum class BLETopicWrite {
   MAIN_TASK = CHAR_MAIN_TASK,
-  MAIN_APP_READY = CHAR_MAIN_APP_READY,
+  MAIN_COMMAND = CHAR_MAIN_COMMAND,
+  MAIN_SONG = CHAR_MAIN_SONG,
 
-  DRIVE_PID = CHAR_DRIVE_PID_CONSTANTS,
+  DRIVE_PID = CHAR_DRIVE_PID,
   DRIVE_CHASSIS_SPEEDS = CHAR_DRIVE_CHASSIS_SPEEDS,
-
-  VISION_CALIBRATE = CHAR_VISION_CALIBRATE,
-
-  MAZE_RESET = CHAR_MAZE_RESET,
-
-  MUSIC_PLAY_SONG = CHAR_MUSIC_PLAY_SONG,
 };
 
 template <BLETopicWrite Topic, typename Default = void>
@@ -70,7 +68,15 @@ struct BLETopicWriteData;
 
 template <>
 struct BLETopicWriteData<BLETopicWrite::MAIN_TASK> {
-  using type = Task;
+  using type = std::pair<RobotTask, uint8_t>;
+};
+template <>
+struct BLETopicWriteData<BLETopicWrite::MAIN_COMMAND> {
+  using type = RobotCommand;
+};
+template <>
+struct BLETopicWriteData<BLETopicWrite::MAIN_SONG> {
+  using type = RobotSong;
 };
 template <>
 struct BLETopicWriteData<BLETopicWrite::DRIVE_PID> {
@@ -79,10 +85,6 @@ struct BLETopicWriteData<BLETopicWrite::DRIVE_PID> {
 template <>
 struct BLETopicWriteData<BLETopicWrite::DRIVE_CHASSIS_SPEEDS> {
   using type = drive::ChassisSpeeds;
-};
-template <>
-struct BLETopicWriteData<BLETopicWrite::MUSIC_PLAY_SONG> {
-  using type = Song;
 };
 
 template <BLETopicWrite Topic>
@@ -93,21 +95,20 @@ struct BLETopicWriteData<Topic, void> {
 // Topics received from the robot.
 enum class BLETopicNotify {
   MAIN_TASK = CHAR_MAIN_TASK,
-  MAIN_ERROR = CHAR_MAIN_ERROR_CODE,
-
-  DRIVE_MOTOR_DATA = CHAR_DRIVE_MOTOR_DATA,
-  DRIVE_IMU_DATA = CHAR_DRIVE_IMU_DATA,
-  DRIVE_PID = CHAR_DRIVE_PID_CONSTANTS,
-  DRIVE_CHASSIS_SPEEDS = CHAR_DRIVE_CHASSIS_SPEEDS,
+  MAIN_ERROR = CHAR_MAIN_ERROR,
+  MAIN_SONG = CHAR_MAIN_SONG,
+  MAIN_STATUS = CHAR_MAIN_STATUS,
 
   VISION_RAW_READINGS = CHAR_VISION_RAW_READINGS,
   VISION_DISTANCES = CHAR_VISION_DISTANCES,
-  VISION_CALIBRATE = CHAR_VISION_CALIBRATE,
+
+  DRIVE_MOTOR_DATA = CHAR_DRIVE_MOTOR_DATA,
+  DRIVE_IMU_DATA = CHAR_DRIVE_IMU_DATA,
+  DRIVE_PID = CHAR_DRIVE_PID,
+  DRIVE_CHASSIS_SPEEDS = CHAR_DRIVE_CHASSIS_SPEEDS,
 
   MAZE_CELL = CHAR_MAZE_CELL,
-  // MAZE_MOUSE_POSITION = ,
-
-  MUSIC_IS_PLAYING = CHAR_MUSIC_IS_PLAYING,
+  MAZE_MOUSE_POSITION = CHAR_MAZE_MOUSE_POSITION,
 };
 
 template <BLETopicNotify Topic, typename Default = void>
@@ -115,7 +116,27 @@ struct BLETopicNotifyData;
 
 template <>
 struct BLETopicNotifyData<BLETopicNotify::MAIN_TASK> {
-  using type = Task;
+  using type = std::pair<RobotTask, uint8_t>;
+};
+template <>
+struct BLETopicNotifyData<BLETopicNotify::MAIN_ERROR> {
+  using type = RobotError;
+};
+template <>
+struct BLETopicNotifyData<BLETopicNotify::MAIN_SONG> {
+  using type = RobotSong;
+};
+template <>
+struct BLETopicNotifyData<BLETopicNotify::MAIN_STATUS> {
+  using type = std::pair<RobotStatusTopic, uint8_t>;
+};
+template <>
+struct BLETopicNotifyData<BLETopicNotify::VISION_RAW_READINGS> {
+  using type = float[4];
+};
+template <>
+struct BLETopicNotifyData<BLETopicNotify::VISION_DISTANCES> {
+  using type = float[4];
 };
 template <>
 struct BLETopicNotifyData<BLETopicNotify::DRIVE_MOTOR_DATA> {
@@ -134,20 +155,12 @@ struct BLETopicNotifyData<BLETopicNotify::DRIVE_CHASSIS_SPEEDS> {
   using type = drive::ChassisSpeeds;
 };
 template <>
-struct BLETopicNotifyData<BLETopicNotify::VISION_RAW_READINGS> {
-  using type = float[4];
+struct BLETopicNotifyData<BLETopicNotify::MAZE_CELL> {
+  using type = std::pair<Coordinate, Cell>;
 };
 template <>
-struct BLETopicNotifyData<BLETopicNotify::VISION_DISTANCES> {
-  using type = float[4];
-};
-template <>
-struct BLETopicNotifyData<BLETopicNotify::VISION_CALIBRATE> {
-  using type = bool;
-};
-template <>
-struct BLETopicNotifyData<BLETopicNotify::MUSIC_IS_PLAYING> {
-  using type = bool;
+struct BLETopicNotifyData<BLETopicNotify::MAZE_MOUSE_POSITION> {
+  using type = Coordinate;
 };
 
 template <BLETopicNotify Topic>
@@ -157,7 +170,7 @@ struct BLETopicNotifyData<Topic, void> {
 
 class BLEManager final {
   std::string m_peripheral_search_name;
-  int m_adapter_index;
+  size_t m_adapter_index;
 
   SimpleBLE::Adapter m_adapter;
   mutable std::optional<SimpleBLE::Safe::Peripheral> m_peripheral;
@@ -181,9 +194,10 @@ class BLEManager final {
   OnDisconnectCallback m_on_disconnect_callback;
 
  public:
-  BLEManager(std::string_view peripheral_name = DEFAULT_PERIPHERAL_NAME,
-             int adapter_index = DEFAULT_ADAPTER_INDEX,
-             bool dummy = false);
+  explicit BLEManager(
+      std::string_view peripheral_name = DEFAULT_PERIPHERAL_NAME,
+      size_t adapter_index = DEFAULT_ADAPTER_INDEX,
+      bool dummy = false);
   ~BLEManager();
 
   static const char* name() { return "ble"; }
@@ -226,15 +240,17 @@ class BLEManager final {
   // Notify
   //
 
-  struct MusicNotifyData {
-    bool is_playing = false;
+  struct MainNotifyData {
+    std::pair<RobotTask, uint8_t> task = {RobotTask::STOPPED, 0};
+    std::map<uint32_t, RobotError> errors;
+    RobotSong song;
+    std::map<RobotStatusTopic, uint8_t> statusTopics;
   };
-  const MusicNotifyData& music_data() const { return m_music_data; }
+  const MainNotifyData& main_data() const { return m_main_data; }
 
   struct VisionNotifyData {
     float raw_readings[4] = {0};
     float distances[4] = {0};
-    bool is_calibrated = false;
   };
   const VisionNotifyData& vision_data() const { return m_vision_data; }
 
@@ -246,14 +262,9 @@ class BLEManager final {
   };
   const DriveNotifyData& drive_data() const { return m_drive_data; }
 
-  struct MainNotifyData {
-    Task task = Task::STOPPED;
-    uint8_t error_code = 0;
-  };
-  const MainNotifyData& main_data() const { return m_main_data; }
-
   struct MazeNotifyData {
-    uint8_t cell = 0;
+    Cell cells[16 * 16] = {};
+    Coordinate mouse_position;
   };
   const MazeNotifyData& maze_data() const { return m_maze_data; }
 
@@ -264,7 +275,16 @@ class BLEManager final {
     if constexpr (Topic == MAIN_TASK) {
       return m_main_data.task;
     } else if constexpr (Topic == MAIN_ERROR) {
-      return m_main_data.error_code;
+      static_assert(false, "Use main_data().errors to access all errors");
+    } else if constexpr (Topic == MAIN_SONG) {
+      return m_main_data.song;
+    } else if constexpr (Topic == MAIN_STATUS) {
+      static_assert(false,
+                    "Use main_data().statusTopics to access all status topics");
+    } else if constexpr (Topic == VISION_RAW_READINGS) {
+      return m_vision_data.raw_readings;
+    } else if constexpr (Topic == VISION_DISTANCES) {
+      return m_vision_data.distances;
     } else if constexpr (Topic == DRIVE_MOTOR_DATA) {
       return m_drive_data.motor_data;
     } else if constexpr (Topic == DRIVE_IMU_DATA) {
@@ -273,16 +293,10 @@ class BLEManager final {
       return m_drive_data.pid_data;
     } else if constexpr (Topic == DRIVE_CHASSIS_SPEEDS) {
       return m_drive_data.chassis_speeds;
-    } else if constexpr (Topic == VISION_RAW_READINGS) {
-      return m_vision_data.raw_readings;
-    } else if constexpr (Topic == VISION_DISTANCES) {
-      return m_vision_data.distances;
-    } else if constexpr (Topic == VISION_CALIBRATE) {
-      return m_vision_data.is_calibrated;
     } else if constexpr (Topic == MAZE_CELL) {
-      return m_maze_data.cell;
-    } else if constexpr (Topic == MUSIC_IS_PLAYING) {
-      return m_music_data.is_playing;
+      static_assert(false, "Use maze_data().cells to access all maze cells");
+    } else if constexpr (Topic == MAZE_MOUSE_POSITION) {
+      return m_maze_data.mouse_position;
     } else
       static_assert(false, "Unsupported notify type");
   }
@@ -326,31 +340,42 @@ class BLEManager final {
   void notify(BLECharacteristic char_id, NotificationFunc callback);
 
   template <BLETopicNotify Topic>
-  NotificationFunc make_notification_callback(
-      BLETopicNotifyData<Topic>::type& data) {
-    return [&](SimpleBLE::ByteArray payload) {
-      using ValueType = BLETopicNotifyData<Topic>::type;
-      constexpr size_t ValueSize = sizeof(ValueType);
-      if (payload.size() != ValueSize) {
-        report_warning(name(), "notification for topic %d has invalid size %zu",
-                       static_cast<int>(Topic), payload.size());
-        return;
-      }
+  static void notification_callback(BLETopicNotifyData<Topic>::type& data,
+                                    SimpleBLE::ByteArray payload) {
+    using ValueType = BLETopicNotifyData<Topic>::type;
+    constexpr size_t ValueSize = sizeof(ValueType);
+    if (payload.size() != ValueSize) {
+      report_warning(name(), "notification for topic %d has invalid size %zu",
+                     static_cast<int>(Topic), payload.size());
+      return;
+    }
 
-      (void)std::memcpy(&data, payload.data(), ValueSize);
-    };
-  }
+    (void)std::memcpy(&data, payload.data(), ValueSize);
+  };
 
   template <BLETopicNotify Topic>
   void notify(BLETopicNotifyData<Topic>::type& data) {
     notify(static_cast<BLECharacteristic>(Topic),
-           make_notification_callback<Topic>(data));
+           [&](SimpleBLE::ByteArray payload) {
+             notification_callback<Topic>(data, payload);
+           });
+  }
+
+  template <BLETopicNotify Topic>
+  void notify(
+      std::function<void(const typename BLETopicNotifyData<Topic>::type& data)>
+          callback) {
+    notify(static_cast<BLECharacteristic>(Topic),
+           [&](SimpleBLE::ByteArray payload) {
+             typename BLETopicNotifyData<Topic>::type data;
+             notification_callback<Topic>(data, payload);
+             callback(data);
+           });
   }
 
  private:
-  MusicNotifyData m_music_data;
+  MainNotifyData m_main_data;
   DriveNotifyData m_drive_data;
   VisionNotifyData m_vision_data;
-  MainNotifyData m_main_data;
   MazeNotifyData m_maze_data;
 };

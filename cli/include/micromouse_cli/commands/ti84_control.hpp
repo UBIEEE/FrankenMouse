@@ -28,9 +28,9 @@ class TI84ControlCommand final : public Command {
 
   static PromptInfo prompt_info() {
     return PromptInfo{
-        .options = s_options,
         .usage_text = "ti84-control [port] [options]",
         .short_description_text = "Control the MicroMouse using a TI-84 Plus CE",
+        .options = s_options,
         .can_accept_file_paths = true,
     };
   }
@@ -45,6 +45,8 @@ class TI84ControlCommand final : public Command {
   int m_baudrate = 9600;
 
   int m_serial_fd = -1;
+
+  bool m_was_task_set = false;
 
  public:
   TI84ControlCommand(const CommandArguments args, BLEManager& ble_manager);

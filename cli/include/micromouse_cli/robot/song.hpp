@@ -2,14 +2,21 @@
 
 #include <cstdint>
 
-enum class Song : uint8_t {
+enum class RobotSong : uint8_t {
   NONE = 0,
-  STARTUP,
+
+  // 1-127 Songs
+
+  HOME_DEPOT = 1,
+  NOKIA,
+
+  _SONG_COUNT,
+
+  // 128-255 Other noises
+
+  STARTUP = 128,
   BLE_CONECT,
   BLE_DISCONECT,
-
-  HOME_DEPOT = 4,
-  NOKIA = 5,
 
   BEGIN_SEARCH,
   BEGIN_FAST_SOLVE,

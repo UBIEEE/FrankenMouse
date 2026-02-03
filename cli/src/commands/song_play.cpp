@@ -3,21 +3,21 @@
 SongPlayCommand::SongPlayCommand(const CommandArguments args,
                                  BLEManager& ble_manager)
     : Command(args), m_arg_parser(args, s_options), m_ble_manager(ble_manager) {
-  if (!validate_args() && m_song != Song::NONE)
+  if (!validate_args() && m_song != RobotSong::NONE)
     return;
 
-  m_ble_manager.write<BLETopicWrite::MUSIC_PLAY_SONG>(m_song);
+  m_ble_manager.write<BLETopicWrite::MAIN_SONG>(m_song);
 }
 
 SongPlayCommand::~SongPlayCommand() {
   if (!m_keep_alive)
     return;
 
-  m_ble_manager.write<BLETopicWrite::MUSIC_PLAY_SONG>(Song::NONE);
+  m_ble_manager.write<BLETopicWrite::MAIN_SONG>(RobotSong::NONE);
 }
 
 CommandProcessResult SongPlayCommand::process() {
-  if (m_ble_manager.get_data<BLETopicNotify::MUSIC_IS_PLAYING>()) {
+  if (m_ble_manager.get_data<BLETopicNotify::MAIN_SONG>() != RobotSong::NONE) {
     return CommandProcessResult::CONTINUE;
   }
   return CommandProcessResult::DONE;

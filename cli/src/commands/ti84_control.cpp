@@ -28,8 +28,11 @@ union ControlMessage {
   /*implicit*/ operator uint8_t() const { return data; }
 };
 
-TI84ControlCommand::TI84ControlCommand(const CommandArguments args, BLEManager& ble_manager)
-    : Command(args), m_arg_parser(m_args, s_options), m_ble_manager(ble_manager) {
+TI84ControlCommand::TI84ControlCommand(const CommandArguments args,
+                                       BLEManager& ble_manager)
+    : Command(args),
+      m_arg_parser(m_args, s_options),
+      m_ble_manager(ble_manager) {
   if (!validate_args())
     return;
 
@@ -41,7 +44,8 @@ TI84ControlCommand::TI84ControlCommand(const CommandArguments args, BLEManager& 
     return;
   }
 
-  m_ble_manager.write<BLETopicWrite::MAIN_TASK>(Task::MANUAL_CHASSIS_SPEEDS);
+  m_ble_manager.write<BLETopicWrite::MAIN_TASK>(
+      std::make_pair(RobotTask::MANUAL_CHASSIS_SPEEDS, 0));
   m_connected = true;
 }
 
@@ -49,13 +53,20 @@ TI84ControlCommand::~TI84ControlCommand() {
   close_serial_port();
 
   if (m_connected) {
-    m_ble_manager.write<BLETopicWrite::MAIN_TASK>(Task::STOPPED);
+    m_ble_manager.write<BLETopicWrite::MAIN_TASK>(
+        std::make_pair(RobotTask::STOPPED, 0));
   }
 }
 
 CommandProcessResult TI84ControlCommand::process() {
   if (!m_connected)
     return CommandProcessResult::DONE;
+
+  bool task_set = m_ble_manager.get_data<BLETopicNotify::MAIN_TASK>().first ==
+                  RobotTask::MANUAL_CHASSIS_SPEEDS;
+  if (m_was_task_set && !task_set)
+    return CommandProcessResult::DONE;
+  m_was_task_set = task_set;
 
   uint8_t data;
 
@@ -82,7 +93,9 @@ CommandProcessResult TI84ControlCommand::process() {
   drive::ChassisSpeeds speeds = to_chassis_speeds(data);
   display_control_message(data, speeds);
 
-  m_ble_manager.write<BLETopicWrite::DRIVE_CHASSIS_SPEEDS>(speeds);
+  if (task_set) {
+    m_ble_manager.write<BLETopicWrite::DRIVE_CHASSIS_SPEEDS>(speeds);
+  }
 
   return CommandProcessResult::CONTINUE;
 }
