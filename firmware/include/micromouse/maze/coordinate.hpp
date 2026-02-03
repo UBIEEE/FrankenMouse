@@ -16,13 +16,13 @@ class Coordinate {
   constexpr Coordinate(uint8_t x, uint8_t y)
       : m_index(y * MazeDimensions::WIDTH_CELLS + x) {}
 
-  constexpr Coordinate(std::pair<uint8_t, uint8_t> coord)
+  constexpr explicit Coordinate(std::pair<uint8_t, uint8_t> coord)
       : Coordinate(coord.first, coord.second) {}
 
   explicit Coordinate(uint8_t index) : m_index(index) {}
 
-  operator uint8_t() const { return m_index; }
-  operator std::pair<uint8_t, uint8_t>() const { return to_pair(); }
+  /*implicit*/ operator uint8_t() const { return m_index; }
+  explicit operator std::pair<uint8_t, uint8_t>() const { return to_pair(); }
 
   uint8_t x() const { return m_index % MazeDimensions::WIDTH_CELLS; }
   uint8_t y() const { return m_index / MazeDimensions::WIDTH_CELLS; }
