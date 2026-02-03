@@ -14,8 +14,8 @@ class ButtonsImpl : public hardware::Buttons, public rclcpp::Node {
  public:
   ButtonsImpl();
 
-  void register_btn1_callback(std::function<void()> cb) { m_btn1_cb = cb; }
-  void register_btn2_callback(std::function<void()> cb) { m_btn2_cb = cb; }
+  void register_button_1_callback(std::function<void()> cb) { m_btn1_cb = cb; }
+  void register_button_2_callback(std::function<void()> cb) { m_btn2_cb = cb; }
 
  private:
   void button_1_callback(const std_msgs::msg::Bool& msg);

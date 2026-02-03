@@ -7,4 +7,4 @@ class BuzzerImpl : public hardware::Buzzer {
   void play_note(audio::Note note) override;
 };
 
-BuzzerImpl& get_mouse_v2_buzzer();
+BuzzerImpl& get_mouse_v3_buzzer();

@@ -75,11 +75,11 @@ void BuzzerImpl::play_note(audio::Note note) {
   htim16.Instance->CCR1 = aar / 2;
 }
 
-BuzzerImpl& get_mouse_v2_buzzer() {
+BuzzerImpl& get_mouse_v3_buzzer() {
   static BuzzerImpl s_buzzer;
   return s_buzzer;
 }
 
 hardware::Buzzer& get_platform_buzzer() {
-  return get_mouse_v2_buzzer();
+  return get_mouse_v3_buzzer();
 }

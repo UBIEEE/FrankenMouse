@@ -89,4 +89,4 @@ class DrivetrainImpl : public hardware::Drivetrain {
                          const float* angular_pid);
 };
 
-DrivetrainImpl& get_mouse_v2_drivetrain();
+DrivetrainImpl& get_mouse_v3_drivetrain();

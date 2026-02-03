@@ -215,11 +215,11 @@ void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef* hi2c) {
   imu->read_complete_handler();
 }
 
-IMUImpl& get_mouse_v2_imu() {
+IMUImpl& get_mouse_v3_imu() {
   static IMUImpl s_imu{IMUImpl::Config{}};
   return s_imu;
 }
 
 hardware::IMU& get_platform_imu() {
-  return get_mouse_v2_imu();
+  return get_mouse_v3_imu();
 }

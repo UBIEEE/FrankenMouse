@@ -218,11 +218,11 @@ void DrivetrainImpl_UpdatePIDValues(const float* pid) {
   d->update_pid_values(translational, angular);
 }
 
-DrivetrainImpl& get_mouse_v2_drivetrain() {
+DrivetrainImpl& get_mouse_v3_drivetrain() {
   static DrivetrainImpl s_drivetrain;
   return s_drivetrain;
 }
 
 hardware::Drivetrain& get_platform_drivetrain() {
-  return get_mouse_v2_drivetrain();
+  return get_mouse_v3_drivetrain();
 }

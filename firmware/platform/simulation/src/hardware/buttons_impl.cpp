@@ -4,10 +4,10 @@ using namespace std::placeholders;
 
 ButtonsImpl::ButtonsImpl() : Node("micromouse_buttons") {
   m_button1_sub = this->create_subscription<std_msgs::msg::Bool>(
-      "/simulation/buttons/button1", 10,
+      "/simulation/buttons/button_1", 10,
       std::bind(&ButtonsImpl::button_1_callback, this, _1));
   m_button2_sub = this->create_subscription<std_msgs::msg::Bool>(
-      "/simulation/buttons/button2", 10,
+      "/simulation/buttons/button_2", 10,
       std::bind(&ButtonsImpl::button_2_callback, this, _1));
 }
 

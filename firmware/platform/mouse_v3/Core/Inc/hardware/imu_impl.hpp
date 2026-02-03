@@ -145,4 +145,4 @@ class IMUImpl : public hardware::IMU {
   void read_complete_handler();
 };
 
-IMUImpl& get_mouse_v2_imu();
+IMUImpl& get_mouse_v3_imu();

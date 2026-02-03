@@ -10,8 +10,12 @@ class ButtonsImpl : public hardware::Buttons {
   std::function<void()> m_btn2_cb;
 
  public:
-  void register_btn1_callback(std::function<void()> cb) { m_btn1_cb = cb; }
-  void register_btn2_callback(std::function<void()> cb) { m_btn2_cb = cb; }
+  void register_button_1_callback(std::function<void()> cb) override {
+    m_btn1_cb = cb;
+  }
+  void register_button_2_callback(std::function<void()> cb) override {
+    m_btn2_cb = cb;
+  }
 
  private:
   friend void ::HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
@@ -27,4 +31,4 @@ class ButtonsImpl : public hardware::Buttons {
   }
 };
 
-ButtonsImpl& get_mouse_v2_buttons();
+ButtonsImpl& get_mouse_v3_buttons();
