@@ -3,6 +3,7 @@
 #include <micromouse/robot.h>
 #include <micromouse/audio/audio_player.hpp>
 #include <micromouse/drive/drive_controller.hpp>
+#include <micromouse/drive/kinematics.hpp>
 #include <micromouse/feedback_topic.hpp>
 #include <micromouse/hardware/battery_status.hpp>
 #include <micromouse/hardware/buttons.hpp>
@@ -16,14 +17,14 @@
 #include <micromouse/maze/coordinate.hpp>
 #include <micromouse/maze/maze.hpp>
 #include <micromouse/navigation/navigator.hpp>
+#include <micromouse/navigation/solvers/flood_fill.hpp>
 #include <micromouse/singleton.hpp>
-#include <micromouse/solver/flood_fill.hpp>
 #include <micromouse/vision/vision.hpp>
 
 class Robot : public Singleton<Robot> {
   drive::SpeedConfig m_speeds{};
   maze::Maze m_maze;
-  FloodFillSolver m_floodfill{m_maze};
+  navigation::FloodFillSolver m_floodfill{m_maze};
 
   // Hardware Components
 

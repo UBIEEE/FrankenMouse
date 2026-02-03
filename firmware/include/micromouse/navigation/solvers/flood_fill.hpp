@@ -1,7 +1,9 @@
 #pragma once
 
 #include <micromouse/maze/maze_dimensions.hpp>
-#include <micromouse/solver/solver.hpp>
+#include <micromouse/navigation/solvers/solver.hpp>
+
+namespace navigation {
 
 class FloodFillSolver : public Solver {
   uint8_t m_cell_values[maze::MazeDimensions::TOTAL_CELLS];
@@ -18,3 +20,5 @@ class FloodFillSolver : public Solver {
 
   Direction smallest_neighbor(maze::Coordinate coord) const;
 };
+
+}  // namespace navigation

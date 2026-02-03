@@ -3,7 +3,7 @@
 #include <micromouse/drive/drive_controller.hpp>
 #include <micromouse/maze/maze.hpp>
 #include <micromouse/vision/vision.hpp>
-#include <micromouse/solver/solver.hpp>
+#include <micromouse/navigation/solvers/solver.hpp>
 #include <micromouse/subsystem.hpp>
 
 namespace navigation {
