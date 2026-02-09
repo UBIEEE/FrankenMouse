@@ -36,7 +36,7 @@ class HelpCommand final : public Command {
     help(name(), commands.at(name()).prompt_info, stdout);
   }
 
-  bool is_done() const override { return true; }
+  CommandStatus status() const override { return CommandStatus::DONE; }
 };
 
 void Prompt::register_command(const char* name,

@@ -2,24 +2,21 @@
 
 SongPlayCommand::SongPlayCommand(const CommandArguments args, CommunicationManager& communication_manager)
     : Command(args), m_arg_parser(args, s_options), m_communication_manager(communication_manager) {
-  if (!validate_args() && m_song != RobotSong::NONE)
+  if (!validate_args())
     return;
 
   m_communication_manager.write<FeedbackTopicWrite::MAIN_SONG>(m_song);
 }
 
 SongPlayCommand::~SongPlayCommand() {
-  if (!m_keep_alive)
-    return;
-
-  m_communication_manager.write<FeedbackTopicWrite::MAIN_SONG>(RobotSong::NONE);
+  if (m_keep_alive && m_song != RobotSong::NONE) {
+    m_communication_manager.write<FeedbackTopicWrite::MAIN_SONG>(RobotSong::NONE);
+  }
 }
 
-CommandProcessResult SongPlayCommand::process() {
-  if (m_communication_manager.get_value<FeedbackTopicNotify::MAIN_SONG>() != RobotSong::NONE) {
-    return CommandProcessResult::CONTINUE;
-  }
-  return CommandProcessResult::DONE;
+void SongPlayCommand::process() {
+  // TODO: Wait a second for robot to start playing the song
+  m_is_done = (m_communication_manager.get_value<FeedbackTopicNotify::MAIN_SONG>() == RobotSong::NONE);
 }
 
 bool SongPlayCommand::validate_args() {
@@ -36,7 +33,7 @@ bool SongPlayCommand::validate_args() {
     return false;
   }
 
-  // Port
+  // Song
 
   if (non_option_args.empty()) {
     report_error(name(), "missing song argument");

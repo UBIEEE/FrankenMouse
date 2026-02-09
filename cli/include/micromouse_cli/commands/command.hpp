@@ -12,9 +12,9 @@
 
 using CommandArguments = std::vector<std::string>;
 
-enum class CommandProcessResult {
+enum class CommandStatus {
   DONE,
-  CONTINUE,
+  CONTINUING,
   EXIT_ALL,
 };
 
@@ -28,15 +28,16 @@ class Command {
   virtual ~Command() = default;
 
   /**
-   * Process the command. Return true if done.
-   *
-   * @return True if done, false if it should keep running.
+   * Process the command, called continuously as long as status() returns CONTINUING.
    */
-  virtual CommandProcessResult process() { return CommandProcessResult::DONE; }
+  virtual void process() {}
 
-  virtual bool is_done() const { return false; }
-
-  explicit operator bool() const { return is_done(); }
+  /**
+   * Get the status of the command, called continuously to determine whether to continue processing.
+   *
+   * @return The status
+   */
+  virtual CommandStatus status() const = 0;
 
   /**
    * Information about the command, used by the prompt for hints and tab completion, and help descriptions.

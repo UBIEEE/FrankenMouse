@@ -251,15 +251,15 @@ class Main {
 
     s_signal_received = 0;
 
-    while (!s_signal_received && m_communication_manager->is_connected() && !m_command->is_done()) {
-      CommandProcessResult result = m_command->process();
-      if (result == CommandProcessResult::EXIT_ALL)
-        return true;
-      if (result != CommandProcessResult::CONTINUE)
+    CommandStatus final_status;
+
+    while (!s_signal_received && m_communication_manager->is_connected()) {
+      if ((final_status = m_command->status()) != CommandStatus::CONTINUING)
         break;
+      m_command->process();
     }
 
-    return false;
+    return final_status == CommandStatus::EXIT_ALL;
   }
 };
 

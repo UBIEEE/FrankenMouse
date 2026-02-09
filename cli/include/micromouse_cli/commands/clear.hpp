@@ -19,4 +19,6 @@ class ClearCommand final : public Command {
     (void)fprintf(stdout, CLEAR_SCREEN());
     (void)fflush(stdout);
   }
+
+  CommandStatus status() const override { return CommandStatus::DONE; }
 };
