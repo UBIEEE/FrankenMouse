@@ -38,6 +38,7 @@ class TI84ControlCommand final : public Command {
   CommunicationManager& m_communication_manager;
 
   bool m_connected = false;
+  bool m_is_done = true;
 
   std::string m_port;
   int m_baudrate = 9600;
@@ -50,9 +51,9 @@ class TI84ControlCommand final : public Command {
   TI84ControlCommand(const CommandArguments args, CommunicationManager& communication_manager);
   ~TI84ControlCommand();
 
-  bool is_done() const override { return !m_connected; }
+  void process() override;
 
-  CommandProcessResult process() override;
+  CommandStatus status() const override { return m_is_done ? CommandStatus::DONE : CommandStatus::CONTINUING; }
 
  private:
   // Returns true if the command should keep running.

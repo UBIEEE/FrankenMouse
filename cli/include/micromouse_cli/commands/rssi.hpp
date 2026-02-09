@@ -16,11 +16,9 @@ class RSSICommand final : public Command {
     };
   }
 
-  // Instant
-  bool is_done() const override { return true; }
-
- public:
   RSSICommand(const CommandArguments args, CommunicationManager& communication_manager) : Command(args) {
     report_status(name(), "%d", communication_manager.peripheral_rssi());
   }
+
+  CommandStatus status() const override { return CommandStatus::DONE; }
 };

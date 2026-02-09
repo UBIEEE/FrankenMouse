@@ -1,12 +1,13 @@
 #pragma once
 
-#include <cstdio>
-#include <map>
 #include <micromouse_cli/robot/song.hpp>
 #include <micromouse_cli/communication/communication_manager.hpp>
 #include <micromouse_cli/commands/command.hpp>
 #include <micromouse_cli/diagnostics.hpp>
 #include <micromouse_cli/options/argument_parser.hpp>
+#include <cstdio>
+#include <map>
+#include <string>
 
 class SongPlayCommand final : public Command {
   enum {
@@ -21,15 +22,18 @@ class SongPlayCommand final : public Command {
       // clang-format on
   };
 
+  static constexpr const char* s_stop = "Stop";
   static constexpr const char* s_home_depot_theme = "HomeDepotTheme";
   static constexpr const char* s_nokia_ringtone = "NokiaRingtone";
 
   static inline const std::map<std::string, RobotSong> s_songs{
+      {s_stop, RobotSong::NONE},
       {s_home_depot_theme, RobotSong::HOME_DEPOT},
       {s_nokia_ringtone, RobotSong::NOKIA},
   };
 
   static inline const std::vector<std::string> s_non_options{
+      s_stop,
       s_home_depot_theme,
       s_nokia_ringtone,
   };
@@ -53,7 +57,7 @@ class SongPlayCommand final : public Command {
   ArgumentParser m_arg_parser;
   CommunicationManager& m_communication_manager;
 
-  bool m_is_done = false;
+  bool m_is_done = true;
   bool m_keep_alive = false;
   RobotSong m_song = RobotSong::NONE;
 
@@ -61,9 +65,9 @@ class SongPlayCommand final : public Command {
   SongPlayCommand(const CommandArguments args, CommunicationManager& communication_manager);
   ~SongPlayCommand();
 
-  bool is_done() const override { return m_is_done; }
+  void process() override;
 
-  CommandProcessResult process() override;
+  CommandStatus status() const override { return m_is_done ? CommandStatus::DONE : CommandStatus::CONTINUING; }
 
  private:
   // Returns true if the command should keep running.

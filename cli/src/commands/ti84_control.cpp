@@ -44,6 +44,7 @@ TI84ControlCommand::TI84ControlCommand(const CommandArguments args,
   m_communication_manager.write<FeedbackTopicWrite::MAIN_TASK>(
       std::make_pair(RobotTask::MANUAL_CHASSIS_SPEEDS, 0));
   m_connected = true;
+  m_is_done = false;
 }
 
 TI84ControlCommand::~TI84ControlCommand() {
@@ -54,14 +55,13 @@ TI84ControlCommand::~TI84ControlCommand() {
   }
 }
 
-CommandProcessResult TI84ControlCommand::process() {
-  if (!m_connected)
-    return CommandProcessResult::DONE;
-
+void TI84ControlCommand::process() {
   bool task_set = m_communication_manager.get_value<FeedbackTopicNotify::MAIN_TASK>().first ==
                   RobotTask::MANUAL_CHASSIS_SPEEDS;
-  if (m_was_task_set && !task_set)
-    return CommandProcessResult::DONE;
+  if (m_was_task_set && !task_set) {
+    m_is_done = true;
+    return;
+  }
   m_was_task_set = task_set;
 
   uint8_t data;
@@ -70,15 +70,16 @@ CommandProcessResult TI84ControlCommand::process() {
   if (bytes_read < 0) {
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
       // No data available, continue waiting
-      return CommandProcessResult::CONTINUE;
+      return;
     }
 
     report_error(name(), "failed to read from serial port: %s", strerror(errno));
-    return CommandProcessResult::DONE;
+    m_is_done = true;  // Stop command on error.
+    return;
 
   } else if (bytes_read != sizeof(data)) {
     report_warning(name(), "read %d bytes?", bytes_read);
-    return CommandProcessResult::CONTINUE;
+    return;
   }
 
   if (!validate_control_message(data)) {
@@ -91,8 +92,6 @@ CommandProcessResult TI84ControlCommand::process() {
   if (task_set) {
     m_communication_manager.write<FeedbackTopicWrite::DRIVE_CHASSIS_SPEEDS>(speeds);
   }
-
-  return CommandProcessResult::CONTINUE;
 }
 
 bool TI84ControlCommand::validate_args() {
