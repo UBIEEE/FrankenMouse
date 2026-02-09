@@ -1,23 +1,22 @@
 #include <micromouse_cli/commands/song_play.hpp>
 
-SongPlayCommand::SongPlayCommand(const CommandArguments args,
-                                 BLEManager& ble_manager)
-    : Command(args), m_arg_parser(args, s_options), m_ble_manager(ble_manager) {
+SongPlayCommand::SongPlayCommand(const CommandArguments args, CommunicationManager& communication_manager)
+    : Command(args), m_arg_parser(args, s_options), m_communication_manager(communication_manager) {
   if (!validate_args() && m_song != RobotSong::NONE)
     return;
 
-  m_ble_manager.write<BLETopicWrite::MAIN_SONG>(m_song);
+  m_communication_manager.write<FeedbackTopicWrite::MAIN_SONG>(m_song);
 }
 
 SongPlayCommand::~SongPlayCommand() {
   if (!m_keep_alive)
     return;
 
-  m_ble_manager.write<BLETopicWrite::MAIN_SONG>(RobotSong::NONE);
+  m_communication_manager.write<FeedbackTopicWrite::MAIN_SONG>(RobotSong::NONE);
 }
 
 CommandProcessResult SongPlayCommand::process() {
-  if (m_ble_manager.get_data<BLETopicNotify::MAIN_SONG>() != RobotSong::NONE) {
+  if (m_communication_manager.get_value<FeedbackTopicNotify::MAIN_SONG>() != RobotSong::NONE) {
     return CommandProcessResult::CONTINUE;
   }
   return CommandProcessResult::DONE;

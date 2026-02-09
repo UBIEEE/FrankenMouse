@@ -1,7 +1,7 @@
 #pragma once
 
 #include <functional>
-#include <micromouse_cli/ble_manager.hpp>
+#include <micromouse_cli/communication/communication_manager.hpp>
 #include <micromouse_cli/commands/command.hpp>
 #include <optional>
 #include <span>
@@ -12,7 +12,7 @@
 using MakeCommandFunc = std::function<Command*(CommandArguments)>;
 
 class Prompt final {
-  BLEManager& m_ble_manager;
+  CommunicationManager& m_communication_manager;
 
  public:
   struct CommandInfo {
@@ -30,7 +30,10 @@ class Prompt final {
   using CommandIterator = decltype(m_commands)::const_iterator;
 
  public:
-  explicit Prompt(BLEManager& ble_manager) : m_ble_manager(ble_manager) { configure(); }
+  explicit Prompt(CommunicationManager& communication_manager)
+      : m_communication_manager(communication_manager) {
+    configure();
+  }
   ~Prompt() = default;
 
   /**
@@ -48,8 +51,8 @@ class Prompt final {
     }
 
     MakeCommandFunc make_command_func = [&](CommandArguments args) -> Command* {
-      if constexpr (CommandType_ConstructibleFromArgumentsAndBLEManager<T>) {
-        return new T(args, m_ble_manager);
+      if constexpr (CommandType_ConstructibleFromArgumentsAndCommunicationManager<T>) {
+        return new T(args, m_communication_manager);
       } else {
         return new T(args);
       }
@@ -67,7 +70,7 @@ class Prompt final {
     // Signal received, or error occurred.
     SIGNAL_OR_ERROR,
 
-    BLE_NOT_CONNECTED,
+    ROBOT_NOT_CONNECTED,
   };
 
   /**

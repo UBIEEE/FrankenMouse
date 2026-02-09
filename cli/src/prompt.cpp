@@ -19,7 +19,7 @@ class HelpCommand final : public Command {
   static const char* name() { return "help"; }
 
   HelpCommand(const CommandArguments args,
-      const std::unordered_map<std::string, Prompt::CommandInfo>& commands)
+              const std::unordered_map<std::string, Prompt::CommandInfo>& commands)
       : Command(args) {
     if (args.size() > 1) {
       Prompt::CommandIterator it = commands.find(args[1]);
@@ -56,8 +56,8 @@ Prompt::Result Prompt::readline(Command** command) {
   assert(command != nullptr);
   *command = nullptr;
 
-  if (!m_ble_manager.is_connected())
-    return Result::BLE_NOT_CONNECTED;
+  if (!m_communication_manager.is_connected())
+    return Result::ROBOT_NOT_CONNECTED;
 
   m_ble_disconnect_stop = false;
 
@@ -69,8 +69,7 @@ Prompt::Result Prompt::readline(Command** command) {
     if (!input) {
       // Determine if the prompt was stopped due to ble disconnection or signal
       // caught by isocline.
-      return m_ble_disconnect_stop ? Result::BLE_NOT_CONNECTED
-                                   : Result::SIGNAL_OR_ERROR;
+      return m_ble_disconnect_stop ? Result::ROBOT_NOT_CONNECTED : Result::SIGNAL_OR_ERROR;
     }
 
     result = parse_command_invocation(input);
@@ -135,7 +134,7 @@ void Prompt::add_help_command() {
 
 void Prompt::configure_ble_disconnect_callback() {
   // Stop the prompt when the BLE connection is dropped.
-  m_ble_manager.set_on_disconnect_callback([&]() {
+  m_communication_manager.set_on_disconnect_callback([&]() {
     ic_async_stop();
     m_ble_disconnect_stop = true;
     std::this_thread::sleep_for(1ms);  // Nothing to see here...
