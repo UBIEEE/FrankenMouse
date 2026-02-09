@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <map>
 #include <micromouse_cli/robot/song.hpp>
-#include <micromouse_cli/ble_manager.hpp>
+#include <micromouse_cli/communication/communication_manager.hpp>
 #include <micromouse_cli/commands/command.hpp>
 #include <micromouse_cli/diagnostics.hpp>
 #include <micromouse_cli/options/argument_parser.hpp>
@@ -38,27 +38,27 @@ class SongPlayCommand final : public Command {
   static const char* name() { return "song-play"; }
   static PromptInfo prompt_info() {
     return PromptInfo{.usage_text = "song-play [song] [options]",
-        .short_description_text = "Play a song on the MicroMouse",
-        .long_description_text =
-            "Play a song on the MicroMouse. By default, this command will "
-            "start playing a song and then exit. Use the --keep-alive option "
-            "to keep the process alive until the song is done playing. The "
-            "song will be stopped if the command is interrupted.",
-        .options = s_options,
-        .non_options_title = "Songs",
-        .non_options = s_non_options};
+                      .short_description_text = "Play a song on the MicroMouse",
+                      .long_description_text =
+                          "Play a song on the MicroMouse. By default, this command will "
+                          "start playing a song and then exit. Use the --keep-alive option "
+                          "to keep the process alive until the song is done playing. The "
+                          "song will be stopped if the command is interrupted.",
+                      .options = s_options,
+                      .non_options_title = "Songs",
+                      .non_options = s_non_options};
   }
 
  private:
   ArgumentParser m_arg_parser;
-  BLEManager& m_ble_manager;
+  CommunicationManager& m_communication_manager;
 
   bool m_is_done = false;
   bool m_keep_alive = false;
   RobotSong m_song = RobotSong::NONE;
 
  public:
-  SongPlayCommand(const CommandArguments args, BLEManager& ble_manager);
+  SongPlayCommand(const CommandArguments args, CommunicationManager& communication_manager);
   ~SongPlayCommand();
 
   bool is_done() const override { return m_is_done; }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdio>
-#include <micromouse_cli/ble_manager.hpp>
+#include <micromouse_cli/communication/communication_manager.hpp>
 #include <micromouse_cli/commands/command.hpp>
 #include <micromouse_cli/diagnostics.hpp>
 
@@ -20,8 +20,7 @@ class RSSICommand final : public Command {
   bool is_done() const override { return true; }
 
  public:
-  RSSICommand(const CommandArguments args, BLEManager& ble_manager)
-      : Command(args) {
-    report_status(name(), "%d", ble_manager.peripheral_rssi());
+  RSSICommand(const CommandArguments args, CommunicationManager& communication_manager) : Command(args) {
+    report_status(name(), "%d", communication_manager.peripheral_rssi());
   }
 };

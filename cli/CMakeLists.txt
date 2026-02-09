@@ -14,7 +14,10 @@ endif()
 
 option(BUILD_WITH_BLE "Include BLE support for communicating wirelessly with the physical MicroMoue" ON)
 option(BUILD_WITH_ROS2 "Include ROS2 support for interfacing with the simulation" ON)
-option(BUILD_WITH_SERIAL "Include Serial support for communicating with the physical MicroMouse over UART and for interfacing with serial controller inputs" ON)
+
+if(NOT BUILD_WITH_BLE AND NOT BUILD_WITH_ROS2)
+  message(FATAL_ERROR "Cannot build with no communication backends. Please enable BLE or ROS2 support")
+endif()
 
 ###
 ### Configure project settings
@@ -110,10 +113,6 @@ if(BUILD_WITH_BLE)
   target_link_libraries(${CMAKE_PROJECT_NAME} simpleble::simpleble)
 
   list(APPEND DEF_LIST "WITH_BLE=1")
-endif()
-
-if(BUILD_WITH_SERIAL)
-  list(APPEND DEF_LIST "WITH_SERIAL=1")
 endif()
 
 # Isocline

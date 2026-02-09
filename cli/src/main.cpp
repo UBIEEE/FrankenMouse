@@ -1,4 +1,9 @@
-#include <micromouse_cli/ble_manager.hpp>
+#if WITH_BLE
+#include <micromouse_cli/communication/ble_communication_manager.hpp>
+#endif
+#if WITH_ROS2
+#include <micromouse_cli/communication/ros2_communication_manager.hpp>
+#endif
 #include <micromouse_cli/diagnostics.hpp>
 #include <micromouse_cli/options/argument_parser.hpp>
 #include <micromouse_cli/prompt.hpp>
@@ -19,28 +24,46 @@
 class Main {
   enum {
     OPTION_HELP,
-    OPTION_PERIPH_NAME,
+    OPTION_COMMUNICATION_MODE,
+#if WITH_BLE
+    OPTION_PERIPHERAL_NAME,
     OPTION_ADAPTER,
     OPTION_DUMMY_PERIPHERAL,
+#endif
   };
 
   static const inline std::vector<Option> s_options{
       // clang-format off
-      {OPTION_HELP,             OptionName("help", "h"),                    false, nullptr, nullptr},
-      {OPTION_PERIPH_NAME,      OptionName("peripheral-name", "name", "p"), true, nullptr, nullptr},
-      {OPTION_ADAPTER,          OptionName("adapter", "a"),                 true, nullptr, nullptr},
-      {OPTION_DUMMY_PERIPHERAL, OptionName("dummy"),                        false, nullptr, nullptr},
+      {OPTION_HELP,               OptionName("help", "h"),                        false, nullptr, nullptr},
+      {OPTION_COMMUNICATION_MODE, OptionName("communication-mode", "mode", "m"),  true,  nullptr, nullptr},
+#if WITH_BLE
+      {OPTION_PERIPHERAL_NAME,    OptionName("ble-peripheral-name", "name", "p"), true,  nullptr, nullptr},
+      {OPTION_ADAPTER,            OptionName("ble-adapter", "adapter", "a"),      true,  nullptr, nullptr},
+      {OPTION_DUMMY_PERIPHERAL,   OptionName("ble-dummy"),                        false, nullptr, nullptr},
+#endif
       // clang-format on
   };
 
   static volatile inline sig_atomic_t s_signal_received = 0;
 
-  std::string_view m_periph_name = DEFAULT_PERIPHERAL_NAME;
-  int m_adapter_idx = DEFAULT_ADAPTER_INDEX;
+  enum class CommunicationMode {
+    BLE,
+    ROS2,
+  } m_communication_mode =
+#if WITH_BLE
+      CommunicationMode::BLE;
+#else
+      CommunicationMode::ROS2;
+#endif
+
+#if WITH_BLE
+  std::string_view m_peripheral_name = BLE_DEFAULT_PERIPHERAL_NAME;
+  int m_adapter_index = BLE_DEFAULT_ADAPTER_INDEX;
   bool m_dummy_peripheral = false;
+#endif
 
   std::unique_ptr<Prompt> m_prompt;
-  std::unique_ptr<BLEManager> m_ble_manager;
+  std::unique_ptr<CommunicationManager> m_communication_manager;
 
   std::span<std::string> m_args;
   const char* m_program_name;
@@ -58,12 +81,24 @@ class Main {
     if (!validate_args())
       return 1;
 
-    m_ble_manager = std::make_unique<BLEManager>(m_periph_name, m_adapter_idx,
-                                                 m_dummy_peripheral);
-    if (!m_ble_manager->is_initialized())
+#if WITH_BLE
+    if (m_communication_mode == CommunicationMode::BLE) {
+      m_communication_manager =
+          std::make_unique<BLECommunicationManager>(m_peripheral_name, m_adapter_index, m_dummy_peripheral);
+    }
+#endif
+#if WITH_ROS2
+    if (m_communication_mode == CommunicationMode::ROS2) {
+      rclcpp::init(0, nullptr, rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
+      m_communication_manager = std::make_unique<ROS2CommunicationManager>();
+    }
+#endif
+    if (!m_communication_manager)
+      return 1;  // TODO
+    if (!m_communication_manager->is_initialized())
       return 1;
 
-    m_prompt = std::make_unique<Prompt>(*m_ble_manager);
+    m_prompt = std::make_unique<Prompt>(*m_communication_manager);
 
     register_commands();
 
@@ -82,12 +117,18 @@ class Main {
       Prompt::Result result = m_prompt->readline(&m_command);
       if (result == SIGNAL_OR_ERROR)
         return 0;  // Exit the program
-      if (result == BLE_NOT_CONNECTED)
+      if (result == ROBOT_NOT_CONNECTED)
         continue;  // Try to reconnect
 
       should_exit = process_command();
       delete m_command;
     }
+
+#if WITH_ROS2
+    if (m_communication_mode == CommunicationMode::ROS2) {
+      rclcpp::shutdown();
+    }
+#endif
 
     return 0;
   }
@@ -96,15 +137,18 @@ class Main {
     // clang-format off
     printf("Usage: %s [options]\n", m_args.front().c_str());
     puts("");
-    puts("mm is a shell for controlling the MicroMouse wirelessly.");
-    puts("When the shell is running, a BLE connection is established to the MicroMouse.");
+    puts("mm is a shell for controlling the MicroMouse.");
+    puts("A connection is established to the MicroMouse when this shell is running.");
     puts("In the shell, run the `help` command to see a list of available commands.");
     puts("");
     puts("Options:");
-    puts("    --help          Show this help message");
-    puts("    --name=<name>   Specify the name of the BLE peripheral to connect to");
-    puts("    --adapter=<id>  Specify the index of the BLE adapter to use");
-    puts("    --dummy         (Debug) Pretend like the connection is established");
+    puts("    --help                       Show this help message");
+    puts("    --communication-mode=<mode>  Set the communication mode (options: BLE (default), ROS2)");
+    puts("");
+    puts("BLE Options:");
+    puts("    --ble-peripheral-name=<name> Set the name of the BLE peripheral to connect to");
+    puts("    --ble-adapter=<id>           Set the index of the BLE adapter to use");
+    puts("    --ble-dummy                  (Debug) Pretend like the connection is established");
     // clang-format on
   }
 
@@ -117,24 +161,64 @@ class Main {
       return false;
     }
 
-    if (options.contains(OPTION_PERIPH_NAME)) {
-      m_periph_name = parsed_option_values.at(OPTION_PERIPH_NAME);
-    }
-    if (options.contains(OPTION_ADAPTER)) {
-      std::string_view adapter = parsed_option_values.at(OPTION_ADAPTER);
-      try {
-        m_adapter_idx = std::stoi(adapter.data());
-        if (m_adapter_idx < 0)
-          throw std::invalid_argument("negative index");
-      } catch (std::invalid_argument& e) {
-          report_error(m_program_name, "invalid adapter index: %s", adapter.data());
+    if (options.contains(OPTION_COMMUNICATION_MODE)) {
+      const std::string_view mode = parsed_option_values.at(OPTION_COMMUNICATION_MODE);
+
+      const bool ble = (mode == "BLE" || mode == "ble");
+      const bool ros2 = (mode == "ROS2" || mode == "ros2");
+
+      if (ble) {
+        m_communication_mode = CommunicationMode::BLE;
+#if !WITH_BLE
+        report_error(m_program_name, "BLE communication mode is not supported in this build");
+        return false;
+#endif
+      } else if (ros2) {
+        m_communication_mode = CommunicationMode::ROS2;
+#if !WITH_ROS2
+        report_error(m_program_name, "ROS2 communication mode is not supported in this build");
+        return false;
+#endif
+      } else {
+        report_error(m_program_name, "invalid communication mode: %s", mode.data());
         return false;
       }
     }
 
-    if (options.contains(OPTION_DUMMY_PERIPHERAL)) {
-      m_dummy_peripheral = true;
+#if WITH_BLE
+    if (options.contains(OPTION_PERIPHERAL_NAME)) {
+      if (m_communication_mode == CommunicationMode::ROS2) {
+        report_warning(m_program_name, "--peripheral-name option is ignored in ROS2 communication mode");
+      } else {
+        m_peripheral_name = parsed_option_values.at(OPTION_PERIPHERAL_NAME);
+      }
     }
+    if (options.contains(OPTION_ADAPTER)) {
+      if (m_communication_mode == CommunicationMode::ROS2) {
+        report_warning(m_program_name, "--adapter option is ignored in ROS2 communication mode");
+      } else {
+        std::string_view adapter = parsed_option_values.at(OPTION_ADAPTER);
+        try {
+          int adapter_index = std::stoi(adapter.data());
+          if (adapter_index < 0) {
+            throw std::invalid_argument("negative index");
+          }
+          m_adapter_index = adapter_index;
+        } catch (std::invalid_argument& e) {
+          report_error(m_program_name, "invalid adapter index: %s", adapter.data());
+          return false;
+        }
+      }
+    }
+
+    if (options.contains(OPTION_DUMMY_PERIPHERAL)) {
+      if (m_communication_mode == CommunicationMode::ROS2) {
+        report_warning(m_program_name, "--dummy option is ignored in ROS2 communication mode");
+      } else {
+        m_dummy_peripheral = true;
+      }
+    }
+#endif
 
     return true;
   }
@@ -149,13 +233,13 @@ class Main {
 
   // Returns true if the program should exit.
   bool process_ble_connection() {
-    if (m_ble_manager->is_connected())
+    if (m_communication_manager->is_connected())
       return false;
 
-    while (!m_ble_manager->is_connected()) {
+    while (!m_communication_manager->is_connected()) {
       if (s_signal_received)
         return true;
-      m_ble_manager->process_events();
+      m_communication_manager->process_events();
     }
 
     return false;
@@ -167,8 +251,7 @@ class Main {
 
     s_signal_received = 0;
 
-    while (!s_signal_received && m_ble_manager->is_connected() &&
-           !m_command->is_done()) {
+    while (!s_signal_received && m_communication_manager->is_connected() && !m_command->is_done()) {
       CommandProcessResult result = m_command->process();
       if (result == CommandProcessResult::EXIT_ALL)
         return true;

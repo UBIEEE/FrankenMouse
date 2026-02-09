@@ -3,7 +3,7 @@
 #include <micromouse_cli/commands/command.hpp>
 #include <micromouse_cli/options/argument_parser.hpp>
 #include <micromouse_cli/drive/chassis_speeds.hpp>
-#include <micromouse_cli/ble_manager.hpp>
+#include <micromouse_cli/communication/communication_manager.hpp>
 
 /**
  * This command is used to control the MicroMouse using a TI-84 Plus CE calculator. This process reads data
@@ -35,7 +35,7 @@ class TI84ControlCommand final : public Command {
 
  private:
   ArgumentParser m_arg_parser;
-  BLEManager& m_ble_manager;
+  CommunicationManager& m_communication_manager;
 
   bool m_connected = false;
 
@@ -47,7 +47,7 @@ class TI84ControlCommand final : public Command {
   bool m_was_task_set = false;
 
  public:
-  TI84ControlCommand(const CommandArguments args, BLEManager& ble_manager);
+  TI84ControlCommand(const CommandArguments args, CommunicationManager& communication_manager);
   ~TI84ControlCommand();
 
   bool is_done() const override { return !m_connected; }
