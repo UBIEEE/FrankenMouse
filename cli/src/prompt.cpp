@@ -47,8 +47,7 @@ void Prompt::register_command(const char* name,
 
   // Update non-options for help command, a little janky
   if (m_commands.contains(HelpCommand::name())) {
-    m_commands.at(HelpCommand::name()).prompt_info.non_options =
-        m_command_names;
+    m_commands.at(HelpCommand::name()).prompt_info.non_options = m_command_names;
   }
 
   m_commands.emplace(std::string(name), CommandInfo{prompt_info, make_command});
@@ -163,8 +162,7 @@ void Prompt::configure_colors() {
 }
 
 void Prompt::configure_completer() {
-  ic_completer_fun_t* completer_func = [](ic_completion_env_t* cenv,
-                                          const char* prefix) {
+  ic_completer_fun_t* completer_func = [](ic_completion_env_t* cenv, const char* prefix) {
     Prompt* prompt = static_cast<Prompt*>(ic_completion_arg(cenv));
     prompt->completer(cenv, prefix);
   };
@@ -173,8 +171,7 @@ void Prompt::configure_completer() {
 }
 
 void Prompt::configure_highlighter() {
-  ic_highlight_fun_t* highlighter_func = [](ic_highlight_env_t* henv,
-                                            const char* input, void* arg) {
+  ic_highlight_fun_t* highlighter_func = [](ic_highlight_env_t* henv, const char* input, void* arg) {
     Prompt* prompt = static_cast<Prompt*>(arg);
     prompt->highlighter(henv, input);
   };
@@ -194,8 +191,7 @@ void Prompt::enable_inline_hints() {
 }
 
 void Prompt::completer(ic_completion_env_t* cenv, const char* input) {
-  ic_completer_fun_t* word_completer_func = [](ic_completion_env_t* cenv,
-                                               const char* prefix) {
+  ic_completer_fun_t* word_completer_func = [](ic_completion_env_t* cenv, const char* prefix) {
     Prompt* prompt = static_cast<Prompt*>(ic_completion_arg(cenv));
     prompt->word_completer(cenv, prefix);
   };
@@ -237,8 +233,7 @@ void Prompt::word_completer(ic_completion_env_t* cenv, const char* word) {
   }
 }
 
-void Prompt::complete_command_name(ic_completion_env_t* cenv,
-                                   const char* word) {
+void Prompt::complete_command_name(ic_completion_env_t* cenv, const char* word) {
   for (const auto& [name, info] : m_commands) {
     if (name.starts_with(word)) {
       (void)ic_add_completion(cenv, name.c_str());
@@ -334,14 +329,12 @@ void Prompt::highlighter(ic_highlight_env_t* henv, const char* input_begin) {
                    is_quoted ? "quoted-file-exists" : "file-exists");
 
     } else if (is_quoted) {
-      ic_highlight(henv, word_begin_index, word_end_index - word_begin_index,
-                   "quoted");
+      ic_highlight(henv, word_begin_index, word_end_index - word_begin_index, "quoted");
     }
   }
 }
 
-Prompt::CommandInvocation Prompt::parse_command_invocation(
-    const char* input_begin) {
+Prompt::CommandInvocation Prompt::parse_command_invocation(const char* input_begin) {
   assert(input_begin != nullptr);
 
   CommandInvocation invocation;
@@ -376,9 +369,7 @@ Prompt::CommandIterator Prompt::match_current_command(const char* input) {
   return m_commands.find(std::string(first_word, first_word_len));
 }
 
-const char* Prompt::get_next_word(const char** input,
-                                  size_t* word_len,
-                                  bool* is_quoted) {
+const char* Prompt::get_next_word(const char** input, size_t* word_len, bool* is_quoted) {
   assert(input != nullptr && *input != nullptr);
   assert(word_len != nullptr);
 

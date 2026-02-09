@@ -22,8 +22,7 @@ union ControlMessage {
 
   ControlMessage() : data(0) {}
   /*implicit*/ ControlMessage(uint8_t data) : data(data) {}
-  ControlMessage(uint8_t directions, uint8_t speed)
-      : data((directions & 0xF) | (speed << 4)) {}
+  ControlMessage(uint8_t directions, uint8_t speed) : data((directions & 0xF) | (speed << 4)) {}
 
   /*implicit*/ operator uint8_t() const { return data; }
 };
@@ -77,8 +76,7 @@ CommandProcessResult TI84ControlCommand::process() {
       return CommandProcessResult::CONTINUE;
     }
 
-    report_error(name(), "failed to read from serial port: %s",
-                 strerror(errno));
+    report_error(name(), "failed to read from serial port: %s", strerror(errno));
     return CommandProcessResult::DONE;
 
   } else if (bytes_read != sizeof(data)) {
@@ -105,8 +103,7 @@ bool TI84ControlCommand::validate_args() {
     return false;
 
   const std::unordered_set<int>& options = m_arg_parser.parsed_options();
-  std::span<const std::string_view> non_option_args =
-      m_arg_parser.non_option_args();
+  std::span<const std::string_view> non_option_args = m_arg_parser.non_option_args();
 
   // Help
 
@@ -130,8 +127,7 @@ bool TI84ControlCommand::validate_args() {
   // Baudrate
 
   if (options.contains(OPTION_BAUDRATE)) {
-    std::string_view baudrate_str =
-        m_arg_parser.parsed_option_values().at(OPTION_BAUDRATE);
+    std::string_view baudrate_str = m_arg_parser.parsed_option_values().at(OPTION_BAUDRATE);
 
     try {
       m_baudrate = std::stoi(baudrate_str.data());
@@ -153,8 +149,7 @@ bool TI84ControlCommand::open_serial_port() {
   // enable non-blocking mode
   m_serial_fd = open(m_port.c_str(), O_RDONLY /*O_RDWR*/ | O_NOCTTY | O_NDELAY);
   if (m_serial_fd < 0) {
-    report_error(name(), "failed to open port %s: %s", m_port.c_str(),
-                 strerror(errno));
+    report_error(name(), "failed to open port %s: %s", m_port.c_str(), strerror(errno));
     return false;
   }
 
@@ -174,8 +169,7 @@ void TI84ControlCommand::close_serial_port() {
 bool TI84ControlCommand::configure_serial_port() {
   struct termios tty;
   if (tcgetattr(m_serial_fd, &tty) != 0) {
-    report_error(name(), "failed to get serial port attributes: %s",
-                 strerror(errno));
+    report_error(name(), "failed to get serial port attributes: %s", strerror(errno));
     return false;
   }
 
@@ -212,8 +206,7 @@ bool TI84ControlCommand::configure_serial_port() {
   tty.c_cc[VTIME] = 0;  // No timeout (wait indefinitely)
 
   if (tcsetattr(m_serial_fd, TCSANOW, &tty) != 0) {
-    report_error(name(), "failed to set serial port attributes: %s",
-                 strerror(errno));
+    report_error(name(), "failed to set serial port attributes: %s", strerror(errno));
     return false;
   }
 
@@ -263,17 +256,14 @@ bool TI84ControlCommand::validate_control_message(uint8_t data) {
   }
 
   if (invalid) {
-    report_warning(name(), "invalid control message: 0x%02x (%s)", data,
-                   reason);
+    report_warning(name(), "invalid control message: 0x%02x (%s)", data, reason);
     return false;
   }
 
   return true;
 }
 
-void TI84ControlCommand::display_control_message(
-    uint8_t data,
-    const drive::ChassisSpeeds& speeds) {
+void TI84ControlCommand::display_control_message(uint8_t data, const drive::ChassisSpeeds& speeds) {
   ControlMessage msg = data;
 
   (void)printf(CLEAR_LINE());
@@ -335,10 +325,8 @@ drive::ChassisSpeeds TI84ControlCommand::to_chassis_speeds(uint8_t data) {
   assert(msg.speed > 0 && msg.speed < 6);
 
   drive::ChassisSpeeds speeds;
-  speeds.linear_velocity_mmps =
-      linear_coeff * s_linear_speed_presets_mmps[msg.speed - 1];
-  speeds.angular_velocity_dps =
-      angular_coeff * s_angular_speed_presets_dps[msg.speed - 1];
+  speeds.linear_velocity_mmps = linear_coeff * s_linear_speed_presets_mmps[msg.speed - 1];
+  speeds.angular_velocity_dps = angular_coeff * s_angular_speed_presets_dps[msg.speed - 1];
 
   return speeds;
 }

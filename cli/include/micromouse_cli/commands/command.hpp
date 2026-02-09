@@ -28,7 +28,7 @@ class Command {
   virtual ~Command() = default;
 
   /**
-   * @brief Process the command. Return true if done.
+   * Process the command. Return true if done.
    *
    * @return True if done, false if it should keep running.
    */
@@ -39,8 +39,7 @@ class Command {
   explicit operator bool() const { return is_done(); }
 
   /**
-   * @brief Information about the command, used by the prompt for hints and tab
-   *        completion, and help descriptions.
+   * Information about the command, used by the prompt for hints and tab completion, and help descriptions.
    */
   struct PromptInfo {
     const char* usage_text = nullptr;
@@ -54,24 +53,22 @@ class Command {
 
     bool can_accept_file_paths = false;
 
-    // Instead of calling the default help function, use this function instead
-    // to emit usage information.
+    // Instead of calling the default help function, use this function instead to emit usage information.
     std::function<void(FILE*)> custom_help_func = nullptr;
 
-    // When using the default help function, this function will be called
-    // after to display any additional information.
+    // When using the default help function, this function will be called after to display any additional
+    // information.
     std::function<void(FILE*)> supplemental_help_func = nullptr;
   };
 
   /**
-   * @brief Emit usage information for the command. Calls the custom_help_func
-   *        if it is set, otherwise it uses the information from prompt_info to
-   *        construct the help message.
+   * Emit usage information for the command. Calls the custom_help_func if it is set, otherwise it uses the
+   * information from prompt_info to construct the help message.
    *
    * @param command_name The name of the command.
-   * @param prompt_info The prompt information for the command.
+   * @param prompt_info  The prompt information for the command.
    */
-  void help(const char* command_name, const PromptInfo& prompt_info, FILE* stream);
+  static void help(const char* command_name, const PromptInfo& prompt_info, FILE* stream);
 };
 
 /**
@@ -125,12 +122,10 @@ concept CommandType_ConstructibleFromArgumentsAndBLEManager =
     std::constructible_from<T, CommandArguments, class BLEManager&>;
 
 /**
- * @brief Base concept that all command types must satisfy.
- *        1. Must be derived from Command.
- *        2. Must be constructible from CommandArguments and optionally
- *           BLEManager&.
- *        3. Must have a static method `name()` that returns the command's name
- *           (const char*).
+ * Base concept that all command types must satisfy.
+ * 1. Must be derived from Command.
+ * 2. Must be constructible from CommandArguments and optionally CommunicationManager&.
+ * 3. Must have a static method `name()` that returns the command's name (const char*).
  */
 template <typename T>
 concept CommandType =

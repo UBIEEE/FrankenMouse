@@ -7,11 +7,8 @@
 
 static std::mutex s_mutex;
 
-static void report(FILE* stream,
-                   const char* tag,
-                   const char* prefix,
-                   const char* fmt,
-                   va_list args) MM_FMTLIST(4);
+static void report(FILE* stream, const char* tag, const char* prefix, const char* fmt, va_list args)
+    MM_FMTLIST(4);
 
 void report_status(const char* tag, const char* fmt, ...) {
   va_list args;
@@ -40,11 +37,7 @@ void report_error(const char* tag, const char* fmt, ...) {
   va_end(args);
 }
 
-static void report(FILE* stream,
-                   const char* tag,
-                   const char* prefix,
-                   const char* fmt,
-                   va_list args) {
+static void report(FILE* stream, const char* tag, const char* prefix, const char* fmt, va_list args) {
   if (!stream)
     stream = stdout;
   assert(fmt != nullptr);

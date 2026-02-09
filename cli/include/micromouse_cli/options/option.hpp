@@ -9,8 +9,7 @@ class OptionName {
  public:
   explicit OptionName(const char* primary) : OptionName(primary, nullptr, nullptr) {}
 
-  OptionName(const char* primary, const char* secondary)
-      : OptionName(primary, secondary, nullptr) {}
+  OptionName(const char* primary, const char* secondary) : OptionName(primary, secondary, nullptr) {}
 
   OptionName(const char* primary, const char* secondary, const char* tertiary) {
     m_names[0] = primary;
