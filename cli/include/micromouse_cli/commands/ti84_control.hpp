@@ -26,7 +26,7 @@ class TI84ControlCommand final : public Command {
   static const char* name() { return "ti84-control"; }
   static PromptInfo prompt_info() {
     return PromptInfo{
-        .usage_text = "ti84-control [port] [options]",
+        .usage_text = "ti84-control <port> [options]",
         .short_description_text = "Control the MicroMouse using a TI-84 Plus CE",
         .options = s_options,
         .can_accept_file_paths = true,
