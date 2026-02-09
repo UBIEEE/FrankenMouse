@@ -15,11 +15,10 @@ using namespace std::chrono_literals;
  *        every command registered with the prompt.
  */
 class HelpCommand final : public Command {
-  COMMAND_NAME("help");
-
  public:
-  HelpCommand(
-      const CommandArguments args,
+  static const char* name() { return "help"; }
+
+  HelpCommand(const CommandArguments args,
       const std::unordered_map<std::string, Prompt::CommandInfo>& commands)
       : Command(args) {
     if (args.size() > 1) {

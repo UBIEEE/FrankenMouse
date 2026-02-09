@@ -35,11 +35,9 @@ class SongPlayCommand final : public Command {
   };
 
  public:
-  COMMAND_NAME("song-play")
-
+  static const char* name() { return "song-play"; }
   static PromptInfo prompt_info() {
-    return PromptInfo{
-        .usage_text = "song-play [song] [options]",
+    return PromptInfo{.usage_text = "song-play [song] [options]",
         .short_description_text = "Play a song on the MicroMouse",
         .long_description_text =
             "Play a song on the MicroMouse. By default, this command will "

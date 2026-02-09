@@ -71,55 +71,12 @@ class Command {
   static void help(const char* command_name, const PromptInfo& prompt_info, FILE* stream);
 };
 
-/**
- * @brief Overrides the is_done() method to always return true.
- *        This is useful for commands that do not need to be processed.
- */
-#define COMMAND_INSTANT()         \
- public:                          \
-  bool is_done() const override { \
-    return true;                  \
-  }
-
-/**
- * @brief Implement the required static name() method for a command.
- */
-#define COMMAND_NAME(name_str) \
- public:                       \
-  static const char* name() {  \
-    return name_str;           \
-  }
-
-/**
- * @brief Implements the static prompt_info() method for a command.
- */
-#define COMMAND_PROMPT_INFO(usage_text_str, description_text_str, \
-                            options_span)                         \
- public:                                                          \
-  static PromptInfo prompt_info() {                               \
-    return PromptInfo{                                            \
-        .usage_text = usage_text_str,                             \
-        .short_description_text = description_text_str,           \
-        .options = options_span,                                  \
-    };                                                            \
-  }
-
-/**
- * @brief Implements the static name() and prompt_info() methods for a command.
- *
- */
-#define COMMAND_NAME_AND_PROMPT_INFO(name_str, usage_text_str,           \
-                                     description_text_str, options_span) \
-  COMMAND_NAME(name_str)                                                 \
-  COMMAND_PROMPT_INFO(usage_text_str, description_text_str, options_span)
+template <typename T>
+concept CommandType_ConstructibleFromArguments = std::constructible_from<T, CommandArguments>;
 
 template <typename T>
-concept CommandType_ConstructibleFromArguments =
-    std::constructible_from<T, CommandArguments>;
-
-template <typename T>
-concept CommandType_ConstructibleFromArgumentsAndBLEManager =
-    std::constructible_from<T, CommandArguments, class BLEManager&>;
+concept CommandType_ConstructibleFromArgumentsAndCommunicationManager =
+    std::constructible_from<T, CommandArguments, class CommunicationManager&>;
 
 /**
  * Base concept that all command types must satisfy.
@@ -128,13 +85,12 @@ concept CommandType_ConstructibleFromArgumentsAndBLEManager =
  * 3. Must have a static method `name()` that returns the command's name (const char*).
  */
 template <typename T>
-concept CommandType =
-    std::derived_from<T, Command> &&
-    (CommandType_ConstructibleFromArguments<T> ||
-     CommandType_ConstructibleFromArgumentsAndBLEManager<T>) &&
-    requires(T t) {
-      { T::name() } -> std::same_as<const char*>;
-    };
+concept CommandType = std::derived_from<T, Command> &&
+                      (CommandType_ConstructibleFromArguments<T> ||
+                       CommandType_ConstructibleFromArgumentsAndCommunicationManager<T>) &&
+                      requires(T t) {
+                        { T::name() } -> std::same_as<const char*>;
+                      };
 
 template <typename T>
 concept CommandType_WithPromptInfo = CommandType<T> && requires(T t) {
