@@ -6,11 +6,18 @@
 #include <micromouse_cli/diagnostics.hpp>
 
 class RSSICommand final : public Command {
-  COMMAND_NAME_AND_PROMPT_INFO("rssi",
-                               "rssi",
-                               "Show the RSSI value of the current connection",
-                               {})
-  COMMAND_INSTANT();
+ public:
+  static const char* name() { return "rssi"; }
+  static PromptInfo prompt_info() {
+    return PromptInfo{
+        .usage_text = "rssi",
+        .short_description_text = "Show the RSSI value of the current connection",
+        .options = {},
+    };
+  }
+
+  // Instant
+  bool is_done() const override { return true; }
 
  public:
   RSSICommand(const CommandArguments args, BLEManager& ble_manager)

@@ -23,8 +23,7 @@ class TI84ControlCommand final : public Command {
   };
 
  public:
-  COMMAND_NAME("ti84-control")
-
+  static const char* name() { return "ti84-control"; }
   static PromptInfo prompt_info() {
     return PromptInfo{
         .usage_text = "ti84-control [port] [options]",

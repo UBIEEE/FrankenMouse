@@ -5,10 +5,16 @@
 #include <micromouse_cli/macros.hpp>
 
 class ClearCommand final : public Command {
-  COMMAND_NAME_AND_PROMPT_INFO("clear", "clear", "Clear the screen", {})
-  COMMAND_INSTANT();
-
  public:
+  static const char* name() { return "clear"; }
+  static PromptInfo prompt_info() {
+    return PromptInfo{
+        .usage_text = "clear",
+        .short_description_text = "Clear the screen",
+        .options = {},
+    };
+  }
+
   explicit ClearCommand(const CommandArguments args) : Command(args) {
     (void)fprintf(stdout, CLEAR_SCREEN());
     (void)fflush(stdout);
