@@ -24,7 +24,9 @@ void ROS2CommunicationManager::configure_subscribers() {
       "/robot/main/task", 10, [this](const std_msgs::msg::UInt8MultiArray& msg) {
         if (msg.data.size() == 2) {
           RobotTask task = static_cast<RobotTask>(msg.data[0]);
-          m_main_data.task = {task, msg.data[1]};
+          RobotStartPosition start_position = static_cast<RobotStartPosition>(msg.data[1]);
+          m_main_data.task = task;
+          m_main_data.start_position = start_position;
         }
       });
 

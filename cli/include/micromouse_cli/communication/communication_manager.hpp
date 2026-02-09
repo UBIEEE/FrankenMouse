@@ -9,6 +9,7 @@
 #include <micromouse_cli/robot/song.hpp>
 #include <micromouse_cli/robot/status_topic.hpp>
 #include <micromouse_cli/robot/task.hpp>
+#include <micromouse_cli/robot/start_position.hpp>
 
 #include <cstdint>
 #include <functional>
@@ -49,9 +50,23 @@ enum class FeedbackTopicWrite {
 template <FeedbackTopicWrite Topic, typename Default = void>
 struct FeedbackTopicWriteData;
 
+struct MainTaskData {
+  RobotTask task = RobotTask::STOPPED;
+  RobotStartPosition start_position = RobotStartPosition::LEFT_OF_GOAL;
+
+  MainTaskData() {}
+
+  /*implicit*/ MainTaskData(RobotTask task) : task(task) {}
+
+  MainTaskData(RobotTask task, RobotStartPosition start_position)
+      : task(task), start_position(start_position) {}
+
+  /*implicit*/ operator RobotTask() const { return task; }
+};
+
 template <>
 struct FeedbackTopicWriteData<FeedbackTopicWrite::MAIN_TASK> {
-  using type = std::pair<RobotTask, uint8_t>;
+  using type = MainTaskData;
 };
 template <>
 struct FeedbackTopicWriteData<FeedbackTopicWrite::MAIN_COMMAND> {
@@ -99,7 +114,7 @@ struct FeedbackTopicNotifyData;
 
 template <>
 struct FeedbackTopicNotifyData<FeedbackTopicNotify::MAIN_TASK> {
-  using type = std::pair<RobotTask, uint8_t>;
+  using type = MainTaskData;
 };
 template <>
 struct FeedbackTopicNotifyData<FeedbackTopicNotify::MAIN_ERROR> {
@@ -194,7 +209,13 @@ class CommunicationManager {
   //
 
   struct MainNotifyData {
-    std::pair<RobotTask, uint8_t> task = {RobotTask::STOPPED, 0};
+    union {
+      MainTaskData task_data {};
+      struct {
+        RobotTask task;
+        RobotStartPosition start_position;
+      };
+    };
     std::map<uint32_t, RobotError> errors;
     RobotSong song;
     std::map<RobotStatusTopic, uint8_t> statusTopics;
@@ -229,11 +250,11 @@ class CommunicationManager {
    * @return The value of the feedback topic.
    */
   template <FeedbackTopicNotify Topic>
-  const typename FeedbackTopicNotifyData<Topic>::type& get_value() const {
+  const typename FeedbackTopicNotifyData<Topic>::type get_value() const {
     using enum FeedbackTopicNotify;
 
     if constexpr (Topic == MAIN_TASK) {
-      return m_main_data.task;
+      return m_main_data.task; // implicit conversion, nobody cares about start position
     } else if constexpr (Topic == MAIN_ERROR) {
       static_assert(false, "Use main_data().errors to access all errors");
     } else if constexpr (Topic == MAIN_SONG) {

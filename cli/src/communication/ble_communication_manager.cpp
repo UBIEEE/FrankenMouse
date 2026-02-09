@@ -192,7 +192,7 @@ bool BLECommunicationManager::configure_peripheral_notifications() {
   if (!is_connected())
     return false;
 
-  notify<FeedbackTopicNotify::MAIN_TASK>(m_main_data.task);
+  notify<FeedbackTopicNotify::MAIN_TASK>(m_main_data.task_data);
   notify<FeedbackTopicNotify::MAIN_ERROR>(
       [&](const RobotError& error) { m_main_data.errors[error.timestamp] = error; });
   notify<FeedbackTopicNotify::MAIN_SONG>(m_main_data.song);
