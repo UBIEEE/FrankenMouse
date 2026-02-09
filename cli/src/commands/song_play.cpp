@@ -28,8 +28,7 @@ bool SongPlayCommand::validate_args() {
     return false;
 
   const std::unordered_set<int>& options = m_arg_parser.parsed_options();
-  std::span<const std::string_view> non_option_args =
-      m_arg_parser.non_option_args();
+  std::span<const std::string_view> non_option_args = m_arg_parser.non_option_args();
 
   // Help
 

@@ -6,9 +6,8 @@
 #include <micromouse_cli/ble_manager.hpp>
 
 /**
- * @brief This command is used to control the MicroMouse using a TI-84 Plus CE
- *        calculator. This process reads data messages sent from the calculator
- *        over serial, then sends instructions to the MicroMouse over BLE.
+ * This command is used to control the MicroMouse using a TI-84 Plus CE calculator. This process reads data
+ * messages sent from the calculator over serial, then sends instructions to the MicroMouse over BLE.
  */
 class TI84ControlCommand final : public Command {
   enum {

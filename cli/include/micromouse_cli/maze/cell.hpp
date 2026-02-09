@@ -3,8 +3,8 @@
 #include <cstdint>
 
 /**
- * @brief Represents a cell in the maze.
- *        Contains data for the walls and whether the cell has been visited.
+ * Represents a cell in the maze.
+ * Contains data for the walls and whether the cell has been visited.
  *
  * 1 byte in size.
  */
@@ -23,12 +23,10 @@ class Cell final {
  public:
   Cell() : m_data(0x00) {}
 
+  explicit Cell(uint8_t byte) : m_data(byte) {}
+
   Cell(bool north, bool east, bool south, bool west)
-      : m_bits{.north = north,
-               .east = east,
-               .south = south,
-               .west = west,
-               .visited = 0} {}
+      : m_bits{.north = north, .east = east, .south = south, .west = west, .visited = 0} {}
 
   ~Cell() = default;
 

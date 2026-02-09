@@ -50,9 +50,7 @@ class Main {
 
  public:
   Main(std::span<std::string> args)
-      : m_args(args),
-        m_program_name(m_args[0].c_str()),
-        m_arg_parser(m_args, s_options) {
+      : m_args(args), m_program_name(m_args[0].c_str()), m_arg_parser(m_args, s_options) {
     signal(SIGINT, [](int) { s_signal_received = 1; });
   }
 
@@ -129,8 +127,7 @@ class Main {
         if (m_adapter_idx < 0)
           throw std::invalid_argument("negative index");
       } catch (std::invalid_argument& e) {
-        report_error(m_program_name, "invalid adapter index: %s",
-                     adapter.data());
+          report_error(m_program_name, "invalid adapter index: %s", adapter.data());
         return false;
       }
     }

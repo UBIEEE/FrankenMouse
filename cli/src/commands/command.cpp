@@ -5,9 +5,7 @@
 #include <cassert>
 #include <format>
 
-void Command::help(const char* command_name,
-                   const PromptInfo& info,
-                   FILE* stream) {
+void Command::help(const char* command_name, const PromptInfo& info, FILE* stream) {
   assert(command_name != nullptr);
   assert(stream != nullptr);
 
@@ -16,8 +14,7 @@ void Command::help(const char* command_name,
     return;
   }
 
-  (void)fprintf(stream, "Usage: %s\n\n",
-                info.usage_text ? info.usage_text : command_name);
+  (void)fprintf(stream, "Usage: %s\n\n", info.usage_text ? info.usage_text : command_name);
 
   const char* description = info.long_description_text;
   if (!description)

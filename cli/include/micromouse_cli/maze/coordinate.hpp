@@ -12,8 +12,7 @@ class Coordinate {
 
   constexpr Coordinate(uint8_t x, uint8_t y) : m_index(y * 16 + x) {}
 
-  constexpr explicit Coordinate(std::pair<uint8_t, uint8_t> coord)
-      : Coordinate(coord.first, coord.second) {}
+  constexpr explicit Coordinate(std::pair<uint8_t, uint8_t> coord) : Coordinate(coord.first, coord.second) {}
 
   explicit Coordinate(uint8_t index) : m_index(index) {}
 
