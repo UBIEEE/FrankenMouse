@@ -178,7 +178,7 @@ class CommunicationManager {
 
   virtual int peripheral_rssi() const { return 0; }
 
-  virtual void process_events() {}
+  virtual void process_connection() {}
 
   using OnConnectCallback = std::function<void()>;
   using OnDisconnectCallback = std::function<void()>;

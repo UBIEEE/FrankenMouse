@@ -52,7 +52,7 @@ class BLECommunicationManager final : public CommunicationManager {
    *        callback (feature not a bug), this function must be called
    *        continuously when scanning to connect to the found peripheral.
    */
-  void process_events() override;
+  void process_connection() override;
 
   void set_on_connect_callback(OnConnectCallback callback) override {
     m_on_connect_callback = std::move(callback);
