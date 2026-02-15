@@ -241,7 +241,7 @@ class Main {
     while (!m_communication_manager->is_connected()) {
       if (s_signal_received)
         return true;
-      m_communication_manager->process_events();
+      m_communication_manager->process_connection();
     }
 
     return false;

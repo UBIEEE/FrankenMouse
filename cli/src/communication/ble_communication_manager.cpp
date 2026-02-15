@@ -82,7 +82,7 @@ BLECommunicationManager::~BLECommunicationManager() {
   m_peripheral = std::nullopt;
 }
 
-void BLECommunicationManager::process_events() {
+void BLECommunicationManager::process_connection() {
   if (!m_initialized || m_dummy)
     return;
 
