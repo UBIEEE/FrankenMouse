@@ -51,7 +51,9 @@ class TI84ControlCommand final : public Command {
   TI84ControlCommand(const CommandArguments args, CommunicationManager& communication_manager);
   ~TI84ControlCommand();
 
+  void init() override;
   void process() override;
+  void end(bool interrupted) override;
 
   CommandStatus status() const override { return m_is_done ? CommandStatus::DONE : CommandStatus::CONTINUING; }
 
