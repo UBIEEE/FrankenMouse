@@ -14,6 +14,8 @@
 #include <micromouse_cli/commands/song_play.hpp>
 #include <micromouse_cli/commands/task_run.hpp>
 #include <micromouse_cli/commands/ti84_control.hpp>
+#include <micromouse_cli/commands/drive_pid_get.hpp>
+#include <micromouse_cli/commands/drive_pid_set.hpp>
 
 #include <unistd.h>
 #include <cassert>
@@ -231,6 +233,8 @@ class Main {
     m_prompt->register_command<RSSICommand>();
     m_prompt->register_command<SongPlayCommand>();
     m_prompt->register_command<TaskRunCommand>();
+    m_prompt->register_command<DrivePIDGetCommand>();
+    m_prompt->register_command<DrivePIDSetCommand>();
   }
 
   // Returns true if the program should exit.
