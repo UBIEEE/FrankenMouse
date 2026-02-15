@@ -23,6 +23,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <span>
+#include <chrono>
+
+using namespace std::chrono_literals;
 
 class Main {
   enum {
@@ -64,9 +68,12 @@ class Main {
   int m_adapter_index = BLE_DEFAULT_ADAPTER_INDEX;
   bool m_dummy_peripheral = false;
 #endif
+#if WITH_ROS2
+  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> m_executor;
+#endif
 
   std::unique_ptr<Prompt> m_prompt;
-  std::unique_ptr<CommunicationManager> m_communication_manager;
+  std::shared_ptr<CommunicationManager> m_communication_manager;
 
   std::span<std::string> m_args;
   const char* m_program_name;
@@ -87,13 +94,18 @@ class Main {
 #if WITH_BLE
     if (m_communication_mode == CommunicationMode::BLE) {
       m_communication_manager =
-          std::make_unique<BLECommunicationManager>(m_peripheral_name, m_adapter_index, m_dummy_peripheral);
+          std::make_shared<BLECommunicationManager>(m_peripheral_name, m_adapter_index, m_dummy_peripheral);
     }
 #endif
 #if WITH_ROS2
     if (m_communication_mode == CommunicationMode::ROS2) {
       rclcpp::init(0, nullptr, rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
-      m_communication_manager = std::make_unique<ROS2CommunicationManager>();
+
+      auto node =  std::make_shared<ROS2CommunicationManager>();
+      m_communication_manager = node;
+
+      m_executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+      m_executor->add_node(node);
     }
 #endif
     if (!m_communication_manager)
@@ -255,6 +267,15 @@ class Main {
   bool process_command() {
     assert(m_command != nullptr);
 
+#if WITH_ROS2
+    if (m_communication_mode == CommunicationMode::ROS2) {
+      // Execute all available work that has built up while the prompt was waiting for input. This should
+      // realistically never reach 100ms, but it's better to provide the timeout instead of potentially
+      // blocking forever.
+      m_executor->spin_all(100ms);
+    }
+#endif
+
     m_command->init();
 
     s_signal_received = 0;
@@ -263,6 +284,12 @@ class Main {
 
     bool interrupted = false;
     while (!(interrupted = (s_signal_received || !m_communication_manager->is_connected()))) {
+#if WITH_ROS2
+      if (m_communication_mode == CommunicationMode::ROS2) {
+        m_executor->spin_some();
+      }
+#endif
+
       if ((final_status = m_command->status()) != CommandStatus::CONTINUING)
         break;
 
