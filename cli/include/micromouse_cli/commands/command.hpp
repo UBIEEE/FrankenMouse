@@ -28,9 +28,23 @@ class Command {
   virtual ~Command() = default;
 
   /**
+   * Initialize the command. Called once before processing begins. Perform any feedback operations here
+   * instead of the constructor.
+   */
+  virtual void init() {}
+
+  /**
    * Process the command, called continuously as long as status() returns CONTINUING.
    */
   virtual void process() {}
+
+  /**
+   * End the command, called once after processing ends.
+   *
+   * @param interrupted Whether the command was interrupted (e.g. by a signal or disconnect) or ended normally
+   *                    (status() returned something other than CONTINUING).
+   */
+  virtual void end(bool interrupted) { (void)interrupted; }
 
   /**
    * Get the status of the command, called continuously to determine whether to continue processing.
@@ -70,6 +84,8 @@ class Command {
    * @param prompt_info  The prompt information for the command.
    */
   static void help(const char* command_name, const PromptInfo& prompt_info, FILE* stream);
+
+  static void usage(const char* command_name, const PromptInfo& prompt_info, FILE* stream);
 };
 
 template <typename T>

@@ -41,22 +41,23 @@ TI84ControlCommand::TI84ControlCommand(const CommandArguments args,
     return;
   }
 
-  m_communication_manager.write<FeedbackTopicWrite::MAIN_TASK>(RobotTask::MANUAL_CHASSIS_SPEEDS);
   m_connected = true;
   m_is_done = false;
 }
 
 TI84ControlCommand::~TI84ControlCommand() {
   close_serial_port();
+}
 
+void TI84ControlCommand::init() {
   if (m_connected) {
-    m_communication_manager.write<FeedbackTopicWrite::MAIN_TASK>(RobotTask::STOPPED);
+    m_communication_manager.write<FeedbackTopicWrite::MAIN_TASK>(RobotTask::MANUAL_CHASSIS_SPEEDS);
   }
 }
 
 void TI84ControlCommand::process() {
-  bool task_set = m_communication_manager.get_value<FeedbackTopicNotify::MAIN_TASK>() ==
-                  RobotTask::MANUAL_CHASSIS_SPEEDS;
+  bool task_set =
+      m_communication_manager.get_value<FeedbackTopicNotify::MAIN_TASK>() == RobotTask::MANUAL_CHASSIS_SPEEDS;
   if (m_was_task_set && !task_set) {
     m_is_done = true;
     return;
@@ -90,6 +91,14 @@ void TI84ControlCommand::process() {
 
   if (task_set) {
     m_communication_manager.write<FeedbackTopicWrite::DRIVE_CHASSIS_SPEEDS>(speeds);
+  }
+}
+
+void TI84ControlCommand::end(bool interrupted) {
+  (void)interrupted;
+
+  if (m_connected) {
+    m_communication_manager.write<FeedbackTopicWrite::MAIN_TASK>(RobotTask::STOPPED);
   }
 }
 

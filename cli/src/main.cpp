@@ -251,15 +251,21 @@ class Main {
   bool process_command() {
     assert(m_command != nullptr);
 
+    m_command->init();
+
     s_signal_received = 0;
 
     CommandStatus final_status;
 
-    while (!s_signal_received && m_communication_manager->is_connected()) {
+    bool interrupted = false;
+    while (!(interrupted = (s_signal_received || !m_communication_manager->is_connected()))) {
       if ((final_status = m_command->status()) != CommandStatus::CONTINUING)
         break;
+
       m_command->process();
     }
+
+    m_command->end(interrupted);
 
     return final_status == CommandStatus::EXIT_ALL;
   }

@@ -2,22 +2,27 @@
 
 TaskRunCommand::TaskRunCommand(const CommandArguments args, CommunicationManager& communication_manager)
     : Command(args), m_arg_parser(args, s_options), m_communication_manager(communication_manager) {
-  if (!validate_args())
+  m_args_valid = validate_args();
+}
+
+TaskRunCommand::~TaskRunCommand() {}
+
+void TaskRunCommand::init() {
+  if (!m_args_valid)
     return;
 
   m_communication_manager.write<FeedbackTopicWrite::MAIN_TASK>({m_task, m_start_position});
 }
 
-TaskRunCommand::~TaskRunCommand() {
-  if (m_keep_alive && m_task != RobotTask::STOPPED) {
-    m_communication_manager.write<FeedbackTopicWrite::MAIN_TASK>({RobotTask::STOPPED, m_start_position});
-  }
-}
-
 void TaskRunCommand::process() {
   // TODO: Wait a second for robot to start running the task
-  m_is_done =
-      (m_communication_manager.get_value<FeedbackTopicNotify::MAIN_TASK>() == RobotTask::STOPPED);
+  m_is_done = (m_communication_manager.get_value<FeedbackTopicNotify::MAIN_TASK>() == RobotTask::STOPPED);
+}
+
+void TaskRunCommand::end(bool interrupted) {
+  if (interrupted && m_keep_alive && m_task != RobotTask::STOPPED) {
+    m_communication_manager.write<FeedbackTopicWrite::MAIN_TASK>({RobotTask::STOPPED, m_start_position});
+  }
 }
 
 bool TaskRunCommand::validate_args() {

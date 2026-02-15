@@ -54,6 +54,8 @@ class TaskRunCommand final : public Command {
   ArgumentParser m_arg_parser;
   CommunicationManager& m_communication_manager;
 
+  bool m_args_valid = false;
+
   bool m_is_done = true;
   bool m_keep_alive = false;
   RobotTask m_task = RobotTask::STOPPED;
@@ -63,7 +65,9 @@ class TaskRunCommand final : public Command {
   TaskRunCommand(const CommandArguments args, CommunicationManager& communication_manager);
   ~TaskRunCommand();
 
+  void init() override;
   void process() override;
+  void end(bool interrupted) override;
 
   CommandStatus status() const override { return m_is_done ? CommandStatus::DONE : CommandStatus::CONTINUING; }
 

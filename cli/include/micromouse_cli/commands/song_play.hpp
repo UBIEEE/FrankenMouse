@@ -57,6 +57,8 @@ class SongPlayCommand final : public Command {
   ArgumentParser m_arg_parser;
   CommunicationManager& m_communication_manager;
 
+  bool m_args_valid = false;
+
   bool m_is_done = true;
   bool m_keep_alive = false;
   RobotSong m_song = RobotSong::NONE;
@@ -65,7 +67,9 @@ class SongPlayCommand final : public Command {
   SongPlayCommand(const CommandArguments args, CommunicationManager& communication_manager);
   ~SongPlayCommand();
 
+  void init() override;
   void process() override;
+  void end(bool interrupted) override;
 
   CommandStatus status() const override { return m_is_done ? CommandStatus::DONE : CommandStatus::CONTINUING; }
 
