@@ -8,5 +8,6 @@ project(units)
 
 add_library(units INTERFACE)
 target_include_directories(units INTERFACE include)
+target_compile_definitions(units INTERFACE UNIT_LIB_DEFAULT_TYPE=float)
 
 target_link_libraries(units INTERFACE gcem)
