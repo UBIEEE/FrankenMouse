@@ -13,16 +13,14 @@
 // Encoder constants.
 static constexpr int8_t ENCODER_MAGNET_POLES = 6;
 static constexpr float GEAR_RATIO = 20.f;
-static constexpr float ENCODER_TICKS_PER_ROTATION =
-    (ENCODER_MAGNET_POLES * GEAR_RATIO);
+static constexpr float ENCODER_TICKS_PER_ROTATION = (ENCODER_MAGNET_POLES * GEAR_RATIO);
 
-static constexpr float WHEEL_DIAMETER_MM = 25.f;
-static constexpr float WHEEL_CIRCUMFERENCE_MM =
-    (WHEEL_DIAMETER_MM * std::numbers::pi_v<float>);
+static constexpr units::millimeter_t WHEEL_DIAMETER = 25_mm;
+static constexpr units::millimeter_t WHEEL_CIRCUMFERENCE = (WHEEL_DIAMETER * std::numbers::pi_v<float>);
 
-static constexpr float ENCODER_TICKS_PER_MM =
-    (ENCODER_TICKS_PER_ROTATION / WHEEL_CIRCUMFERENCE_MM);
-static constexpr float ENCODER_MM_PER_TICK = (1.f / ENCODER_TICKS_PER_MM); // TODO: Measure instead of calculate
+static constexpr auto ENCODER_TICKS_PER_DISTANCE = (ENCODER_TICKS_PER_ROTATION / WHEEL_CIRCUMFERENCE);
+// TODO: Measure instead of calculate
+static constexpr units::millimeter_t ENCODER_DISTANCE_PER_TICK = (1.f / ENCODER_TICKS_PER_DISTANCE);
 
 //
 // Encoder functions.
@@ -36,8 +34,8 @@ Encoder::Data Encoder::update(uint16_t ticks) {
   m_ticks += delta_ticks;
   m_velocity = delta_ticks / ROBOT_UPDATE_PERIOD_S;
 
-  return {.position_mm = m_ticks * ENCODER_MM_PER_TICK,
-          .velocity_mmps = m_velocity * ENCODER_MM_PER_TICK};
+  return {.position = m_ticks * ENCODER_DISTANCE_PER_TICK,
+          .velocity = (m_velocity / 1_s) * ENCODER_DISTANCE_PER_TICK};
 }
 
 int32_t Encoder::calc_delta_ticks(uint16_t current, uint16_t last) {

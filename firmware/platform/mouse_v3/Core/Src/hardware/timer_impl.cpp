@@ -26,10 +26,10 @@ void TimerImpl::stop() {
   m_is_running = false;
 }
 
-uint32_t TimerImpl::elapsed_ms() const {
+units::millisecond_t TimerImpl::get() const {
   uint32_t end_time_ms = m_is_running ? HAL_GetTick() : m_time_stop_ms;
 
-  return end_time_ms - m_time_start_ms;
+  return units::millisecond_t{end_time_ms - m_time_start_ms};
 }
 
 std::unique_ptr<hardware::Timer> make_platform_timer() {

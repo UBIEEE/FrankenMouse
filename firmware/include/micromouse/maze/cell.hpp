@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include <micromouse/maze/direction.hpp>
+#include <units/length.h>
+#include <cstdint>
 
 namespace maze {
 
@@ -24,21 +25,17 @@ class Cell final {
   };
 
  public:
-  static constexpr float WIDTH_MM = 180.f;
-  static constexpr float HALF_WIDTH_MM = WIDTH_MM / 2.f;
-  static constexpr float WALL_THICKNESS_MM = 12.f;
-  static constexpr float HALF_WALL_THICKNESS_MM = WALL_THICKNESS_MM / 2.f;
-  static constexpr float FREE_WIDTH_MM = WIDTH_MM - WALL_THICKNESS_MM;
+  static constexpr units::millimeter_t WIDTH = 180_mm;
+  static constexpr units::millimeter_t HALF_WIDTH = WIDTH / 2.f;
+  static constexpr units::millimeter_t WALL_THICKNESS = 12_mm;
+  static constexpr units::millimeter_t HALF_WALL_THICKNESS = WALL_THICKNESS / 2.f;
+  static constexpr units::millimeter_t FREE_WIDTH = WIDTH - WALL_THICKNESS;
 
  public:
   Cell() : m_data(0x00) {}
 
   Cell(bool north, bool east, bool south, bool west)
-      : m_bits{.north = north,
-               .east = east,
-               .south = south,
-               .west = west,
-               .visited = 0} {}
+      : m_bits{.north = north, .east = east, .south = south, .west = west, .visited = 0} {}
 
   ~Cell() = default;
 

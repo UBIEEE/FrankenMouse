@@ -1,7 +1,7 @@
 #include <micromouse/drive/drive_controller.hpp>
-
 #include <micromouse/drive/kinematics.hpp>
 #include <micromouse/math.hpp>
+#include <units/math.h>
 
 using namespace drive;
 
@@ -23,11 +23,11 @@ void DriveController::reset() {
 
 void DriveController::periodic() {
 DO_PERIODIC:
-  const float linear_elapsed_s = m_linear_timer->elapsed_s();
-  const float angular_elapsed_s = m_angular_timer->elapsed_s();
+  const units::second_t linear_time = m_linear_timer->get();
+  const units::second_t angular_time = m_angular_timer->get();
 
-  const bool linear_done = m_linear_profile.is_done_at(linear_elapsed_s);
-  const bool angular_done = m_angular_profile.is_done_at(angular_elapsed_s);
+  const bool linear_done = m_linear_profile.is_finished(linear_time);
+  const bool angular_done = m_angular_profile.is_finished(angular_time);
 
   switch (m_motion_state) {
     using enum MotionState;
@@ -47,25 +47,20 @@ DO_PERIODIC:
       return;
   }
 
-  ChassisSpeeds chassis_speeds = {
-      .linear_velocity_mmps =
-          m_linear_profile.sample(linear_elapsed_s).velocity,
-      .angular_velocity_dps =
-          m_angular_profile.sample(angular_elapsed_s).velocity};
+  ChassisSpeeds chassis_speeds = {.linear_velocity = m_linear_profile.sample(linear_time).velocity,
+                                  .angular_velocity = m_angular_profile.sample(angular_time).velocity};
 
-  if (chassis_speeds.linear_velocity_mmps > 10 &&
-      std::abs(chassis_speeds.angular_velocity_dps) < 1.f &&
-      m_vision.left_wall() && m_vision.right_wall()) {
+  if (chassis_speeds.linear_velocity > 10_mmps &&
+      units::math::abs(chassis_speeds.angular_velocity) < 1_deg_per_s && m_vision.left_wall() &&
+      m_vision.right_wall()) {
     // align
 
-    const float left_distance =
-        m_ir_sensors.get_distance_mm(hardware::IRSensors::MID_LEFT);
-    const float right_distance =
-        m_ir_sensors.get_distance_mm(hardware::IRSensors::MID_RIGHT);
-    const float diff = right_distance - left_distance;
+    const units::millimeter_t left_distance = m_ir_sensors.get_distance(hardware::IRSensors::MID_LEFT);
+    const units::millimeter_t right_distance = m_ir_sensors.get_distance(hardware::IRSensors::MID_RIGHT);
+    const units::millimeter_t diff = right_distance - left_distance;
 
-    chassis_speeds.angular_velocity_dps += m_vision_align_pid.calculate(
-        diff, 0.f);  // TODO: make this a function of speed
+    chassis_speeds.angular_velocity += units::degrees_per_second_t{
+        m_vision_align_pid.calculate(diff.value(), 0.f)};  // TODO: make this a function of speed
   }
 
   m_drivetrain.set_chassis_speeds(chassis_speeds);
@@ -82,9 +77,8 @@ void DriveController::start_next_motion() {
   switch (m_current_motion->type) {
     using enum Motion::Type;
     case FORWARD:
-      config_linear(m_current_motion->forward.distance,
-                    m_current_motion->forward.end_high);
-      config_angular(0.f);
+      config_linear(m_current_motion->forward.distance, m_current_motion->forward.end_high);
+      config_angular(0_deg);
       break;
     case TURN:
       start_arc(*m_current_motion);
@@ -128,13 +122,11 @@ void DriveController::process_turn(bool linear_done, bool angular_done) {
   }
 }
 
-void DriveController::enqueue_forward(float distance_mm,
+void DriveController::enqueue_forward(units::millimeter_t distance,
                                       bool end_high,
                                       CompletionCallback completion_func) {
-  Motion motion{.type = Motion::Type::FORWARD,
-                .forward = {},
-                .completion_func = completion_func};
-  motion.forward.distance = distance_mm;
+  Motion motion{.type = Motion::Type::FORWARD, .forward = {}, .completion_func = completion_func};
+  motion.forward.distance = distance;
   motion.forward.end_high = end_high;
 
   m_motions.push(std::move(motion));
@@ -143,33 +135,31 @@ void DriveController::enqueue_forward(float distance_mm,
     m_motion_state = MotionState::IDLE;
 }
 
-void DriveController::enqueue_turn(float leadup_distance_mm,
-                                   TurnAngle angle,
-                                   float turn_radius_mm,
-                                   float followup_distance_mm,
+void DriveController::enqueue_turn(units::millimeter_t leadup_distance,
+                                   TurnAngle angle_option,
+                                   units::millimeter_t turn_radius,
+                                   units::millimeter_t followup_distance,
                                    CompletionCallback completion_func) {
-  const float angle_deg = float(int16_t(angle));
-  const float angle_rad = deg_to_rad(angle_deg);
+  const units::radian_t angle = units::degree_t{static_cast<float>(int16_t(angle_option))};
 
   Motion leadup_motion{.type = Motion::Type::FORWARD, .forward = {}};
-  leadup_motion.forward.distance = leadup_distance_mm;
+  leadup_motion.forward.distance = leadup_distance;
 
   Motion arc_motion{.type = Motion::Type::TURN, .turn = {}};
-  arc_motion.turn.angle = angle;
-  arc_motion.turn.arc_distance_mm = turn_radius_mm * std::abs(angle_rad);
+  arc_motion.turn.angle = angle_option;
+  arc_motion.turn.arc_distance = turn_radius * units::math::abs(angle).value();
 
   Motion followup_motion{.type = Motion::Type::FORWARD, .forward = {}};
-  followup_motion.forward.distance = followup_distance_mm;
+  followup_motion.forward.distance = followup_distance;
 
-  bool is_leadup = (leadup_distance_mm != 0.f);
-  bool is_followup = (followup_distance_mm != 0.f);
+  bool is_leadup = (leadup_distance != 0_mm);
+  bool is_followup = (followup_distance != 0_mm);
 
   if (is_leadup) {
     m_motions.push(std::move(leadup_motion));
   }
 
-  (is_followup ? followup_motion : arc_motion).completion_func =
-      completion_func;
+  (is_followup ? followup_motion : arc_motion).completion_func = completion_func;
 
   m_motions.push(std::move(arc_motion));
 
@@ -182,45 +172,40 @@ void DriveController::enqueue_turn(float leadup_distance_mm,
 }
 
 void DriveController::start_arc(Motion& motion) {
-  const float turn_linear_velocity_mmps = m_linear_profile.final_velocity();
+  const units::millimeters_per_second_t turn_linear_velocity = m_linear_profile.final_state().velocity;
 
-  config_linear(motion.turn.arc_distance_mm, turn_linear_velocity_mmps,
-                turn_linear_velocity_mmps);
+  config_linear(motion.turn.arc_distance, turn_linear_velocity, turn_linear_velocity);
 
-  const float angle_deg = int16_t(motion.turn.angle);
+  const units::degree_t angle = units::degree_t{static_cast<float>(int16_t(motion.turn.angle))};
 
-  const float total_time_s = m_linear_profile.duration_s();
+  const units::second_t total_time = m_linear_profile.total_time();
 
-  float angular_acceleration_dps2 = m_speeds.angular_acceleration_dps2;
-  float angular_velocity_dps = m_speeds.angular_velocity_dps;
+  units::degrees_per_second_squared_t angular_acceleration = m_speeds.angular_acceleration;
+  units::degrees_per_second_t angular_velocity = m_speeds.angular_velocity;
 
   // Calculate acceleration and velocity to reach target angle in required time.
-  if (!float_equals(turn_linear_velocity_mmps, 0.f)) {
-    angular_acceleration_dps2 =
-        (4.f * std::abs(angle_deg)) / (total_time_s * total_time_s);
-    angular_velocity_dps = std::sqrt(angular_acceleration_dps2 * angle_deg);
+  if (!float_equals(turn_linear_velocity.value(), 0.f)) {
+    angular_acceleration = (4.f * units::math::abs(angle)) / (total_time * total_time);
+    angular_velocity = units::math::sqrt(angular_acceleration * angle);
   }
 
-  config_angular(angle_deg, 0.f, angular_velocity_dps,
-                 angular_acceleration_dps2);
+  config_angular(angle, 0_deg_per_s, angular_velocity, angular_acceleration);
 }
 
-void DriveController::config_linear(float distance_mm, bool end_high) {
-  const float final_velocity_mmps =
-      end_high ? m_speeds.linear_velocity_mmps : 0.f;
+void DriveController::config_linear(units::millimeter_t distance, bool end_high) {
+  const units::millimeters_per_second_t final_velocity = end_high ? m_speeds.linear_velocity : 0_mmps;
 
-  config_linear(distance_mm, final_velocity_mmps);
+  config_linear(distance, final_velocity);
 }
 
-void DriveController::config_linear(float distance_mm,
-                                    float final_velocity_mmps) {
-  config_linear(distance_mm, final_velocity_mmps,
-                m_speeds.linear_velocity_mmps);
+void DriveController::config_linear(units::millimeter_t distance,
+                                    units::millimeters_per_second_t final_velocity) {
+  config_linear(distance, final_velocity, m_speeds.linear_velocity);
 }
 
-void DriveController::config_linear(float distance_mm,
-                                    float final_velocity_mmps,
-                                    float max_velocity_mmps) {
+void DriveController::config_linear(units::millimeter_t distance,
+                                    units::millimeters_per_second_t final_velocity,
+                                    units::millimeters_per_second_t max_velocity) {
   // The intention of this snippet is to compensate for when the robot
   // overshoots the end of the last motion. This just reduces the distance to
   // travel by the extra distance traveled.
@@ -228,38 +213,35 @@ void DriveController::config_linear(float distance_mm,
   // This is commented out for now because it messes things up when debugging in
   // simulation (because timer keeps going...)
 #if 1
-  const float final_distance_mm =
-      m_linear_profile.sample(m_linear_timer->elapsed_s()).distance;
+  const units::millimeter_t final_distance = m_linear_profile.sample(m_linear_timer->get()).distance;
 
-  const float extra_distance_mm =
-      final_distance_mm - m_linear_profile.final_distance();
+  const units::millimeter_t extra_distance = final_distance - m_linear_profile.distance();
 
-  distance_mm -= extra_distance_mm;
+  distance -= extra_distance;
 #endif
 
-  m_linear_profile.configure(distance_mm, final_velocity_mmps,
-                             max_velocity_mmps,
-                             m_speeds.linear_acceleration_mmps2);
+  TrapezoidProfile<units::millimeters>::Constraints constraints(max_velocity, m_speeds.linear_acceleration);
+  m_linear_profile.configure(distance, final_velocity, constraints);
 
   m_linear_timer->reset();
   m_linear_timer->start();
 }
 
-void DriveController::config_angular(float angle_deg) {
-  m_angular_profile.configure(angle_deg, m_speeds.angular_velocity_dps,
-                              m_speeds.angular_velocity_dps,
-                              m_speeds.angular_acceleration_dps2);
+void DriveController::config_angular(units::degree_t angle) {
+  TrapezoidProfile<units::degrees>::Constraints constraints(m_speeds.angular_velocity,
+                                                            m_speeds.angular_acceleration);
+  m_angular_profile.configure(angle, m_speeds.angular_velocity, constraints);
 
   m_angular_timer->reset();
   m_angular_timer->start();
 }
 
-void DriveController::config_angular(float angle_deg,
-                                     float final_velocity_dps,
-                                     float max_velocity_dps,
-                                     float acceleration_dps2) {
-  m_angular_profile.configure(angle_deg, final_velocity_dps, max_velocity_dps,
-                              acceleration_dps2);
+void DriveController::config_angular(units::degree_t angle,
+                                     units::degrees_per_second_t final_velocity,
+                                     units::degrees_per_second_t max_velocity,
+                                     units::degrees_per_second_squared_t acceleration) {
+  TrapezoidProfile<units::degrees>::Constraints constraints(max_velocity, acceleration);
+  m_angular_profile.configure(angle, final_velocity, constraints);
 
   m_angular_timer->reset();
   m_angular_timer->start();

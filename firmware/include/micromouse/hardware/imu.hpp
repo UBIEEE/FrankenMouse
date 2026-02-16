@@ -1,6 +1,8 @@
 #pragma once
 
 #include <micromouse/hardware/component.hpp>
+#include <units/angular_velocity.h>
+#include <units/acceleration.h>
 
 namespace hardware {
 
@@ -20,18 +22,18 @@ class IMU : public Component {
   virtual bool is_on_standby() { return false; }
 
   /**
-   * @brief Get an angular velocity reading from the IMU (in deg/s)
+   * @brief Get an angular velocity reading from the IMU.
    *
-   * @return float
+   * @return Angular velocity.
    */
-  virtual float get_angular_velocity(Axis axis) = 0;
+  virtual units::degrees_per_second_t get_angular_velocity(Axis axis) = 0;
 
   /**
-   * @brief Get a linear acceleration reading of the IMU (in gravities)
+   * @brief Get a linear acceleration reading from the IMU.
    *
-   * @return float
+   * @return Linear acceleration.
    */
-  virtual float get_linear_accel(Axis axis) = 0;
+  virtual units::standard_gravity_t get_linear_accel(Axis axis) = 0;
 };
 
 }  // namespace hardware

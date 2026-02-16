@@ -122,12 +122,12 @@ class IMUImpl : public hardware::IMU {
   void set_standby(bool on_standby) override;
   bool is_on_standby() override { return m_standby; }
 
-  float get_angular_velocity(Axis axis) override {
-    return m_data.gyro_data_dps[axis];
+  units::degrees_per_second_t get_angular_velocity(Axis axis) override {
+    return units::degrees_per_second_t{m_data.gyro_data_dps[axis]};
   }
 
-  float get_linear_accel(Axis axis) override {
-    return m_data.accel_data_g[axis];
+  units::standard_gravity_t get_linear_accel(Axis axis) override {
+    return units::standard_gravity_t{m_data.accel_data_g[axis]};
   }
 
  private:

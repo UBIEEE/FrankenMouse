@@ -3,10 +3,8 @@
 #include <micromouse/robot_cell_positions.hpp>
 
 void Robot::init() {
-  m_buttons.register_button_1_callback(
-      std::bind(&Robot::handle_button_1, this));
-  m_buttons.register_button_2_callback(
-      std::bind(&Robot::handle_button_2, this));
+  m_buttons.register_button_1_callback(std::bind(&Robot::handle_button_1, this));
+  m_buttons.register_button_2_callback(std::bind(&Robot::handle_button_2, this));
 }
 
 void Robot::periodic() {
@@ -62,8 +60,7 @@ void Robot::publish_extra_feedback() {
   publish_current_task();
 }
 
-void Robot::delegate_received_feedback(FeedbackTopicReceive topic,
-                                       const uint8_t* data) {
+void Robot::delegate_received_feedback(FeedbackTopicReceive topic, const uint8_t* data) {
   switch (topic) {
     using enum FeedbackTopicReceive;
     case MAIN_TASK:
@@ -222,9 +219,8 @@ void Robot::start_task_maze_search() {
   m_maze.reset();
   m_maze.init_start_cell(Maze::StartLocation::WEST_OF_GOAL);
 
-  m_navigator.reset_position(Maze::start(m_start_location),
-                             maze::Direction::NORTH,
-                             RobotCellPositions::back_wall_mm());
+  m_navigator.reset_position(Maze::start(m_start_location), maze::Direction::NORTH,
+                             RobotCellPositions::back_wall());
 
   m_navigator.search_to(Maze::GOAL_ENDPOINTS, m_floodfill);
 }
@@ -234,9 +230,8 @@ void Robot::start_task_maze_solve(bool fast) {
 
   m_solve_stage = SolveStage::START_TO_GOAL;
 
-  m_navigator.reset_position(Maze::start(m_start_location),
-                             maze::Direction::NORTH,
-                             RobotCellPositions::back_wall_mm());
+  m_navigator.reset_position(Maze::start(m_start_location), maze::Direction::NORTH,
+                             RobotCellPositions::back_wall());
 
   // m_navigator.solve_to(Maze::GOAL_ENDPOINTS, fast);
 }
@@ -244,8 +239,7 @@ void Robot::start_task_maze_solve(bool fast) {
 void Robot::start_task_test_drive_straight() {
   m_drive_controller.reset();
 
-  const float forward_distance =
-      maze::Cell::WIDTH_MM - RobotCellPositions::back_wall_mm();
+  const units::millimeter_t forward_distance = maze::Cell::WIDTH - RobotCellPositions::back_wall();
 
   m_drive_controller.enqueue_forward(forward_distance, false);
 }
@@ -253,25 +247,21 @@ void Robot::start_task_test_drive_straight() {
 void Robot::start_task_test_drive_left_turn() {
   m_drive_controller.reset();
 
-  const float forward_distance =
-      maze::Cell::WIDTH_MM - RobotCellPositions::back_wall_mm();
+  const units::millimeter_t forward_distance = maze::Cell::WIDTH - RobotCellPositions::back_wall();
 
   m_drive_controller.enqueue_forward(forward_distance);
-  m_drive_controller.enqueue_turn(drive::DriveController::TurnAngle::CCW_90,
-                                  maze::Cell::WIDTH_MM / 2.f);
-  m_drive_controller.enqueue_forward(maze::Cell::WIDTH_MM, false);
+  m_drive_controller.enqueue_turn(drive::DriveController::TurnAngle::CCW_90, maze::Cell::WIDTH / 2.f);
+  m_drive_controller.enqueue_forward(maze::Cell::WIDTH, false);
 }
 
 void Robot::start_task_test_drive_right_turn() {
   m_drive_controller.reset();
 
-  const float forward_distance =
-      maze::Cell::WIDTH_MM - RobotCellPositions::back_wall_mm();
+  const units::millimeter_t forward_distance = maze::Cell::WIDTH - RobotCellPositions::back_wall();
 
   m_drive_controller.enqueue_forward(forward_distance);
-  m_drive_controller.enqueue_turn(drive::DriveController::TurnAngle::CW_90,
-                                  maze::Cell::WIDTH_MM / 2.f);
-  m_drive_controller.enqueue_forward(maze::Cell::WIDTH_MM, false);
+  m_drive_controller.enqueue_turn(drive::DriveController::TurnAngle::CW_90, maze::Cell::WIDTH / 2.f);
+  m_drive_controller.enqueue_forward(maze::Cell::WIDTH, false);
 }
 
 void Robot::start_task_test_drive_turn_180() {
@@ -280,7 +270,7 @@ void Robot::start_task_test_drive_turn_180() {
 }
 
 void Robot::start_task_test_gyro() {
-  drive::ChassisSpeeds speeds{0.f, 0.f};
+  drive::ChassisSpeeds speeds{};
   m_drivetrain.set_chassis_speeds(speeds);
 }
 
@@ -290,7 +280,7 @@ void Robot::start_task_test_drive_straight_vision_align() {
 
 void Robot::start_task_manual_chassis_speeds() {
   m_drive_controller.reset();
-  m_chassis_speeds = {0.f, 0.f};
+  m_chassis_speeds = drive::ChassisSpeeds{};
   m_chassis_speeds_timer->reset();
   m_chassis_speeds_timer->start();
 }
@@ -432,17 +422,17 @@ void Robot::process_task_test_drive() {
 }
 
 void Robot::process_task_manual_chassis_speeds() {
-  const float elapsed_time = m_chassis_speeds_timer->elapsed_s();
+  const units::second_t elapsed_time = m_chassis_speeds_timer->get();
 
-  if (elapsed_time > 0.5f) {
-    m_chassis_speeds = {0.f, 0.f};
+  if (elapsed_time > 0.5_s) {
+    m_chassis_speeds = {};
   }
 
   m_drivetrain.set_chassis_speeds(m_chassis_speeds);
 }
 
 void Robot::process_task_armed() {
-  const float* readings = m_ir_sensors.get_raw_readings();
+  const std::array<float, 4>& readings = m_ir_sensors.get_raw_readings();
 
   using enum hardware::IRSensors::Sensor;
 
@@ -467,7 +457,7 @@ void Robot::process_task_armed() {
 }
 
 void Robot::process_task_armed_triggering() {
-  const float* readings = m_ir_sensors.get_raw_readings();
+  const std::array<float, 4>& readings = m_ir_sensors.get_raw_readings();
 
   using enum hardware::IRSensors::Sensor;
 
@@ -480,7 +470,7 @@ void Robot::process_task_armed_triggering() {
   if (blocked)
     return;
 
-  const bool time_over = m_armed_trigger_timer->elapsed_s() > 1.f;
+  const bool time_over = m_armed_trigger_timer->get() > 1_s;
 
   if (time_over) {
     run_task(Task::ARMED_TRIGGERED);
@@ -492,13 +482,12 @@ void Robot::process_task_armed_triggering() {
 }
 
 void Robot::process_task_armed_triggered() {
-  if (m_armed_trigger_timer->elapsed_s() < 1.f)
+  if (m_armed_trigger_timer->get() < 1_s)
     return;
 
   // Trigger side points to goal.
-  m_start_location = m_armed_trigger_side == ArmedTriggerSide::LEFT
-                         ? Maze::StartLocation::WEST_OF_GOAL
-                         : Maze::StartLocation::EAST_OF_GOAL;
+  m_start_location = m_armed_trigger_side == ArmedTriggerSide::LEFT ? Maze::StartLocation::WEST_OF_GOAL
+                                                                    : Maze::StartLocation::EAST_OF_GOAL;
 
   // TODO: Calibration
 

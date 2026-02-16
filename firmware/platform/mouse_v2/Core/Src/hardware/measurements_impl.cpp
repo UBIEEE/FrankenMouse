@@ -4,13 +4,13 @@ using namespace hardware;
 
 RobotMeasurements& get_robot_measurements() {
   static RobotMeasurements measurements = {
-      .length_mm = 100.f,
-      .width_mm = 70.f,
-      .center_to_front_mm = 55.f,
-      .center_to_back_mm = 45.f,
-      .track_width_mm = 50.4f,
-      .mid_ir_sensor_angle_deg = 45.f,
-      .far_ir_sensor_angle_deg = 5.f,
+      .length = 100_mm,
+      .width = 70_mm,
+      .center_to_front = 55_mm,
+      .center_to_back = 45_mm,
+      .track_width = 50.4_mm,
+      .mid_ir_sensor_angle = 45_deg,
+      .far_ir_sensor_angle = 5_deg,
   };
 
   return measurements;

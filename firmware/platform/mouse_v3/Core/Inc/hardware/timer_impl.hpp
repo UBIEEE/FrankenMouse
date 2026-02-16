@@ -17,5 +17,5 @@ class TimerImpl : public hardware::Timer {
   void start() override;
   void stop() override;
 
-  uint32_t elapsed_ms() const override;
+  units::millisecond_t get() const override;
 };

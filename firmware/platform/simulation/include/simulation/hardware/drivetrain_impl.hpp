@@ -18,8 +18,7 @@ class DrivetrainImpl : public hardware::Drivetrain, public rclcpp::Node {
 
   void set_chassis_speeds(const drive::ChassisSpeeds& speeds) override;
   void set_wheel_speeds(const drive::WheelSpeeds& speeds) override {
-    set_chassis_speeds(
-        drive::to_chassis_speeds(speeds, m_measurements.track_width_mm));
+    set_chassis_speeds(drive::to_chassis_speeds(speeds, m_measurements.track_width));
   }
 };
 

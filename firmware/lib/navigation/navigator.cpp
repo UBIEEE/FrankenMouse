@@ -13,13 +13,11 @@ void Navigator::periodic() {
   m_position = m_next_position;
   m_direction = m_next_direction;
 
-  printf("Cell: (%d, %d), Direction: %d\n", m_position.x(), m_position.y(),
-         (int)m_direction);
+  printf("Cell: (%d, %d), Direction: %d\n", m_position.x(), m_position.y(), (int)m_direction);
 
   // The robot's next cell.
 
-  std::optional<maze::Coordinate> new_position =
-      m_maze.neighbor_coordinate(m_position, m_direction);
+  std::optional<maze::Coordinate> new_position = m_maze.neighbor_coordinate(m_position, m_direction);
   assert(new_position);
 
   m_next_position = *new_position;
@@ -66,8 +64,7 @@ void Navigator::periodic() {
     // assert(false);
   }
 
-  printf("Left: %d, Right: %d, Front: %d\n", (int)is_left_wall,
-         (int)is_right_wall, (int)is_front_wall);
+  printf("Left: %d, Right: %d, Front: %d\n", (int)is_left_wall, (int)is_right_wall, (int)is_front_wall);
 
   m_maze.set_wall(m_next_position, left_direction, is_left_wall);
   m_maze.set_wall(m_next_position, right_direction, is_right_wall);
@@ -82,16 +79,13 @@ void Navigator::periodic() {
   if (m_direction == move_direction) {
     move(Move::FORWARD);
     m_next_direction = m_direction;
-  }
-  else if (maze::left_of(m_direction) == move_direction) {
+  } else if (maze::left_of(m_direction) == move_direction) {
     move(Move::TURN_LEFT);
     m_next_direction = maze::left_of(m_direction);
-  }
-  else if (maze::right_of(m_direction) == move_direction) {
+  } else if (maze::right_of(m_direction) == move_direction) {
     move(Move::TURN_RIGHT);
     m_next_direction = maze::right_of(m_direction);
-  }
-  else { // Opposite
+  } else {  // Opposite
     move(Move::TURN_AROUND);
     m_next_direction = maze::opposite(m_direction);
   }
@@ -99,10 +93,10 @@ void Navigator::periodic() {
 
 void Navigator::reset_position(maze::Coordinate position,
                                maze::Direction direction,
-                               float cell_position_mm) {
+                               units::millimeter_t cell_position) {
   m_position = m_next_position = position;
   m_direction = m_next_direction = direction;
-  m_start_cell_position_mm = cell_position_mm;
+  m_start_cell_position = cell_position;
 
   m_maze.cell(m_position).set_visited();
 }
@@ -113,16 +107,13 @@ void Navigator::search_to(maze::CoordinateSpan targets, Solver& solver) {
   m_solver = &solver;
   m_done = false;
 
-  float sense_distance =
-      RobotCellPositions::SENSING_SPOT_MM - m_start_cell_position_mm;
-  float remaining_distance =
-      maze::Cell::WIDTH_MM - RobotCellPositions::SENSING_SPOT_MM;
+  units::millimeter_t sense_distance = RobotCellPositions::SENSING_SPOT - m_start_cell_position;
+  units::millimeter_t remaining_distance = maze::Cell::WIDTH - RobotCellPositions::SENSING_SPOT;
 
   m_drive.enqueue_forward(sense_distance, true, m_should_sense_callback);
   m_drive.enqueue_forward(remaining_distance, true);
 
-  printf("Cell: x: %d: y: %d: direction: %d\n", m_position.x(), m_position.y(),
-         (int)m_direction);
+  printf("Cell: x: %d: y: %d: direction: %d\n", m_position.x(), m_position.y(), (int)m_direction);
 
   m_move = Move::FORWARD;
 }
@@ -130,9 +121,8 @@ void Navigator::search_to(maze::CoordinateSpan targets, Solver& solver) {
 void Navigator::move(Move move) {
   m_move = move;
 
-  float sense_distance = RobotCellPositions::SENSING_SPOT_MM;
-  float remaining_distance =
-      maze::Cell::WIDTH_MM - RobotCellPositions::SENSING_SPOT_MM;
+  units::millimeter_t sense_distance = RobotCellPositions::SENSING_SPOT;
+  units::millimeter_t remaining_distance = maze::Cell::WIDTH - RobotCellPositions::SENSING_SPOT;
 
   switch (move) {
     using enum Move;
@@ -141,29 +131,26 @@ void Navigator::move(Move move) {
       m_drive.enqueue_forward(remaining_distance, true);
       break;
     case FORWARD_STOP:
-      m_drive.enqueue_forward(maze::Cell::WIDTH_MM, false, m_done_callback);
-      m_start_cell_position_mm = 0.f;
+      m_drive.enqueue_forward(maze::Cell::WIDTH, false, m_done_callback);
+      m_start_cell_position = 0_mm;
       break;
     case TURN_LEFT:
       m_drive.enqueue_forward(remaining_distance, true);
-      m_drive.enqueue_turn(drive::DriveController::TurnAngle::CCW_90,
-                           RobotCellPositions::SEARCH_TURN_RADIUS_MM,
+      m_drive.enqueue_turn(drive::DriveController::TurnAngle::CCW_90, RobotCellPositions::SEARCH_TURN_RADIUS,
                            m_should_sense_callback);
       m_drive.enqueue_forward(remaining_distance, true);
       break;
     case TURN_RIGHT:
       m_drive.enqueue_forward(remaining_distance, true);
-      m_drive.enqueue_turn(drive::DriveController::TurnAngle::CW_90,
-                           RobotCellPositions::SEARCH_TURN_RADIUS_MM,
+      m_drive.enqueue_turn(drive::DriveController::TurnAngle::CW_90, RobotCellPositions::SEARCH_TURN_RADIUS,
                            m_should_sense_callback);
       m_drive.enqueue_forward(remaining_distance, true);
       break;
     case TURN_AROUND:
-      m_drive.enqueue_forward(maze::Cell::HALF_WIDTH_MM, false);
+      m_drive.enqueue_forward(maze::Cell::HALF_WIDTH, false);
       m_drive.enqueue_turn(drive::DriveController::TurnAngle::CW_180);
-      m_drive.enqueue_forward(
-          RobotCellPositions::SENSING_SPOT_MM - maze::Cell::HALF_WIDTH_MM, true,
-          m_should_sense_callback);
+      m_drive.enqueue_forward(RobotCellPositions::SENSING_SPOT - maze::Cell::HALF_WIDTH, true,
+                              m_should_sense_callback);
       m_drive.enqueue_forward(remaining_distance, true);
       break;
     case TURN_AROUND_IN_PLACE:

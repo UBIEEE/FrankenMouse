@@ -1,3 +1,4 @@
+#if 0
 #include <micromouse/drive/trapezoid_profile.hpp>
 
 #include <algorithm>
@@ -5,124 +6,78 @@
 
 using namespace drive;
 
-void TrapezoidProfile::configure(float d,
-                                 float v_f,
-                                 float max_velocity,
-                                 float a) {
-
-  m_backwards = false;
-  if (d < 0.f) {
-    m_backwards = true;
-    d = -d;
-  }
-
-  v_f = std::min(v_f, max_velocity);
-
-  m_dist_total = d;
-  m_velocity_init = m_velocity_final;
-  m_acceleration = a;
-
-  const float& v_i = m_velocity_init;
-  float& v_max = m_velocity_cruise;
-
-  // A little optimization.
-  if (v_i == max_velocity && v_i == v_f) {
-    v_max = max_velocity;
-
-    m_dist_rise = m_dist_fall = 0.f;
-    m_time_rise_s = m_time_fall_s = 0.f;
-
-    m_dist_cruise = d;
-    m_time_total_s = (max_velocity > 0.f) ? (d / max_velocity) : 0.f;
-    m_time_cruise_s = m_time_total_s;
-
+void TrapezoidProfile::configure(const State& initial_state,
+                                 const State& final_state,
+                                 const Constraints& constraints) {
+  if (!constraints) {
+    reset();
+    // TODO: Log error
     return;
   }
 
-  // Check if it's possible to reach the final velocity.
-  if (v_f < v_i) {
-    const float min_vel_2 = (v_i * v_i) - 2.f * a * d;
-    const float min_vel = min_vel_2 < 0.f ? 0.f : std::sqrt(min_vel_2);
+  m_direction = get_direction(initial_state, final_state);
+  m_initial = direct(initial_state, m_direction);
+  m_final = direct(final_state, m_direction);
+  m_final_undirected = final_state;
+  m_constraints = constraints;
 
-    v_f = std::max(v_f, min_vel);
-
-  } else if (v_f > v_i) {
-    const float max_vel = std::sqrt((v_i * v_i) + 2.f * a * d);
-
-    v_f = std::min(v_f, max_vel);
+  if (std::abs(m_initial.velocity) > m_constraints.max_velocity) {
+    m_initial.velocity = std::copysign(m_constraints.max_velocity, m_initial.velocity);
   }
 
-  m_velocity_final = v_f;
+  float cutoff_begin_time = m_initial.velocity / m_constraints.max_acceleration;
+  float cutoff_begin_dist = std::pow(cutoff_begin_time, 2) * m_constraints.max_acceleration / 2.f;
 
-  // Calculate maximum attainable velocity over the distance with the given
-  // acceleration limit.
-  v_max = std::sqrt((v_i * v_i + v_f * v_f) / 2.f + a * d);
+  float cutoff_end_time = m_final.velocity / m_constraints.max_acceleration;
+  float cutoff_end_dist = std::pow(cutoff_end_time, 2) * m_constraints.max_acceleration / 2.f;
 
-  // Make sure the max velocity is not greater than the configured max
-  // velocity.
-  v_max = std::min(v_max, max_velocity);
+  float total_dist = cutoff_begin_dist + (m_final.position - m_initial.position) + cutoff_end_dist;
+  float accel_time = m_constraints.max_velocity / m_constraints.max_acceleration;
 
-  if (a > 0.f) {
-    // Calculate the distance to reach max velocity.
-    m_dist_rise = (v_max * v_max - v_i * v_i) / (2.f * a);
+  float cruise_dist = total_dist - std::pow(accel_time, 2) * m_constraints.max_acceleration;
 
-    // Calculate the distance to decelerate from max velocity to the final
-    // velocity.
-    m_dist_fall = (v_max * v_max - v_f * v_f) / (2.f * a);
-
-    m_time_rise_s = (v_max - v_i) / a;
-    m_time_fall_s = (v_max - v_f) / a;
-
-  } else {
-    m_dist_rise = m_dist_fall = 0.f;
-    m_time_rise_s = m_time_fall_s = 0.f;
+  // Doesn't reach max velocity
+  if (cruise_dist < 0.f) {
+    accel_time = std::sqrt(total_dist / m_constraints.max_acceleration);
+    cruise_dist = 0.f;
   }
 
-  m_dist_cruise = d - (m_dist_rise + m_dist_fall);
-  m_time_cruise_s = (v_max > 0.f) ? (m_dist_cruise / v_max) : 0;
+  float rise_time = accel_time - cutoff_begin_time;
+  float cruise_time = cruise_dist / m_constraints.max_velocity;
+  float fall_time = accel_time - cutoff_end_time;
 
-  m_time_total_s = m_time_rise_s + m_time_cruise_s + m_time_fall_s;
+  m_rise_end_time = rise_time;
+  m_cruise_end_time = rise_time + cruise_time;
+  m_fall_end_time = rise_time + cruise_time + fall_time;
+
+  float rise_dist = (m_initial.velocity + rise_time * m_constraints.max_acceleration / 2.f) * rise_time;
+  float fall_dist = (m_final.velocity + fall_time * m_constraints.max_acceleration / 2.f) * fall_time;
+
+  m_rise_end_dist = rise_dist;
+  m_cruise_end_dist = rise_dist + cruise_dist;
+  m_fall_end_dist = rise_dist + cruise_dist + fall_dist;
 }
 
-TrapezoidProfile::Sample TrapezoidProfile::sample(float t) {
-  float d, v;
+TrapezoidProfile::SampledState TrapezoidProfile::sample(float t) {
+  State result = m_initial;
 
-  const float& v_i = m_velocity_init;
-  const float& v_c = m_velocity_cruise;
-  const float& v_f = m_velocity_final;
-
-  const float& a = m_acceleration;
-
-  if (t > m_time_total_s) {
-    v = v_f;
-    d = m_dist_total + v_f * (t - m_time_total_s);
-
-  } else if (v_i == v_c && v_i == v_f) {
-    v = v_i;
-    d = v * t;
-
-  } else if (t < m_time_rise_s) {
-    v = v_i + a * t;
-    d = v_i * t + 0.5f * a * t * t;
-
-  } else if (t < (m_time_rise_s + m_time_cruise_s)) {
-    const float t_part = (t - m_time_rise_s);
-
-    v = v_c;
-    d = m_dist_rise + v * t_part;
-
+  if (t < m_rise_end_time) {
+    result.velocity += t * m_constraints.max_acceleration;
+    result.position += (m_initial.velocity + t * m_constraints.max_acceleration / 2.f) * t;
+  } else if (t < m_cruise_end_time) {
+    result.velocity = m_constraints.max_velocity;
+    result.position += m_rise_end_dist + m_constraints.max_velocity * (t - m_rise_end_time);
+  } else if (t < m_fall_end_time) {
+    result.velocity = m_constraints.max_velocity - (t - m_cruise_end_time) * m_constraints.max_acceleration;
+    float fall_time = t - m_cruise_end_time;
+    result.position += m_cruise_end_dist + (m_constraints.max_velocity * fall_time -
+                                            m_constraints.max_acceleration * std::pow(fall_time, 2) / 2.f);
   } else {
-    const float t_part = (t - m_time_rise_s - m_time_cruise_s);
-
-    v = v_c - a * t_part;
-    d = (m_dist_rise + m_dist_cruise) + v_c * t_part -
-        0.5f * a * t_part * t_part;
+    result = m_final;
   }
 
-  if (m_backwards) {
-    d = -d;
-    v = -v;
-  }
-
-  return Sample{.distance = d, .velocity = v};
+  float distance = result.position - m_initial.position;
+  return SampledState(direct(result, m_direction), distance);
 }
+
+#endif

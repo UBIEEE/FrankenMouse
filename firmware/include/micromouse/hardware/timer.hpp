@@ -1,5 +1,6 @@
 #pragma once
 
+#include <units/time.h>
 #include <cstdint>
 #include <memory>
 
@@ -16,17 +17,16 @@ class Timer {
   virtual void start() = 0;
   virtual void stop() = 0;
 
-  virtual uint32_t elapsed_ms() const = 0;
-  float elapsed_s() const { return elapsed_ms() / 1000.0f; }
+  virtual units::millisecond_t get() const = 0;
 };
 
 }  // namespace hardware
 
 /**
- * @brief Returns a newly created platform-specific timer.
+ * Returns a newly created platform-specific timer.
  *
  * This function is to be implemented by the user in platform-specific code.
  *
- * @return std::unique_ptr<hardware::Timer>
+ * @return The timer instance.
  */
 std::unique_ptr<hardware::Timer> make_platform_timer();
