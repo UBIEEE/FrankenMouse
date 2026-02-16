@@ -99,6 +99,11 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   target_compile_options(micromouse PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+# Thirdparty libraries
+add_subdirectory(thirdparty)
+target_link_libraries(micromouse PUBLIC units gcem)
+
+
 ###
 ### Build targets
 ###
