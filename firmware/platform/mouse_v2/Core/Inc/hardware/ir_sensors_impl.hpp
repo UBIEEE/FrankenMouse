@@ -11,8 +11,8 @@ class IRSensorsImpl : public hardware::IRSensors {
 
   uint16_t m_raw_readings[4] = {0};
 
-  float m_readings[4] = {0};
-  float m_distances_mm[4];
+  std::array<float, 4> m_readings = {0};
+  std::array<units::millimeter_t, 4> m_distances;
 
   enum Sensor : uint8_t {
     FAR_RIGHT,  // Channel 7
@@ -31,8 +31,7 @@ class IRSensorsImpl : public hardware::IRSensors {
 
  public:
   IRSensorsImpl() {
-    std::fill(m_distances_mm, m_distances_mm + 4,
-              std::numeric_limits<float>::infinity());
+    std::fill(m_distances.begin(), m_distances.end(), units::millimeter_t{std::numeric_limits<float>::infinity()});
   }
 
   void periodic() override;
@@ -40,15 +39,15 @@ class IRSensorsImpl : public hardware::IRSensors {
   void set_enabled(bool enabled) override { m_enabled = enabled; }
   bool is_enabled() const override { return m_enabled; }
 
-  const float* get_raw_readings() const override { return m_readings; }
-  const float* get_distances_mm() const override { return m_distances_mm; }
+  const std::array<float, 4>& get_raw_readings() const override { return m_readings; }
+  const std::array<units::millimeter_t, 4>& get_distances() const override { return m_distances; }
 
  private:
   void set_emitter(Sensor sensor, GPIO_PinState state);
 
   void handle_raw_sensor_reading();
 
-  static float calculate_distance_mm(const float& intensity_reading);
+  static units::millimeter_t calculate_distance(const float& intensity_reading);
 
  private:
   friend void ::HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc);

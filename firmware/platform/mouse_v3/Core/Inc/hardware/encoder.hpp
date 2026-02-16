@@ -1,5 +1,7 @@
 #pragma once
 
+#include <units/length.h>
+#include <units/velocity.h>
 #include <cstdint>
 
 class Encoder {
@@ -10,8 +12,8 @@ class Encoder {
 
  public:
   struct Data {
-    float position_mm = 0.f;
-    float velocity_mmps = 0.f;
+    units::millimeter_t position = 0_mm;
+    units::millimeters_per_second_t velocity = 0_mmps;
   };
 
  public:

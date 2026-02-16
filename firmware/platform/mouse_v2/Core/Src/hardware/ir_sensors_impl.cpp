@@ -1,7 +1,7 @@
 #include "hardware/ir_sensors_impl.hpp"
 
 #include "main.h"
-
+#include <units/math.h>
 #include <cmath>
 
 extern ADC_HandleTypeDef hadc1;  // main.c
@@ -55,8 +55,7 @@ void IRSensorsImpl::periodic() {
 
     case State::WAITING:
       // Start DMA read.
-      HAL_ADC_Start_DMA(&hadc1,
-                        reinterpret_cast<uint32_t*>(&m_raw_readings), 4);
+      HAL_ADC_Start_DMA(&hadc1, reinterpret_cast<uint32_t*>(&m_raw_readings), 4);
       m_state = State::READING;
       break;
   }
@@ -67,23 +66,23 @@ void IRSensorsImpl::set_emitter(Sensor sensor, GPIO_PinState state) {
 }
 
 void IRSensorsImpl::handle_raw_sensor_reading() {
-  m_readings[m_sensor] = m_raw_readings[m_sensor] / 1024.f; // 10-Bit reading.
+  m_readings[m_sensor] = m_raw_readings[m_sensor] / 1024.f;  // 10-Bit reading.
 
   // TODO: Correct for any light bleed through the sensor cover.
 
   // Normalize the reading to be linear (undo the inverse square law).
-  m_distances_mm[m_sensor] = calculate_distance_mm(m_readings[m_sensor]);
-
+  m_distances[m_sensor] = calculate_distance(m_readings[m_sensor]);
 }
 
-float IRSensorsImpl::calculate_distance_mm(const float& R) {
-  if (R < 0.001f) return std::numeric_limits<float>::infinity();
+units::millimeter_t IRSensorsImpl::calculate_distance(const float& R) {
+  if (R < 0.001f)
+    return units::millimeter_t{std::numeric_limits<float>::infinity()};
 
   // Measurements:
   // 120mm: 0.047852
   // 160mm: 0.027344
-  const float known_distance_mm = 120.f;
-  const float known_intensity   = 0.047852f;
+  const units::millimeter_t known_distance = 120_mm;
+  const float known_intensity = 0.047852f;
 
   // The light intensity emitted gets weaker as the distance increases (by the
   // inverse square law). The distance is actually double, since it needs to
@@ -99,9 +98,9 @@ float IRSensorsImpl::calculate_distance_mm(const float& R) {
   //
   // d = sqrt(K / (4 * R))
 
-  const float K = known_intensity * 4 * (known_distance_mm * known_distance_mm);
+  const auto K = known_intensity * 4 * (known_distance * known_distance);
 
-  const float d = std::sqrt(K / (4.f * R));
+  const units::millimeter_t d = units::math::sqrt(K / (4.f * R));
 
   return d;
 }

@@ -11,6 +11,12 @@
 #include <micromouse/vision/vision.hpp>
 #include <micromouse/robot.h>
 
+#include <units/length.h>
+#include <units/angle.h>
+#include <units/velocity.h>
+#include <units/acceleration.h>
+#include <units/angular_velocity.h>
+#include <units/angular_acceleration.h>
 #include <cmath>
 #include <functional>
 #include <optional>
@@ -24,16 +30,19 @@ class DriveController : public Subsystem {
   vision::Vision& m_vision;
   hardware::IRSensors& m_ir_sensors = get_platform_ir_sensors();
 
-  TrapezoidProfile m_linear_profile;
-  TrapezoidProfile m_angular_profile;
+  TrapezoidProfile<units::millimeter> m_linear_profile;
+  TrapezoidProfile<units::degree> m_angular_profile;
 
   std::unique_ptr<hardware::Timer> m_linear_timer = make_platform_timer();
   std::unique_ptr<hardware::Timer> m_angular_timer = make_platform_timer();
 
   SpeedConstraints m_speeds;
 
-  drive::PIDController m_vision_align_pid {
-    0.05f, 0.f, 0.f, ROBOT_UPDATE_PERIOD_S,
+  drive::PIDController m_vision_align_pid{
+      0.05f,
+      0.f,
+      0.f,
+      ROBOT_UPDATE_PERIOD_S,
   };
 
   enum class MotionState {
@@ -62,14 +71,14 @@ class DriveController : public Subsystem {
     union {
       // Forward
       struct {
-        float distance;
+        units::millimeter_t distance;
         bool end_high = true;
       } forward;
 
       // Turn
       struct {
         TurnAngle angle;
-        float arc_distance_mm;
+        units::millimeter_t arc_distance;
       } turn;
     };
 
@@ -95,31 +104,30 @@ class DriveController : public Subsystem {
   void publish_extra_feedback() override;
 
   bool is_done() const {
-    return m_motions.empty() && ((m_motion_state == MotionState::NONE) ||
-                                 (m_motion_state == MotionState::IDLE));
+    return m_motions.empty() &&
+           ((m_motion_state == MotionState::NONE) || (m_motion_state == MotionState::IDLE));
   }
 
   // Adds a forward motion to the motion queue.
-  void enqueue_forward(float distance_mm,
+  void enqueue_forward(units::millimeter_t distance,
                        bool end_high = true,
                        CompletionCallback completion_func = nullptr);
 
   // Adds a turning motion to the motion queueue.
-  void enqueue_turn(float leadup_distance_mm,
+  void enqueue_turn(units::millimeter_t leadup_distance,
                     TurnAngle angle,
-                    float turn_radius_mm,
-                    float followup_distance_mm,
+                    units::millimeter_t turn_radius,
+                    units::millimeter_t followup_distance,
                     CompletionCallback completion_func = nullptr);
 
   void enqueue_turn(TurnAngle angle,
-                    float turn_radius_mm,
+                    units::millimeter_t turn_radius,
                     CompletionCallback completion_func = nullptr) {
-    enqueue_turn(0.f, angle, turn_radius_mm, 0.f, completion_func);
+    enqueue_turn(0_mm, angle, turn_radius, 0_mm, completion_func);
   }
 
-  void enqueue_turn(TurnAngle angle,
-                    CompletionCallback completion_func = nullptr) {
-    enqueue_turn(0.f, angle, 0.f, 0.f, completion_func);
+  void enqueue_turn(TurnAngle angle, CompletionCallback completion_func = nullptr) {
+    enqueue_turn(0_mm, angle, 0_mm, 0_mm, completion_func);
   }
 
   // Stops and clears queued motions.
@@ -146,17 +154,17 @@ class DriveController : public Subsystem {
   void process_turn(bool linear_done, bool angular_done);
 
  private:
-  void config_linear(float distance_mm, bool end_high = true);
-  void config_linear(float distance_mm, float final_velocity_mmps);
-  void config_linear(float distance_mm,
-                     float final_velocity_mmps,
-                     float max_velocity_mmps);
+  void config_linear(units::millimeter_t distance, bool end_high = true);
+  void config_linear(units::millimeter_t distance, units::millimeters_per_second_t final_velocity);
+  void config_linear(units::millimeter_t distance,
+                     units::millimeters_per_second_t final_velocity,
+                     units::millimeters_per_second_t max_velocity);
 
-  void config_angular(float angle_deg);
-  void config_angular(float angle_deg,
-                      float final_velocity_dps,
-                      float max_velocity_dps,
-                      float acceleration_dps2);
+  void config_angular(units::degree_t angle);
+  void config_angular(units::degree_t angle,
+                      units::degrees_per_second_t final_velocity,
+                      units::degrees_per_second_t max_velocity,
+                      units::degrees_per_second_squared_t acceleration);
 };
 
 }  // namespace drive

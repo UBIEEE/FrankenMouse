@@ -6,8 +6,7 @@
 using namespace std::placeholders;
 
 IRSensorsImpl::IRSensorsImpl() : Node("micromouse_ir_sensors") {
-  std::fill(m_distances_mm, m_distances_mm + 4,
-            std::numeric_limits<float>::infinity());
+  std::fill(m_distances.begin(), m_distances.end(), units::millimeter_t{std::numeric_limits<float>::infinity()});
 
   m_ir_readings_sub =
       this->create_subscription<std_msgs::msg::Float32MultiArray>(
@@ -19,8 +18,10 @@ void IRSensorsImpl::ir_readings_callback(
     const std_msgs::msg::Float32MultiArray& msg) {
   assert(msg.data.size() == 8);
 
-  std::copy(msg.data.begin(), msg.data.begin() + 4, m_raw_readings);
-  std::copy(msg.data.begin() + 4, msg.data.end(), m_distances_mm);
+  std::copy(msg.data.begin(), msg.data.begin() + 4, m_raw_readings.data());
+  std::copy(msg.data.begin() + 4, msg.data.end(), (float*)m_distances.data());
+
+  static_assert(sizeof(decltype(m_distances)::value_type) == sizeof(float));
 }
 
 std::shared_ptr<IRSensorsImpl> get_simulation_ir_sensors() {

@@ -6,6 +6,8 @@
 #include <micromouse/hardware/drivetrain.hpp>
 #include <micromouse/hardware/feedback.hpp>
 #include <micromouse/hardware/measurements.hpp>
+#include <units/velocity.h>
+#include <units/angular_velocity.h>
 #include "hardware/drivetrain_impl.h"
 #include "hardware/encoder.hpp"
 #include "hardware/imu_impl.hpp"
@@ -51,9 +53,9 @@ class DrivetrainImpl : public hardware::Drivetrain {
   } m_raw_speed_data;
 
   struct {
-    drive::ChassisSpeeds target_speeds = {0.f, 0.f};
+    drive::ChassisSpeeds target_speeds{};
 
-    float final_angular_dps = 0.f;
+    units::degrees_per_second_t final_angular = 0_deg_per_s;
     float final_right_speed = 0.f;
     float final_left_speed = 0.f;
   } m_velocity_control_data;
@@ -72,8 +74,7 @@ class DrivetrainImpl : public hardware::Drivetrain {
 
   void set_chassis_speeds(const drive::ChassisSpeeds& speeds) override;
   void set_wheel_speeds(const drive::WheelSpeeds& speeds) override {
-    set_chassis_speeds(
-        drive::to_chassis_speeds(speeds, m_measurements.track_width_mm));
+    set_chassis_speeds(drive::to_chassis_speeds(speeds, m_measurements.track_width));
   }
 
  private:
@@ -81,16 +82,12 @@ class DrivetrainImpl : public hardware::Drivetrain {
   void update_pid_controllers();
 
   void set_motors(float left_percent, float right_percent);
-  void set_motors_raw(uint8_t left,
-                      GPIO_PinState left_dir,
-                      uint8_t right,
-                      GPIO_PinState right_dir);
+  void set_motors_raw(uint8_t left, GPIO_PinState left_dir, uint8_t right, GPIO_PinState right_dir);
 
  private:
   friend void ::DrivetrainImpl_UpdatePIDValues(const float*);
 
-  void update_pid_values(const float* translational_pid,
-                         const float* angular_pid);
+  void update_pid_values(const float* translational_pid, const float* angular_pid);
 
  private:
   friend void ::HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim);

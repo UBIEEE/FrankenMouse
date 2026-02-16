@@ -7,7 +7,7 @@ class UnimplementedTimer : public Timer {
   void reset() override {}
   void start() override {}
   void stop() override {}
-  uint32_t elapsed_ms() const override { return 0; }
+  units::millisecond_t get() const override { return 0_ms; }
 };
 
 __attribute__((weak)) std::unique_ptr<Timer> make_platform_timer() {

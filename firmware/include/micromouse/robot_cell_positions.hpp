@@ -2,18 +2,19 @@
 
 #include <micromouse/hardware/measurements.hpp>
 #include <micromouse/maze/cell.hpp>
+#include <units/length.h>
 
 class RobotCellPositions {
  public:
-  static float back_wall_mm() {
+  static units::millimeter_t back_wall() {
     hardware::RobotMeasurements& m = get_robot_measurements();
-    return m.center_to_back_mm + maze::Cell::HALF_WALL_THICKNESS_MM;
+    return m.center_to_back + maze::Cell::HALF_WALL_THICKNESS;
   }
 
-  static constexpr float CENTERED_MM = maze::Cell::WIDTH_MM / 2.f;
+  static constexpr units::millimeter_t CENTERED = maze::Cell::WIDTH / 2.f;
 
-  static constexpr float SENSING_SPOT_MM = CENTERED_MM + 65.f;
+  static constexpr units::millimeter_t SENSING_SPOT = CENTERED + 65_mm;
 
-  static constexpr float SEARCH_TURN_RADIUS_MM =
-      maze::Cell::HALF_WIDTH_MM - (maze::Cell::WIDTH_MM - SENSING_SPOT_MM);
+  static constexpr units::millimeter_t SEARCH_TURN_RADIUS =
+      maze::Cell::HALF_WIDTH - (maze::Cell::WIDTH - SENSING_SPOT);
 };

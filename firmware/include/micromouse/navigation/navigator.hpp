@@ -5,6 +5,7 @@
 #include <micromouse/vision/vision.hpp>
 #include <micromouse/navigation/solvers/solver.hpp>
 #include <micromouse/subsystem.hpp>
+#include <units/length.h>
 
 namespace navigation {
 
@@ -15,8 +16,8 @@ class Navigator : public Subsystem {
 
   Solver* m_solver = nullptr;
 
-  float m_start_cell_position_mm = 0.f;
-  float m_target_cell_position_mm;
+  units::millimeter_t m_start_cell_position = 0_mm;
+  units::millimeter_t m_target_cell_position;
 
   maze::Coordinate m_position;
   maze::Direction m_direction;
@@ -46,7 +47,7 @@ class Navigator : public Subsystem {
 
   void reset_position(maze::Coordinate position,
                       maze::Direction direction,
-                      float cell_position_mm);
+                      units::millimeter_t cell_position);
 
   void search_to(maze::CoordinateSpan targets, Solver& solver);
   // TODO: solve_to() for faster?
@@ -57,15 +58,15 @@ class Navigator : public Subsystem {
   }
 
  private:
-  const drive::DriveController::CompletionCallback m_should_sense_callback =
-      [this] { m_should_sense = true; };
+  const drive::DriveController::CompletionCallback m_should_sense_callback = [this] {
+    m_should_sense = true;
+  };
 
-  const drive::DriveController::CompletionCallback m_done_callback =
-      [this] {
-        m_done = true;
-        // m_position = m_next_position;
-        // m_direction = m_next_direction;
-      };
+  const drive::DriveController::CompletionCallback m_done_callback = [this] {
+    m_done = true;
+    // m_position = m_next_position;
+    // m_direction = m_next_direction;
+  };
 
   void move(Move move);
 };

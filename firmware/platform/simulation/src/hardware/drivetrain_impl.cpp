@@ -6,18 +6,17 @@
 using namespace std::placeholders;
 
 DrivetrainImpl::DrivetrainImpl() : Node("micromouse_drivetrain") {
-  m_twist_pub = this->create_publisher<geometry_msgs::msg::Twist>(
-      "/simulation/drive/cmd_vel", 10);
+  m_twist_pub = this->create_publisher<geometry_msgs::msg::Twist>("/simulation/drive/cmd_vel", 10);
 }
 
 void DrivetrainImpl::stop() {
-  set_chassis_speeds({0.f, 0.f});
+  set_chassis_speeds(drive::ChassisSpeeds{});
 }
 
 void DrivetrainImpl::set_chassis_speeds(const drive::ChassisSpeeds& speeds) {
   geometry_msgs::msg::Twist twist;
-  twist.angular.z = speeds.angular_velocity_dps;
-  twist.linear.x = speeds.linear_velocity_mmps / 1000.0;
+  twist.angular.z = speeds.angular_velocity.value();
+  twist.linear.x = speeds.linear_velocity.convert<units::meters_per_second>().value();
 
   m_twist_pub->publish(twist);
 }

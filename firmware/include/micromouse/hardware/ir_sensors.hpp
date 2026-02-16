@@ -1,6 +1,8 @@
 #pragma once
 
 #include <micromouse/hardware/component.hpp>
+#include <units/length.h>
+#include <array>
 
 namespace hardware {
 
@@ -20,26 +22,25 @@ class IRSensors : public Component {
   virtual bool is_enabled() const { return true; }
 
   /**
-   * @brief Get the raw readings of the IR sensors (1 => max intensity, 0 => see
-   * nothing).
+   * Get the raw readings of the IR sensors (1 => max intensity, 0 => see nothing).
    *
-   * @return float* Pointer to array of 4 readings, from left to right.
+   * @return Array of 4 readings, from left to right.
    */
-  virtual const float* get_raw_readings() const = 0;
+  virtual const std::array<float, 4>& get_raw_readings() const = 0;
 
   /**
-   * @brief Get the distance readings of the IR sensors, in millimeters.
+   * Get the distance readings of the IR sensors.
    *
-   * @return float* Pointer to array of 4 distances, from left to right.
+   * @return Array of 4 distances, from left to right.
    */
-  virtual const float* get_distances_mm() const = 0;
+  virtual const std::array<units::millimeter_t, 4>& get_distances() const = 0;
 
   const float& get_raw_reading(Sensor sensor) const {
     return get_raw_readings()[static_cast<int>(sensor)];
   }
 
-  const float& get_distance_mm(Sensor sensor) const {
-    return get_distances_mm()[static_cast<int>(sensor)];
+  units::millimeter_t get_distance(Sensor sensor) const {
+    return get_distances()[static_cast<int>(sensor)];
   }
 };
 

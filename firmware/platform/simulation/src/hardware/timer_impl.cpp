@@ -7,8 +7,7 @@ TimerImpl::TimerImpl() {
 }
 
 void TimerImpl::reset() {
-  m_start_time_point = m_stop_time_point =
-      std::chrono::high_resolution_clock::now();
+  m_start_time_point = m_stop_time_point = std::chrono::high_resolution_clock::now();
 
   m_is_running = false;
 }
@@ -29,13 +28,11 @@ void TimerImpl::stop() {
   m_is_running = false;
 }
 
-uint32_t TimerImpl::elapsed_ms() const {
-  auto end_time_point = m_is_running ? std::chrono::high_resolution_clock::now()
-                                     : m_stop_time_point;
+units::millisecond_t TimerImpl::get() const {
+  auto end_time_point = m_is_running ? std::chrono::high_resolution_clock::now() : m_stop_time_point;
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_point - m_start_time_point);
 
-  return std::chrono::duration_cast<std::chrono::milliseconds>(
-             end_time_point - m_start_time_point)
-      .count();
+  return units::millisecond_t{static_cast<float>(duration.count())};
 }
 
 std::unique_ptr<Timer> make_platform_timer() {
