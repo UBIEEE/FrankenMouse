@@ -49,6 +49,10 @@ UNIT_ADD(acceleration, feet_per_second_squared, feet_per_second_squared, fps_sq,
 UNIT_ADD(acceleration, standard_gravity, standard_gravity, SG,
          unit<std::ratio<980665, 100000>, meters_per_second_squared>)
 
+UNIT_ADD(acceleration, millimeters_per_second_squared, millimeters_per_second_squared,
+         mmps_sq,
+         compound_unit<length::millimeters, inverse<squared<time::seconds>>>)
+
 UNIT_ADD_CATEGORY_TRAIT(acceleration)
 #endif
 

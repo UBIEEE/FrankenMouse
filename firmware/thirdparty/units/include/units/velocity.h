@@ -52,6 +52,9 @@ UNIT_ADD(velocity, kilometers_per_hour, kilometers_per_hour, kph,
 UNIT_ADD(velocity, knot, knots, kts,
          compound_unit<length::nauticalMiles, inverse<time::hour>>)
 
+UNIT_ADD(velocity, millimeters_per_second, millimeters_per_second, mmps,
+         compound_unit<length::millimeters, inverse<time::seconds>>)
+
 UNIT_ADD_CATEGORY_TRAIT(velocity)
 #endif
 
