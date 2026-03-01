@@ -53,7 +53,7 @@ class DrivePIDSetCommand final : public Command {
   Component m_component;
 
   bool m_args_valid = false;
-  float m_pid[6] = {0};  // linear (kP, kI, kD), angular (kP, kI, kD)
+  float m_pid[6];  // linear (kP, kI, kD), angular (kP, kI, kD)
 
  public:
   DrivePIDSetCommand(const CommandArguments args, CommunicationManager& communication_manager);
