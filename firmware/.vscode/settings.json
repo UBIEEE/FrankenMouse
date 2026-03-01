@@ -3,7 +3,7 @@
     "*.cpp": "cpp",
     "*.hpp": "cpp",
     "*.c": "c",
-    "*.h": "objective-c",
+    "*.h": "c",
     "array": "cpp",
     "limits": "cpp",
     "any": "cpp",
@@ -94,11 +94,14 @@
     "shared_mutex": "cpp",
     "source_location": "cpp",
     "stack": "cpp",
-    "typeindex": "cpp"
+    "typeindex": "cpp",
+    "ranges": "cpp"
   },
   "git.openRepositoryInParentFolders": "always",
   "cmake.configureArgs": [
     "-DBUILD_SIMULATION=ON",
+    "-DBUILD_MOUSE_V3=OFF",
+    "-DBUILD_MOUSE_V2=OFF",
     "-DBUILD_TESTS=ON"
   ]
 }
