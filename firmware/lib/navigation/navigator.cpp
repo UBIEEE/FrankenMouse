@@ -3,17 +3,21 @@
 #include <cassert>
 #include <micromouse/robot/cell_positions.hpp>
 
+#define LOG_PREFIX "[nav] "
+#include <micromouse/logging.hpp>
+
 using namespace navigation;
 
 void Navigator::periodic() {
   if (m_done || !m_should_sense)
     return;
+
   m_should_sense = false;
 
   m_position = m_next_position;
   m_direction = m_next_direction;
 
-  printf("Cell: (%d, %d), Direction: %d\n", m_position.x(), m_position.y(), (int)m_direction);
+  LogInfo("cell: ({}, {}), direction: {}", m_position.x(), m_position.y(), maze::direction_to_string(m_direction));
 
   // The robot's next cell.
 
@@ -52,19 +56,19 @@ void Navigator::periodic() {
   bool was_front_wall = cell.is_wall(front_direction);
 
   if (was_left_wall && !is_left_wall) {
-    printf("Something went wrong, left wall missing\n");
+    LogError("something went wrong, left wall missing");
     // assert(false);
   }
   if (was_right_wall && !is_right_wall) {
-    printf("Something went wrong, right wall missing\n");
+    LogError("something went wrong, right wall missing");
     // assert(false);
   }
   if (was_front_wall && !is_front_wall) {
-    printf("Something went wrong, front wall missing\n");
+    LogError("something went wrong, front wall missing");
     // assert(false);
   }
 
-  printf("Left: %d, Right: %d, Front: %d\n", (int)is_left_wall, (int)is_right_wall, (int)is_front_wall);
+  LogInfo("left: {}, right: {}, front: {}", is_left_wall, is_right_wall, is_front_wall);
 
   m_maze.set_wall(m_next_position, left_direction, is_left_wall);
   m_maze.set_wall(m_next_position, right_direction, is_right_wall);
@@ -74,7 +78,7 @@ void Navigator::periodic() {
   // Solve the maze, decide where to move to.
 
   Direction move_direction = m_solver->next(m_next_position, m_targets);
-  printf("Move: %d\n", (int)move_direction);
+  LogInfo("move: {}", maze::direction_to_string(move_direction));
 
   if (m_direction == move_direction) {
     move(Move::FORWARD);
@@ -113,7 +117,7 @@ void Navigator::search_to(maze::CoordinateSpan targets, Solver& solver) {
   m_drive.enqueue_forward(sense_distance, true, m_should_sense_callback);
   m_drive.enqueue_forward(remaining_distance, true);
 
-  printf("Cell: x: %d: y: %d: direction: %d\n", m_position.x(), m_position.y(), (int)m_direction);
+  LogInfo("cell: ({}, {}), direction: {}", m_position.x(), m_position.y(), maze::direction_to_string(m_direction));
 
   m_move = Move::FORWARD;
 }

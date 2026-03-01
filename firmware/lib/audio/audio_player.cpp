@@ -1,5 +1,8 @@
 #include <micromouse/audio/audio_player.hpp>
 
+#define LOG_PREFIX "[audio] "
+#include <micromouse/logging.hpp>
+
 using namespace audio;
 
 AudioPlayer::AudioPlayer() {
@@ -49,6 +52,8 @@ void AudioPlayer::play_song(Song song, bool repeat) {
   if (song >= Song::_COUNT)
     return;
 
+  LogInfo("play song: {}", song_to_string(song));
+
   m_song_handle = &get_song(song);
   m_song_repeat = repeat;
   m_note_index = 0;
@@ -66,6 +71,8 @@ void AudioPlayer::end_song() {
     m_should_stop = false;
     return;
   }
+
+  LogInfo("end song: {}", song_to_string(m_current_song));
 
   if (m_song_handle != nullptr) {
     m_current_song = Song::QUIET;

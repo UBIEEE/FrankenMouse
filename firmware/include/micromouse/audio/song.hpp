@@ -31,4 +31,6 @@ enum class Song : uint8_t {
   _COUNT,
 };
 
+const char* song_to_string(Song song);
+
 }  // namespace audio

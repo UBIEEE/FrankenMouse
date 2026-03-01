@@ -47,4 +47,6 @@ enum class Task : uint8_t {
   _COUNT,
 };
 
+const char* task_to_string(Task task);
+
 }  // namespace robot

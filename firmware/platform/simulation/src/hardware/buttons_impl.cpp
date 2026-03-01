@@ -14,14 +14,12 @@ ButtonsImpl::ButtonsImpl() : Node("micromouse_buttons") {
 void ButtonsImpl::button_1_callback(const std_msgs::msg::Bool& msg) {
   if (msg.data && m_btn1_cb) {
     m_btn1_cb();
-    printf("Button 1 pressed\n");
   }
 }
 
 void ButtonsImpl::button_2_callback(const std_msgs::msg::Bool& msg) {
   if (msg.data && m_btn2_cb) {
     m_btn2_cb();
-    printf("Button 2 pressed\n");
   }
 }
 

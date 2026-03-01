@@ -1,5 +1,8 @@
 #include <micromouse/vision/vision.hpp>
 
+#define LOG_PREFIX "[vision] "
+#include <micromouse/logging.hpp>
+
 using namespace vision;
 
 Vision::Vision() {
@@ -11,11 +14,11 @@ void Vision::periodic() {
 }
 
 void Vision::reset_calibration() {
-  //
+  LogInfo("reset vision calibration");
 }
 
 void Vision::calibrate() {
-  //
+  LogInfo("calibrate vision");
 }
 
 bool Vision::left_wall() {

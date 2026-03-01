@@ -2,8 +2,43 @@
 
 #include <micromouse/robot/robot.h>
 
-using namespace audio;
+namespace audio {
+
 using enum NoteInOctave;
+
+const char* song_to_string(Song song) {
+  switch (song) {
+    using enum Song;
+    case QUIET:
+      return "Quiet";
+    case HOME_DEPOT:
+      return "Home Depot Theme";
+    case NOKIA:
+      return "Nokia Ringtone";
+    case STARTUP:
+      return "Startup Tone";
+    case BLE_CONNECT:
+      return "BLE Connect Tone";
+    case BLE_DISCONNECT:
+      return "BLE Disconnect Tone";
+    case BEGIN_SEARCH:
+      return "Begin Search Tone";
+    case BEGIN_FAST_SOLVE:
+      return "Begin Fast Solve Tone";
+    case BEGIN_SLOW_SOLVE:
+      return "Begin Slow Solve Tone";
+    case BEGIN_OTHER:
+      return "Begin Other Tone";
+    case ARMED:
+      return "Armed Tone";
+    case ARMED_TRIGGERING:
+      return "Armed and Triggering Tone";
+    case _SONG_COUNT:
+    case _COUNT:
+      break;
+  }
+  return "Unknown";
+}
 
 // clang-format off
 
@@ -178,3 +213,5 @@ const AudioPlayer::SongHandle& AudioPlayer::get_song(Song song) const {
 }
 
 // clang-format on
+
+}  // namespace audio

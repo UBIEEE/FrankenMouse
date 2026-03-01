@@ -1,5 +1,8 @@
 #include <micromouse/maze/maze.hpp>
 
+#define LOG_PREFIX "[maze] "
+#include <micromouse/logging.hpp>
+
 using namespace maze;
 
 Maze::Maze() {
@@ -7,6 +10,8 @@ Maze::Maze() {
 }
 
 void Maze::reset() {
+  LogInfo("reset maze");
+
   for (std::size_t i = 0; i < MazeDimensions::TOTAL_CELLS; ++i) {
     m_cells[i].reset();
   }
