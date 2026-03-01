@@ -25,18 +25,26 @@ endif()
 
 if(BUILD_MOUSE_V3 OR BUILD_MOUSE_V2)
   set(BUILD_STM32 ON)
+
+  if(BUILD_TESTS AND NOT BUILD_SIMULATION)
+    message(FATAL_ERROR "Tests are only supported on desktop simulation.")
+  endif()
 endif()
 
 if(BUILD_STM32 AND BUILD_DESKTOP)
   message(FATAL_ERROR "Multiple build platforms selected.")
 endif()
 
+set(WITH_LOGGING OFF)
 if(BUILD_MOUSE_V3)
   message(STATUS "Build platform: Mouse v3")
 elseif(BUILD_MOUSE_V2)
   message(STATUS "Build platform: Mouse v2")
-else()
+elseif(BUILD_SIMULATION)
   message(STATUS "Build platform: Desktop")
+  set(WITH_LOGGING ON)
+else()
+  message(FATAL_ERROR "Invalid build configuration.")
 endif()
 
 ###
@@ -103,6 +111,13 @@ endif()
 add_subdirectory(thirdparty)
 target_link_libraries(micromouse PUBLIC units gcem)
 
+if(WITH_LOGGING)
+  target_compile_definitions(micromouse PUBLIC WITH_LOGGING)
+
+  set(SPDLOG_USE_STD_FORMAT ON)
+  add_subdirectory(thirdparty/spdlog)
+  target_link_libraries(micromouse PUBLIC spdlog::spdlog)
+endif()
 
 ###
 ### Build targets
