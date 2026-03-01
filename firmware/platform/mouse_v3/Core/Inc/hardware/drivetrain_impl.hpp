@@ -22,14 +22,7 @@ class DrivetrainImpl : public hardware::Drivetrain {
   Encoder m_left_encoder;
   Encoder m_right_encoder;
 
-  struct {
-    struct {
-      Encoder::Data left;
-      Encoder::Data right;
-    } encoder;
-
-    drive::Pose pose;
-  } m_drive_data;
+  MotorData m_drive_data;
 
   // Control stuff.
 
@@ -65,7 +58,7 @@ class DrivetrainImpl : public hardware::Drivetrain {
 
   void periodic() override;
   void publish_periodic_feedback() override;
-  void publish_extra_feedback() override;
+  void publish_status_feedback() override;
   void stop() override;
 
   void set_chassis_speeds(const drive::ChassisSpeeds& speeds) override;
@@ -84,6 +77,13 @@ class DrivetrainImpl : public hardware::Drivetrain {
   friend void ::DrivetrainImpl_UpdatePIDValues(const float*);
 
   void update_pid_values(const float* translational_pid, const float* angular_pid);
+
+  enum PIDComponent {
+    TRANSLATIONAL,
+    ANGULAR,
+  };
+
+  void update_pid_value(PIDComponent component, drive::PIDController::Term term, float value);
 };
 
 DrivetrainImpl& get_mouse_v3_drivetrain();

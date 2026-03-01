@@ -9,7 +9,7 @@
 #include <micromouse/hardware/timer.hpp>
 #include <micromouse/subsystem.hpp>
 #include <micromouse/vision/vision.hpp>
-#include <micromouse/robot.h>
+#include <micromouse/robot/robot.h>
 
 #include <units/length.h>
 #include <units/angle.h>
@@ -101,7 +101,7 @@ class DriveController : public Subsystem {
 
   void periodic() override;
   void publish_periodic_feedback() override;
-  void publish_extra_feedback() override;
+  void publish_status_feedback() override;
 
   bool is_done() const {
     return m_motions.empty() &&

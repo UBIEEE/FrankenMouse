@@ -34,6 +34,12 @@ class IMU : public Component {
    * @return Linear acceleration.
    */
   virtual units::standard_gravity_t get_linear_accel(Axis axis) = 0;
+
+  struct Data {
+    units::degrees_per_second_t gyro_data[3];
+    units::standard_gravity_t accel_data[3];
+  };
+  static_assert(sizeof(Data) == sizeof(float[6]));
 };
 
 }  // namespace hardware

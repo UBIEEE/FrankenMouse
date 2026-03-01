@@ -11,7 +11,7 @@ class Subsystem {
 
   virtual void periodic() {}
   virtual void publish_periodic_feedback() {}
-  virtual void publish_extra_feedback() {}
+  virtual void publish_status_feedback() {}
 
  protected:
   Subsystem() = default;

@@ -1,6 +1,8 @@
-#include <micromouse/robot.hpp>
+#include <micromouse/robot/robot.hpp>
 
-#include <micromouse/robot_cell_positions.hpp>
+#include <micromouse/robot/cell_positions.hpp>
+
+using namespace robot;
 
 void Robot::init() {
   m_buttons.register_button_1_callback(std::bind(&Robot::handle_button_1, this));
@@ -25,12 +27,12 @@ void Robot::periodic() {
 }
 
 void Robot::on_connect() {
-  m_audio_player.play_song(audio::Song::BLE_CONECT);
+  m_audio_player.play_song(audio::Song::BLE_CONNECT);
   m_feedback_connected = true;
 }
 
 void Robot::on_disconnect() {
-  m_audio_player.play_song(audio::Song::BLE_DISCONECT);
+  m_audio_player.play_song(audio::Song::BLE_DISCONNECT);
   m_feedback_connected = false;
 }
 
@@ -46,54 +48,64 @@ void Robot::publish_periodic_feedback() {
   }
 }
 
-void Robot::publish_extra_feedback() {
+void Robot::publish_status_feedback() {
   if (!m_feedback_connected)
     return;
 
   for (auto s : m_subsystems) {
-    s->publish_extra_feedback();
+    s->publish_status_feedback();
   }
   for (auto c : m_components) {
-    c->publish_extra_feedback();
+    c->publish_status_feedback();
   }
 
   publish_current_task();
 }
 
-void Robot::delegate_received_feedback(FeedbackTopicReceive topic, const uint8_t* data) {
+void Robot::delegate_received_feedback(feedback::TopicReceive topic, const uint8_t* data) {
   switch (topic) {
-    using enum FeedbackTopicReceive;
+    using enum feedback::TopicReceive;
     case MAIN_TASK:
-      if (data[0] >= static_cast<uint8_t>(Task::_COUNT))
-        return;
-      run_task(Task(data[0]));
-      return;
-    case MAIN_COMMAND:
-      // TODO:
-      // MAZE_RESET:
-      //   m_maze.reset();
-      //   m_maze.init_start_cell(Maze::StartLocation::WEST_OF_GOAL);
-      //   return;
-      // VISION_CALIBRATE:
-      //   if (data[0] == 0) {
-      //     m_vision.reset_calibration();
-      //   } else if (data[0] == 1) {
-      //     m_vision.calibrate();
-      //   }
-      return;
-    case MAIN_SONG:
-      if (data[0] < static_cast<uint8_t>(audio::Song::_SONG_COUNT)) {
-        m_audio_player.play_song(audio::Song(data[0]));
+      if (*data < 128) {
+        run_task(Task(*data));
       }
-      return;
+      break;
+    case MAIN_COMMAND:
+      handle_command(Command(*data));
+      break;
+    case MAIN_SONG:
+      if (*data < 128) {
+        m_audio_player.play_song(audio::Song(*data));
+      }
+      break;
+    case DRIVE_PID:
+      // Handled earlier by platform code.
+      break;
     case DRIVE_CHASSIS_SPEEDS:
       // TODO:
       std::memcpy(&m_chassis_speeds, data, sizeof(m_chassis_speeds));
       m_chassis_speeds_timer->reset();
       m_chassis_speeds_timer->start();
-      return;
-    default:
-      return;
+      break;
+  }
+}
+
+void Robot::handle_command(Command command) {
+  switch (command) {
+    using enum Command;
+    case RESEND_ALL_FEEDBACK:
+      // TODO
+      break;
+    case RESET_MAZE:
+      m_maze.reset();
+      m_maze.init_start_cell(Maze::StartLocation::WEST_OF_GOAL);
+      break;
+    case CALIBRATE_VISION:
+      m_vision.calibrate();
+      break;
+    case RESET_VISION_CALIBRATION:
+      m_vision.reset_calibration();
+      break;
   }
 }
 
@@ -220,7 +232,7 @@ void Robot::start_task_maze_search() {
   m_maze.init_start_cell(Maze::StartLocation::WEST_OF_GOAL);
 
   m_navigator.reset_position(Maze::start(m_start_location), maze::Direction::NORTH,
-                             RobotCellPositions::back_wall());
+                             CellPositions::back_wall());
 
   m_navigator.search_to(Maze::GOAL_ENDPOINTS, m_floodfill);
 }
@@ -231,7 +243,7 @@ void Robot::start_task_maze_solve(bool fast) {
   m_solve_stage = SolveStage::START_TO_GOAL;
 
   m_navigator.reset_position(Maze::start(m_start_location), maze::Direction::NORTH,
-                             RobotCellPositions::back_wall());
+                             CellPositions::back_wall());
 
   // m_navigator.solve_to(Maze::GOAL_ENDPOINTS, fast);
 }
@@ -239,7 +251,7 @@ void Robot::start_task_maze_solve(bool fast) {
 void Robot::start_task_test_drive_straight() {
   m_drive_controller.reset();
 
-  const units::millimeter_t forward_distance = maze::Cell::WIDTH - RobotCellPositions::back_wall();
+  const units::millimeter_t forward_distance = maze::Cell::WIDTH - CellPositions::back_wall();
 
   m_drive_controller.enqueue_forward(forward_distance, false);
 }
@@ -247,7 +259,7 @@ void Robot::start_task_test_drive_straight() {
 void Robot::start_task_test_drive_left_turn() {
   m_drive_controller.reset();
 
-  const units::millimeter_t forward_distance = maze::Cell::WIDTH - RobotCellPositions::back_wall();
+  const units::millimeter_t forward_distance = maze::Cell::WIDTH - CellPositions::back_wall();
 
   m_drive_controller.enqueue_forward(forward_distance);
   m_drive_controller.enqueue_turn(drive::DriveController::TurnAngle::CCW_90, maze::Cell::WIDTH / 2.f);
@@ -257,7 +269,7 @@ void Robot::start_task_test_drive_left_turn() {
 void Robot::start_task_test_drive_right_turn() {
   m_drive_controller.reset();
 
-  const units::millimeter_t forward_distance = maze::Cell::WIDTH - RobotCellPositions::back_wall();
+  const units::millimeter_t forward_distance = maze::Cell::WIDTH - CellPositions::back_wall();
 
   m_drive_controller.enqueue_forward(forward_distance);
   m_drive_controller.enqueue_turn(drive::DriveController::TurnAngle::CW_90, maze::Cell::WIDTH / 2.f);
@@ -495,8 +507,8 @@ void Robot::process_task_armed_triggered() {
 }
 
 void Robot::publish_current_task() {
-  uint8_t data[1] = {static_cast<uint8_t>(m_task)};
-  m_feedback.publish_topic(FeedbackTopicSend::MAIN_TASK, data);
+  using namespace feedback;
+  m_feedback.publish<TopicSend::MAIN_TASK>(m_task);
 }
 
 void Robot_Init(void) {
@@ -519,15 +531,11 @@ void Robot_PublishPeriodicFeedback(void) {
   Robot::get().publish_periodic_feedback();
 }
 
-void Robot_PublishExtraFeedback(void) {
-  Robot::get().publish_extra_feedback();
-}
-
 void Robot_ReportError(void) {}
 
 void Robot_DelegateReceivedFeedback(uint8_t topic, uint8_t* data) {
   if (topic >= _FB_TOPIC_RECEIVE_COUNT)
     return;
 
-  Robot::get().delegate_received_feedback(FeedbackTopicReceive(topic), data);
+  Robot::get().delegate_received_feedback(feedback::TopicReceive(topic), data);
 }

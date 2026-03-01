@@ -1,7 +1,7 @@
 #include <micromouse/navigation/navigator.hpp>
 
 #include <cassert>
-#include <micromouse/robot_cell_positions.hpp>
+#include <micromouse/robot/cell_positions.hpp>
 
 using namespace navigation;
 
@@ -107,8 +107,8 @@ void Navigator::search_to(maze::CoordinateSpan targets, Solver& solver) {
   m_solver = &solver;
   m_done = false;
 
-  units::millimeter_t sense_distance = RobotCellPositions::SENSING_SPOT - m_start_cell_position;
-  units::millimeter_t remaining_distance = maze::Cell::WIDTH - RobotCellPositions::SENSING_SPOT;
+  units::millimeter_t sense_distance = robot::CellPositions::SENSING_SPOT - m_start_cell_position;
+  units::millimeter_t remaining_distance = maze::Cell::WIDTH - robot::CellPositions::SENSING_SPOT;
 
   m_drive.enqueue_forward(sense_distance, true, m_should_sense_callback);
   m_drive.enqueue_forward(remaining_distance, true);
@@ -121,8 +121,8 @@ void Navigator::search_to(maze::CoordinateSpan targets, Solver& solver) {
 void Navigator::move(Move move) {
   m_move = move;
 
-  units::millimeter_t sense_distance = RobotCellPositions::SENSING_SPOT;
-  units::millimeter_t remaining_distance = maze::Cell::WIDTH - RobotCellPositions::SENSING_SPOT;
+  units::millimeter_t sense_distance = robot::CellPositions::SENSING_SPOT;
+  units::millimeter_t remaining_distance = maze::Cell::WIDTH - robot::CellPositions::SENSING_SPOT;
 
   switch (move) {
     using enum Move;
@@ -136,20 +136,20 @@ void Navigator::move(Move move) {
       break;
     case TURN_LEFT:
       m_drive.enqueue_forward(remaining_distance, true);
-      m_drive.enqueue_turn(drive::DriveController::TurnAngle::CCW_90, RobotCellPositions::SEARCH_TURN_RADIUS,
+      m_drive.enqueue_turn(drive::DriveController::TurnAngle::CCW_90, robot::CellPositions::SEARCH_TURN_RADIUS,
                            m_should_sense_callback);
       m_drive.enqueue_forward(remaining_distance, true);
       break;
     case TURN_RIGHT:
       m_drive.enqueue_forward(remaining_distance, true);
-      m_drive.enqueue_turn(drive::DriveController::TurnAngle::CW_90, RobotCellPositions::SEARCH_TURN_RADIUS,
+      m_drive.enqueue_turn(drive::DriveController::TurnAngle::CW_90, robot::CellPositions::SEARCH_TURN_RADIUS,
                            m_should_sense_callback);
       m_drive.enqueue_forward(remaining_distance, true);
       break;
     case TURN_AROUND:
       m_drive.enqueue_forward(maze::Cell::HALF_WIDTH, false);
       m_drive.enqueue_turn(drive::DriveController::TurnAngle::CW_180);
-      m_drive.enqueue_forward(RobotCellPositions::SENSING_SPOT - maze::Cell::HALF_WIDTH, true,
+      m_drive.enqueue_forward(robot::CellPositions::SENSING_SPOT - maze::Cell::HALF_WIDTH, true,
                               m_should_sense_callback);
       m_drive.enqueue_forward(remaining_distance, true);
       break;

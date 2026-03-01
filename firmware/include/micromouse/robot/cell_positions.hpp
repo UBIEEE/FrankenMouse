@@ -4,7 +4,9 @@
 #include <micromouse/maze/cell.hpp>
 #include <units/length.h>
 
-class RobotCellPositions {
+namespace robot {
+
+class CellPositions {
  public:
   static units::millimeter_t back_wall() {
     hardware::RobotMeasurements& m = get_robot_measurements();
@@ -18,3 +20,5 @@ class RobotCellPositions {
   static constexpr units::millimeter_t SEARCH_TURN_RADIUS =
       maze::Cell::HALF_WIDTH - (maze::Cell::WIDTH - SENSING_SPOT);
 };
+
+}  // namespace robot

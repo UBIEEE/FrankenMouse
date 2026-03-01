@@ -21,9 +21,9 @@ class AudioPlayer : public Subsystem {
     bool pause_between_notes = true;
   };
 
- private:
-  static const SongHandle m_songs[uint8_t(Song::_COUNT)];  // songs.cpp
+  const SongHandle& get_song(Song song) const; // songs.cpp
 
+ private:
   const SongHandle* m_song_handle = nullptr;
   bool m_song_repeat = false;
   uint16_t m_note_index = 0;
@@ -31,13 +31,13 @@ class AudioPlayer : public Subsystem {
 
   bool m_should_stop = false;
   // uint8_t m_is_playing = false;
-  Song m_current_song = Song::NONE;
+  Song m_current_song = Song::QUIET;
 
  public:
   AudioPlayer();
 
   void periodic() override;
-  void publish_extra_feedback() override;
+  void publish_status_feedback() override;
 
   /**
    * @brief Immediately starts playing a song from the beginning.

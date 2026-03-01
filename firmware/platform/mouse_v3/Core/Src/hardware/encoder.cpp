@@ -1,6 +1,6 @@
 #include "hardware/encoder.hpp"
 
-#include <micromouse/robot.h>
+#include <micromouse/robot/robot.h>
 #include "main.h"
 
 #include <cmath>
@@ -26,7 +26,7 @@ static constexpr units::millimeter_t ENCODER_DISTANCE_PER_TICK = (1.f / ENCODER_
 // Encoder functions.
 //
 
-Encoder::Data Encoder::update(uint16_t ticks) {
+hardware::Drivetrain::EncoderData Encoder::update(uint16_t ticks) {
   const int32_t delta_ticks = calc_delta_ticks(ticks, m_last_ticks);
 
   m_last_ticks = ticks;

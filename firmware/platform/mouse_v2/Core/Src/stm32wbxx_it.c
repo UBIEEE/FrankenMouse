@@ -25,7 +25,7 @@
 
 #include <stdbool.h>
 #include "stm32_seq.h"
-#include <micromouse/robot.h>
+#include <micromouse/robot/robot.h>
 
 /* USER CODE END Includes */
 

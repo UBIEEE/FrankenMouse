@@ -22,7 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include <micromouse/robot.h>
+#include <micromouse/robot/robot.h>
 
 /* USER CODE END Includes */
 

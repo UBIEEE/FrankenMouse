@@ -1,10 +1,10 @@
 #pragma once
 
-#include <micromouse/robot.h>
+#include <micromouse/robot/robot.h>
 #include <micromouse/audio/audio_player.hpp>
 #include <micromouse/drive/drive_controller.hpp>
 #include <micromouse/drive/kinematics.hpp>
-#include <micromouse/feedback_topic.hpp>
+#include <micromouse/feedback/feedback_topic.hpp>
 #include <micromouse/hardware/battery_status.hpp>
 #include <micromouse/hardware/buttons.hpp>
 #include <micromouse/hardware/buzzer.hpp>
@@ -19,7 +19,10 @@
 #include <micromouse/navigation/navigator.hpp>
 #include <micromouse/navigation/solvers/flood_fill.hpp>
 #include <micromouse/singleton.hpp>
+#include <micromouse/robot/task.hpp>
 #include <micromouse/vision/vision.hpp>
+
+namespace robot {
 
 class Robot : public Singleton<Robot> {
   drive::SpeedConfig m_speeds{};
@@ -37,8 +40,7 @@ class Robot : public Singleton<Robot> {
   hardware::Buttons& m_buttons = get_platform_buttons();
 
   const std::array<hardware::Component*, 7> m_components{
-      &m_battery_status, &m_buzzer,   &m_drivetrain, &m_imu,
-      &m_ir_sensors,     &m_feedback, &m_buttons,
+      &m_battery_status, &m_buzzer, &m_drivetrain, &m_imu, &m_ir_sensors, &m_feedback, &m_buttons,
   };
 
   // Logic Subsystems
@@ -48,8 +50,6 @@ class Robot : public Singleton<Robot> {
   drive::DriveController m_drive_controller{m_vision, m_speeds.normal_speeds};
   navigation::Navigator m_navigator{m_drive_controller, m_vision, m_maze};
 
-  Maze::StartLocation m_start_location = Maze::StartLocation::WEST_OF_GOAL;
-
   const std::array<Subsystem*, 4> m_subsystems{
       &m_drive_controller,
       &m_audio_player,
@@ -58,80 +58,15 @@ class Robot : public Singleton<Robot> {
   };
 
   bool m_feedback_connected = false;
+  Maze::StartLocation m_start_location = Maze::StartLocation::WEST_OF_GOAL;
 
- private:
-  std::array<maze::CoordinateSpan, 4> get_search_targets() {
-    return {Maze::GOAL_ENDPOINTS, Maze::outside_start_span(m_start_location),
-            Maze::GOAL_ENDPOINTS, Maze::start_span(m_start_location)};
-  }
-
-  std::array<maze::CoordinateSpan, 4> get_solve_targets() {
-    return {Maze::GOAL_ENDPOINTS, Maze::start_span(m_start_location)};
-  }
-
- public:
-  void init();
-  void periodic();
-  void on_connect();
-  void on_disconnect();
-  void publish_periodic_feedback();
-  void publish_extra_feedback();
-  void delegate_received_feedback(FeedbackTopicReceive topic,
-                                  const uint8_t* data);
-
- public:
-  enum class Task : uint8_t {
-    STOPPED = 0,
-
-    //
-    // 1-10: maze tasks.
-    //
-
-    MAZE_SEARCH = 1,
-    MAZE_SLOW_SOLVE = 2,
-    MAZE_FAST_SOLVE = 3,
-
-    //
-    // 11-20: test drive tasks.
-    //
-
-    // Test drive movements, starting from the back wall.
-    TEST_DRIVE_STRAIGHT = 11,
-    TEST_DRIVE_LEFT_TURN = 12,
-    TEST_DRIVE_RIGHT_TURN = 13,
-    TEST_DRIVE_TURN_180 = 14,
-
-    TEST_GYRO = 15,
-    TEST_DRIVE_STRAIGHT_VISION_ALIGN = 16,
-
-    //
-    // 21-30: Manual control tasks.
-    //
-
-    MANUAL_CHASSIS_SPEEDS = 21,
-
-    //
-    // 128+: other
-    //
-
-    ARMED = 128,
-    ARMED_TRIGGERING,
-    ARMED_TRIGGERED,
-
-    VISION_CALIBRATE,
-
-    _COUNT,
-  };
-
- private:
   Task m_task = Task::STOPPED;
 
   Task m_next_task = Task::STOPPED;
   bool m_is_next_task = false;
 
   Task m_armed_task;
-  std::unique_ptr<hardware::Timer> m_armed_trigger_timer =
-      make_platform_timer();
+  std::unique_ptr<hardware::Timer> m_armed_trigger_timer = make_platform_timer();
 
   enum class ArmedTriggerSide : bool {
     LEFT,
@@ -152,28 +87,44 @@ class Robot : public Singleton<Robot> {
     GOAL_TO_START = 1,
   } m_solve_stage = SolveStage::START_TO_GOAL;
 
-  drive::ChassisSpeeds m_chassis_speeds {};
-  std::unique_ptr<hardware::Timer> m_chassis_speeds_timer =
-      make_platform_timer();
+  drive::ChassisSpeeds m_chassis_speeds{};
+  std::unique_ptr<hardware::Timer> m_chassis_speeds_timer = make_platform_timer();
 
  public:
+  void init();
+  void periodic();
+  void on_connect();
+  void on_disconnect();
+  void publish_periodic_feedback();
+  void publish_status_feedback();
+  void delegate_received_feedback(feedback::TopicReceive topic, const uint8_t* data);
+
   Task current_task() const { return m_task; }
 
  private:
+  void handle_command(Command command);
+
   void handle_button_1();
   void handle_button_2();
 
- private:
+  void set_start_location(Maze::StartLocation start_location) { m_start_location = start_location; }
+
+  std::array<maze::CoordinateSpan, 4> get_search_targets() {
+    return {Maze::GOAL_ENDPOINTS, Maze::outside_start_span(m_start_location), Maze::GOAL_ENDPOINTS,
+            Maze::start_span(m_start_location)};
+  }
+
+  std::array<maze::CoordinateSpan, 4> get_solve_targets() {
+    return {Maze::GOAL_ENDPOINTS, Maze::start_span(m_start_location)};
+  }
+
+  // Task things
+
   void arm_task(Task task);
   void run_task(Task task);
 
   void end_task();
 
-  void set_start_location(Maze::StartLocation start_location) {
-    m_start_location = start_location;
-  }
-
- private:
   void start_next_task();
 
   void start_task_maze_search();
@@ -205,6 +156,7 @@ class Robot : public Singleton<Robot> {
   void process_task_armed_triggering();
   void process_task_armed_triggered();
 
- private:
   void publish_current_task();
 };
+
+}  // namespace robot

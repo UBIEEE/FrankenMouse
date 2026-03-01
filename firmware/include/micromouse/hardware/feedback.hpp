@@ -1,6 +1,6 @@
 #pragma once
 
-#include <micromouse/feedback_topic.hpp>
+#include <micromouse/feedback/feedback_topic.hpp>
 #include <micromouse/hardware/component.hpp>
 
 namespace hardware {
@@ -9,8 +9,16 @@ class Feedback : public Component {
  protected:
   Feedback() = default;
 
+  virtual void publish_topic(feedback::TopicSend topic, const uint8_t* data) = 0;
+
  public:
-  virtual void publish_topic(FeedbackTopicSend topic, uint8_t* data) = 0;
+  template <feedback::TopicSend Topic>
+  void publish(const typename feedback::TopicSendData<Topic>::type& value) {
+    using ValueType = feedback::TopicSendData<Topic>::type;
+
+    const uint8_t* data = reinterpret_cast<const uint8_t*>(&value);
+    publish_topic(Topic, data);  //, sizeof(ValueType));
+  }
 };
 
 }  // namespace hardware
