@@ -68,7 +68,7 @@ DO_PERIODIC:
 
 void DriveController::publish_periodic_feedback() {}
 
-void DriveController::publish_extra_feedback() {}
+void DriveController::publish_status_feedback() {}
 
 void DriveController::start_next_motion() {
   m_current_motion = m_motions.front();

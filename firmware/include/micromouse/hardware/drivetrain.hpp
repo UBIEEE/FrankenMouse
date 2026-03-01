@@ -1,6 +1,7 @@
 #pragma once
 
 #include <micromouse/drive/kinematics.hpp>
+#include <micromouse/drive/pose.hpp>
 #include <micromouse/hardware/component.hpp>
 
 namespace hardware {
@@ -13,8 +14,22 @@ class Drivetrain : public Component {
   virtual void reset() {}
   virtual void stop() = 0;
   virtual void set_wheel_speeds(const drive::WheelSpeeds& wheel_speeds) = 0;
-  virtual void set_chassis_speeds(
-      const drive::ChassisSpeeds& chassis_speeds) = 0;
+  virtual void set_chassis_speeds(const drive::ChassisSpeeds& chassis_speeds) = 0;
+
+  struct EncoderData {
+    units::millimeter_t position = 0_mm;
+    units::millimeters_per_second_t velocity = 0_mmps;
+  };
+
+  struct MotorData {
+    struct {
+      EncoderData left;
+      EncoderData right;
+    } encoder;
+
+    drive::Pose pose;
+  };
+  static_assert(sizeof(MotorData) == sizeof(float[4 + 3]));
 };
 
 }  // namespace hardware

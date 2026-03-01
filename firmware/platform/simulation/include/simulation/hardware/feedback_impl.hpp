@@ -41,7 +41,7 @@ class FeedbackImpl : public hardware::Feedback, public rclcpp::Node {
  public:
   FeedbackImpl();
 
-  void publish_topic(FeedbackTopicSend topic, uint8_t* data) override;
+  void publish_topic(feedback::TopicSend topic, const uint8_t* data) override;
 };
 
 std::shared_ptr<FeedbackImpl> get_simulation_feedback();

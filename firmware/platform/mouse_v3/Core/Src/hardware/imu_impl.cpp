@@ -6,8 +6,7 @@ extern I2C_HandleTypeDef hi2c1;  // main.c
 
 static constexpr float GYRO_VELOCITY_COMPENSATION = 1.2f;
 
-static constexpr uint8_t IMU_ADDR =
-    (0x68 << 1);  // 7-bit address, so shift left
+static constexpr uint8_t IMU_ADDR = (0x68 << 1);  // 7-bit address, so shift left
 static constexpr uint8_t IMU_WHO_AM_I = 0x67;
 
 static constexpr uint8_t REG_WHO_AM_I = 0x75;
@@ -75,10 +74,9 @@ IMUImpl::IMUImpl(const Config& config) : m_config(config) {
 }
 
 void IMUImpl::publish_periodic_feedback() {
-  static_assert(sizeof(m_data) == 6 * 4);
+  using namespace feedback;
 
-  m_feedback.publish_topic(FeedbackTopicSend::DRIVE_IMU_DATA,
-                           reinterpret_cast<uint8_t*>(&m_data));
+  m_feedback.publish<TopicSend::DRIVE_IMU_DATA>(m_data);
 }
 
 void IMUImpl::set_standby(bool on_standby) {
@@ -114,9 +112,7 @@ HAL_StatusTypeDef IMUImpl::write_register(uint8_t reg, uint8_t value) {
   return HAL_I2C_Master_Transmit(&hi2c1, IMU_ADDR, data, 2, I2C_TIMEOUT);
 }
 
-HAL_StatusTypeDef IMUImpl::read_register(uint8_t reg,
-                                         uint8_t* buf,
-                                         uint8_t len) {
+HAL_StatusTypeDef IMUImpl::read_register(uint8_t reg, uint8_t* buf, uint8_t len) {
   assert_param(len > 0);
   assert_param(buf != nullptr);
 
@@ -157,49 +153,55 @@ void IMUImpl::read_complete_handler() {
   if (!m_is_receiving)
     return;
 
-  const float accel_conversion = [&] {
-    switch (m_config.accel.range) {
-      case Config::Accelerometer::Range::_2_G:
-        return (2.f / INT16_MAX);
-      case Config::Accelerometer::Range::_4_G:
-        return (4.f / INT16_MAX);
-      case Config::Accelerometer::Range::_8_G:
-        return (8.f / INT16_MAX);
-      case Config::Accelerometer::Range::_16_G:
-      default:
-        return (16.f / INT16_MAX);
-    }
-  }();
+  units::standard_gravity_t accel_conversion;
+  switch (m_config.accel.range) {
+    case Config::Accelerometer::Range::_2_G:
+      accel_conversion = (2_SG / INT16_MAX);
+      break;
+    case Config::Accelerometer::Range::_4_G:
+      accel_conversion = (4_SG / INT16_MAX);
+      break;
+    case Config::Accelerometer::Range::_8_G:
+      accel_conversion = (8_SG / INT16_MAX);
+      break;
+    case Config::Accelerometer::Range::_16_G:
+    default:
+      accel_conversion = (16_SG / INT16_MAX);
+      break;
+  }
 
   const int16_t accel_x = (m_data_raw[0] << 8) | m_data_raw[1];
   const int16_t accel_y = (m_data_raw[2] << 8) | m_data_raw[3];
   const int16_t accel_z = (m_data_raw[4] << 8) | m_data_raw[5];
 
-  m_data.accel_data_g[Axis::X] = accel_x * accel_conversion;
-  m_data.accel_data_g[Axis::Y] = accel_y * accel_conversion;
-  m_data.accel_data_g[Axis::Z] = accel_z * accel_conversion;
+  m_data.accel_data[Axis::X] = accel_x * accel_conversion;
+  m_data.accel_data[Axis::Y] = accel_y * accel_conversion;
+  m_data.accel_data[Axis::Z] = accel_z * accel_conversion;
 
-  const float gyro_conversion = [&] {
-    switch (m_config.gyro.range) {
-      case Config::Gyro::Range::_250_DPS:
-        return (250.f / INT16_MAX);
-      case Config::Gyro::Range::_500_DPS:
-        return (500.f / INT16_MAX);
-      case Config::Gyro::Range::_1000_DPS:
-        return (1000.f / INT16_MAX);
-      case Config::Gyro::Range::_2000_DPS:
-      default:
-        return (2000.f / INT16_MAX);
-    }
-  }();
+  units::degrees_per_second_t gyro_conversion;
+  switch (m_config.gyro.range) {
+    case Config::Gyro::Range::_250_DPS:
+      gyro_conversion = (250_deg_per_s / INT16_MAX);
+      break;
+    case Config::Gyro::Range::_500_DPS:
+      gyro_conversion = (500_deg_per_s / INT16_MAX);
+      break;
+    case Config::Gyro::Range::_1000_DPS:
+      gyro_conversion = (1000_deg_per_s / INT16_MAX);
+      break;
+    case Config::Gyro::Range::_2000_DPS:
+    default:
+      gyro_conversion = (2000_deg_per_s / INT16_MAX);
+      break;
+  }
 
   const int16_t gyro_x = (m_data_raw[6] << 8) | m_data_raw[7];
   const int16_t gyro_y = (m_data_raw[8] << 8) | m_data_raw[9];
   const int16_t gyro_z = (m_data_raw[10] << 8) | m_data_raw[11];
 
-  m_data.gyro_data_dps[Axis::X] = gyro_x * gyro_conversion;
-  m_data.gyro_data_dps[Axis::Y] = gyro_y * gyro_conversion;
-  m_data.gyro_data_dps[Axis::Z] = gyro_z * gyro_conversion;
+  m_data.gyro_data[Axis::X] = gyro_x * gyro_conversion;
+  m_data.gyro_data[Axis::Y] = gyro_y * gyro_conversion;
+  m_data.gyro_data[Axis::Z] = gyro_z * gyro_conversion;
 
   m_is_receiving = false;
 }

@@ -4,7 +4,7 @@ using namespace hardware;
 
 class UnimplementedFeedback : public Feedback {
  public:
-  void publish_topic(FeedbackTopicSend, uint8_t*) override {}
+  void publish_topic(feedback::TopicSend, const uint8_t*) override {}
 };
 
 __attribute__((weak)) Feedback& get_platform_feedback() {

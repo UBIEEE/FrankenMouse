@@ -36,8 +36,7 @@ bool Vision::front_wall() {
 }
 
 void Vision::publish_periodic_feedback() {
-  m_feedback.publish_topic(FeedbackTopicSend::VISION_RAW_READINGS,
-                           (uint8_t*)m_ir_sensors.get_raw_readings().data());
-  m_feedback.publish_topic(FeedbackTopicSend::VISION_DISTANCES,
-                           (uint8_t*)m_ir_sensors.get_distances().data());
+  using namespace feedback;
+  m_feedback.publish<TopicSend::VISION_RAW_READINGS>(m_ir_sensors.get_raw_readings());
+  m_feedback.publish<TopicSend::VISION_DISTANCES>(m_ir_sensors.get_distances());
 }

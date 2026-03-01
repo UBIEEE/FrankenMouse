@@ -5,7 +5,7 @@
 namespace audio {
 
 enum class Song : uint8_t {
-  NONE = 0,
+  QUIET = 0,
 
   // 1-127 Songs
 
@@ -17,8 +17,8 @@ enum class Song : uint8_t {
   // 128-255 Other noises
 
   STARTUP = 128,
-  BLE_CONECT,
-  BLE_DISCONECT,
+  BLE_CONNECT,
+  BLE_DISCONNECT,
 
   BEGIN_SEARCH,
   BEGIN_FAST_SOLVE,

@@ -1,4 +1,4 @@
-#include <micromouse/robot.hpp>
+#include <micromouse/robot/robot.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -9,6 +9,8 @@
 
 #include <chrono>
 #include <thread>
+
+using namespace robot;
 
 int main(int argc, char** argv) {
   rclcpp::init(argc, argv);
@@ -22,7 +24,7 @@ int main(int argc, char** argv) {
   Robot::get().init();
 
   Robot::get().on_connect();
-  Robot::get().publish_extra_feedback();
+  Robot::get().publish_status_feedback();
 
   size_t iter = 0;
 

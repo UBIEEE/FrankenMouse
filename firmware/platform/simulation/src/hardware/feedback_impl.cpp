@@ -1,26 +1,28 @@
 #include <simulation/hardware/drivetrain_impl.hpp>
 #include <simulation/hardware/feedback_impl.hpp>
 
-#include <micromouse/robot.hpp>
+#include <micromouse/robot/robot.hpp>
 
 using namespace std::placeholders;
+
+using namespace robot;
 
 FeedbackImpl::FeedbackImpl() : Node("micromouse_feedback") {
   m_main_task_sub = this->create_subscription<std_msgs::msg::UInt8>(
       "/client/main/task", 10, [this](const std_msgs::msg::UInt8& msg) {
-        Robot::get().delegate_received_feedback(FeedbackTopicReceive::MAIN_TASK,
+        Robot::get().delegate_received_feedback(feedback::TopicReceive::MAIN_TASK,
                                                 &msg.data);
       });
 
   m_main_command_sub = this->create_subscription<std_msgs::msg::UInt8>(
       "/client/main/command", 10, [this](const std_msgs::msg::UInt8& msg) {
         Robot::get().delegate_received_feedback(
-            FeedbackTopicReceive::MAIN_COMMAND, &msg.data);
+            feedback::TopicReceive::MAIN_COMMAND, &msg.data);
       });
 
   m_main_song_sub = this->create_subscription<std_msgs::msg::UInt8>(
       "/client/main/song", 10, [this](const std_msgs::msg::UInt8& msg) {
-        Robot::get().delegate_received_feedback(FeedbackTopicReceive::MAIN_SONG,
+        Robot::get().delegate_received_feedback(feedback::TopicReceive::MAIN_SONG,
                                                 &msg.data);
       });
 
@@ -45,7 +47,7 @@ FeedbackImpl::FeedbackImpl() : Node("micromouse_feedback") {
             };
 
             Robot::get().delegate_received_feedback(
-                FeedbackTopicReceive::DRIVE_CHASSIS_SPEEDS,
+                feedback::TopicReceive::DRIVE_CHASSIS_SPEEDS,
                 reinterpret_cast<const uint8_t*>(speeds));
           });
 
@@ -81,9 +83,9 @@ FeedbackImpl::FeedbackImpl() : Node("micromouse_feedback") {
       "/robot/maze/coordinates", 10);
 }
 
-void FeedbackImpl::publish_topic(FeedbackTopicSend topic, uint8_t* data) {
+void FeedbackImpl::publish_topic(feedback::TopicSend topic, const uint8_t* data) {
   switch (topic) {
-    using enum FeedbackTopicSend;
+    using enum feedback::TopicSend;
     case MAIN_TASK: {
       std_msgs::msg::UInt8 msg;
       msg.data = data[0];
@@ -141,7 +143,7 @@ void FeedbackImpl::publish_topic(FeedbackTopicSend topic, uint8_t* data) {
     case DRIVE_CHASSIS_SPEEDS: {
       geometry_msgs::msg::Twist msg;
 
-      const float* float_data = reinterpret_cast<float*>(data);
+      const float* float_data = reinterpret_cast<const float*>(data);
       msg.linear.x = float_data[0];
       msg.linear.y = float_data[1];
       msg.linear.z = float_data[2];

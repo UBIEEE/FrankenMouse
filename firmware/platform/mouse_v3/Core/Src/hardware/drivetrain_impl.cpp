@@ -2,7 +2,7 @@
 
 #include "stm32wbxx_hal_lptim.h"
 
-#include <micromouse/robot.h>
+#include <micromouse/robot/robot.h>
 #include <cmath>
 #include "main.h"
 
@@ -93,8 +93,8 @@ void DrivetrainImpl::update_encoders() {
   const uint16_t left_ticks = hlptim1.Instance->CNT;
   const uint16_t right_ticks = htim2.Instance->CNT / 2;
 
-  const Encoder::Data left_data = m_left_encoder.update(left_ticks);
-  const Encoder::Data right_data = m_right_encoder.update(right_ticks);
+  const EncoderData left_data = m_left_encoder.update(left_ticks);
+  const EncoderData right_data = m_right_encoder.update(right_ticks);
 
   const units::millimeter_t& delta_left = left_data.position - m_drive_data.encoder.left.position;
   const units::millimeter_t& delta_right = right_data.position - m_drive_data.encoder.right.position;
@@ -175,23 +175,39 @@ void DrivetrainImpl::set_motors_raw(uint16_t left,
 }
 
 void DrivetrainImpl::update_pid_values(const float* translational, const float* angular) {
-  m_translational_left_pid.set_pid(translational[0], translational[1], translational[2]);
-  m_translational_right_pid.set_pid(translational[0], translational[1], translational[2]);
-
-  m_angular_pid.set_pid(angular[0], angular[1], angular[2]);
+  using enum drive::PIDController::Term;
+  for (auto term : {PROPORTIONAL, INTEGRAL, DERIVATIVE}) {
+    update_pid_value(PIDComponent::TRANSLATIONAL, term, translational[term]);
+    update_pid_value(PIDComponent::ANGULAR, term, angular[term]);
+  }
 
   m_translational_left_pid.reset();
   m_translational_right_pid.reset();
   m_angular_pid.reset();
 }
 
-void DrivetrainImpl::publish_periodic_feedback() {
-  static_assert(sizeof(m_drive_data) == (4 * 4 + 3 * 4));
+void DrivetrainImpl::update_pid_value(PIDComponent component, drive::PIDController::Term term, float value) {
+  if (value < 0.f)
+    return;
 
-  m_feedback.publish_topic(FeedbackTopicSend::DRIVE_MOTOR_DATA, reinterpret_cast<uint8_t*>(&m_drive_data));
+  switch (component) {
+    case PIDComponent::TRANSLATIONAL:
+      m_translational_left_pid.set_term(term, value);
+      m_translational_right_pid.set_term(term, value);
+      break;
+    case PIDComponent::ANGULAR:
+      m_angular_pid.set_term(term, value);
+      break;
+  }
 }
 
-void DrivetrainImpl::publish_extra_feedback() {}
+void DrivetrainImpl::publish_periodic_feedback() {
+  using namespace feedback;
+
+  m_feedback.publish<TopicSend::DRIVE_MOTOR_DATA>(m_drive_data);
+}
+
+void DrivetrainImpl::publish_status_feedback() {}
 
 void DrivetrainImpl_UpdatePIDValues(const float* pid) {
   const float* translational = pid;

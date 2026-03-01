@@ -1,5 +1,6 @@
 #pragma once
 
+#include <micromouse/hardware/drivetrain.hpp>
 #include <units/length.h>
 #include <units/velocity.h>
 #include <cstdint>
@@ -11,13 +12,7 @@ class Encoder {
   float m_velocity = 0.f;  // Ticks per second.
 
  public:
-  struct Data {
-    units::millimeter_t position = 0_mm;
-    units::millimeters_per_second_t velocity = 0_mmps;
-  };
-
- public:
-  Data update(uint16_t ticks);
+  hardware::Drivetrain::EncoderData update(uint16_t ticks);
 
   void reset() {
     m_ticks = 0;

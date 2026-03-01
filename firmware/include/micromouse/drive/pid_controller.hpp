@@ -40,6 +40,26 @@ class PIDController {
   float ki() const { return m_ki; }
   float kd() const { return m_kd; }
 
+  enum Term {
+    PROPORTIONAL,
+    INTEGRAL,
+    DERIVATIVE,
+  };
+
+  void set_term(Term term, float value) {
+    switch (term) {
+      case PROPORTIONAL:
+        m_kp = value;
+        break;
+      case INTEGRAL:
+        m_ki = value;
+        break;
+      case DERIVATIVE:
+        m_kd = value;
+        break;
+    }
+  }
+
   float calculate(float measurement, float setpoint);
 
   void reset();

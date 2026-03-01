@@ -21,10 +21,7 @@ class IMUImpl : public hardware::IMU {
   float m_gyro_conversion;
   float m_accel_conversion;
 
-  struct {
-    float gyro_data_dps[3];  // Angular velocity, in degrees per second.
-    float accel_data_g[3];   // Acceleration, in gravities.
-  } m_data;
+  Data m_data;
 
   uint8_t m_data_raw[12];
 
@@ -123,11 +120,11 @@ class IMUImpl : public hardware::IMU {
   bool is_on_standby() override { return m_standby; }
 
   units::degrees_per_second_t get_angular_velocity(Axis axis) override {
-    return units::degrees_per_second_t{m_data.gyro_data_dps[axis]};
+    return m_data.gyro_data[axis];
   }
 
   units::standard_gravity_t get_linear_accel(Axis axis) override {
-    return units::standard_gravity_t{m_data.accel_data_g[axis]};
+    return m_data.accel_data[axis];
   }
 
  private:
