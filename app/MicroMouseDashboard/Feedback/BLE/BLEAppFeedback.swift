@@ -124,7 +124,7 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
   struct DriveService {
     var driveData = [Float32](repeating: 0, count: 4 + 3)
     var imuData = [Float32](repeating: 0, count: 6)
-    var pid = [Float32](repeating: 0, count: 6)
+    var pid = [Float32](repeating: -1, count: 6)
     var linearVelocity: Float32 = 0
     var angularVelocity: Float32 = 0
 
