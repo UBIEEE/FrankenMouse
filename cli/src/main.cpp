@@ -99,7 +99,7 @@ class Main {
 #endif
 #if WITH_ROS2
     if (m_communication_mode == CommunicationMode::ROS2) {
-      rclcpp::init(0, nullptr, rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
+      rclcpp::init(0, nullptr, rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::SigTerm);
 
       auto node =  std::make_shared<ROS2CommunicationManager>();
       m_communication_manager = node;

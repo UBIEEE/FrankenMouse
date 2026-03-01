@@ -4,6 +4,8 @@ DrivePIDSetCommand::DrivePIDSetCommand(const CommandArguments args,
                                        CommunicationManager& communication_manager)
     : Command(args), m_arg_parser(args, s_options), m_communication_manager(communication_manager) {
   m_args_valid = validate_args();
+
+  std::fill(m_pid, m_pid + 6, -1.f);
 }
 
 DrivePIDSetCommand::~DrivePIDSetCommand() {}
