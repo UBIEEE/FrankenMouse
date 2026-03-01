@@ -2,6 +2,9 @@
 
 #include <micromouse/robot/cell_positions.hpp>
 
+#define LOG_PREFIX "[robot] "
+#include <micromouse/logging.hpp>
+
 using namespace robot;
 
 void Robot::init() {
@@ -27,11 +30,15 @@ void Robot::periodic() {
 }
 
 void Robot::on_connect() {
+  LogInfo("feedback connected");
+
   m_audio_player.play_song(audio::Song::BLE_CONNECT);
   m_feedback_connected = true;
 }
 
 void Robot::on_disconnect() {
+  LogInfo("feedback disconnected");
+
   m_audio_player.play_song(audio::Song::BLE_DISCONNECT);
   m_feedback_connected = false;
 }
@@ -52,6 +59,8 @@ void Robot::publish_status_feedback() {
   if (!m_feedback_connected)
     return;
 
+  LogInfo("publish status feedback");
+
   for (auto s : m_subsystems) {
     s->publish_status_feedback();
   }
@@ -63,6 +72,8 @@ void Robot::publish_status_feedback() {
 }
 
 void Robot::delegate_received_feedback(feedback::TopicReceive topic, const uint8_t* data) {
+  LogInfo("feedback topic update: {}", feedback::topic_receive_to_string(topic));
+
   switch (topic) {
     using enum feedback::TopicReceive;
     case MAIN_TASK:
@@ -91,6 +102,8 @@ void Robot::delegate_received_feedback(feedback::TopicReceive topic, const uint8
 }
 
 void Robot::handle_command(Command command) {
+  LogInfo("handling command: {}", command_to_string(command));
+
   switch (command) {
     using enum Command;
     case RESEND_ALL_FEEDBACK:
@@ -110,6 +123,8 @@ void Robot::handle_command(Command command) {
 }
 
 void Robot::handle_button_1() {
+  LogInfo("button 1 pressed");
+
   // If the robot's doing something, stop it.
   if (current_task() != Task::STOPPED) {
     run_task(Task::STOPPED);
@@ -124,6 +139,8 @@ void Robot::handle_button_1() {
 }
 
 void Robot::handle_button_2() {
+  LogInfo("button 2 pressed");
+
   // If the robot's doing something, stop it.
   if (current_task() != Task::STOPPED) {
     run_task(Task::STOPPED);
@@ -134,13 +151,19 @@ void Robot::handle_button_2() {
 }
 
 void Robot::arm_task(Task task) {
+  LogInfo("arm task: {}", task_to_string(task));
+
   m_armed_task = task;
   run_task(Task::ARMED);
 }
 
 void Robot::run_task(Task task) {
-  if (task == m_task)
+  if (task == m_task) {
+    LogInfo("already running task: {}", task_to_string(task));
     return;
+  }
+
+  LogInfo("run task: {}", task_to_string(task));
 
   m_next_task = task;
   m_is_next_task = true;
@@ -150,6 +173,8 @@ void Robot::end_task() {
   if (m_task == Task::MAZE_SEARCH) {
     m_search_done = true;
   }
+
+  LogInfo("end task: {}", task_to_string(m_task));
 
   run_task(Task::STOPPED);
 }

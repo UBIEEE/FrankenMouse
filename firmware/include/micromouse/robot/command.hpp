@@ -11,4 +11,6 @@ enum class Command : uint8_t {
   RESET_VISION_CALIBRATION,
 };
 
+const char* command_to_string(Command command);
+
 }  // namespace robot

@@ -3,6 +3,9 @@
 #include <micromouse/math.hpp>
 #include <units/math.h>
 
+#define LOG_PREFIX "[drive] "
+#include <micromouse/logging.hpp>
+
 using namespace drive;
 
 void DriveController::reset() {
@@ -77,10 +80,15 @@ void DriveController::start_next_motion() {
   switch (m_current_motion->type) {
     using enum Motion::Type;
     case FORWARD:
+      LogInfo("starting forward motion: {}mm, should end high: {}",
+              m_current_motion->forward.distance.value(), m_current_motion->forward.end_high);
       config_linear(m_current_motion->forward.distance, m_current_motion->forward.end_high);
       config_angular(0_deg);
       break;
     case TURN:
+      LogInfo("starting turn motion: angle: {} degrees, arc distance: {}mm",
+              static_cast<int16_t>(m_current_motion->turn.angle),
+              m_current_motion->turn.arc_distance.value());
       start_arc(*m_current_motion);
       break;
   }

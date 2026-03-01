@@ -25,6 +25,8 @@ enum class TopicReceive : uint8_t {
   DRIVE_CHASSIS_SPEEDS = FB_TOPIC_RECEIVE_DRIVE_CHASSIS_SPEEDS,
 };
 
+const char* topic_receive_to_string(TopicReceive topic);
+
 struct MainTaskData {
   robot::Task task = robot::Task::STOPPED;
   maze::Maze::StartLocation start_position = maze::Maze::StartLocation::WEST_OF_GOAL;
@@ -86,6 +88,8 @@ enum class TopicSend : uint8_t {
   MAZE_CELL = FB_TOPIC_SEND_MAZE_CELL,
   MAZE_MOUSE_POSITION = FB_TOPIC_SEND_MAZE_MOUSE_POSITION,
 };
+
+const char* topic_send_to_string(TopicSend topic);
 
 template <TopicSend Topic, typename Default = void>
 struct TopicSendData;
