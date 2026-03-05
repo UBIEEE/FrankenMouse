@@ -16,23 +16,24 @@ enum class Task : uint8_t {
   MAZE_FAST_SOLVE = 3,
 
   //
-  // 11-20: test drive tasks.
+  // 11-40: test drive tasks.
   //
 
-  // Test drive movements, starting from the back wall.
-  TEST_DRIVE_STRAIGHT = 11,
-  TEST_DRIVE_LEFT_TURN = 12,
-  TEST_DRIVE_RIGHT_TURN = 13,
-  TEST_DRIVE_TURN_180 = 14,
-
-  TEST_GYRO = 15,
-  TEST_DRIVE_STRAIGHT_VISION_ALIGN = 16,
+  TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT = 11,
+  TEST_DRIVE_STRAIGHT_ONE_CELL = 12,
+  TEST_DRIVE_TURN_RIGHT_FROM_SENSE_SPOT_TO_SENSE_SPOT = 13,
+  TEST_DRIVE_TURN_LEFT_FROM_SENSE_SPOT_TO_SENSE_SPOT = 14,
+  TEST_DRIVE_TURN_RIGHT_IN_PLACE = 15,
+  TEST_DRIVE_TURN_LEFT_IN_PLACE = 16,
+  TEST_DRIVE_TURN_180_IN_PLACE = 17,
+  TEST_GYRO = 18,
+  TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN = 19,
 
   //
-  // 21-30: Manual control tasks.
+  // 41-50: Manual control tasks.
   //
 
-  MANUAL_CHASSIS_SPEEDS = 21,
+  MANUAL_CHASSIS_SPEEDS = 41,
 
   //
   // 128+: other
@@ -43,8 +44,6 @@ enum class Task : uint8_t {
   ARMED_TRIGGERED,
 
   VISION_CALIBRATE,
-
-  _COUNT,
 };
 
 const char* task_to_string(Task task);

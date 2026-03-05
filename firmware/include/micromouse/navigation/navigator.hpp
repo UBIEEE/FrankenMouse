@@ -1,6 +1,6 @@
 #pragma once
 
-#include <micromouse/drive/drive_controller.hpp>
+#include <micromouse/drive/motion_runner.hpp>
 #include <micromouse/maze/maze.hpp>
 #include <micromouse/vision/vision.hpp>
 #include <micromouse/navigation/solvers/solver.hpp>
@@ -10,7 +10,7 @@
 namespace navigation {
 
 class Navigator : public Subsystem {
-  drive::DriveController& m_drive;
+  drive::MotionRunner& m_drive;
   vision::Vision& m_vision;
   Maze& m_maze;
 
@@ -40,7 +40,7 @@ class Navigator : public Subsystem {
   } m_move;
 
  public:
-  Navigator(drive::DriveController& drive, vision::Vision& vision, Maze& maze)
+  Navigator(drive::MotionRunner& drive, vision::Vision& vision, Maze& maze)
       : m_drive(drive), m_vision(vision), m_maze(maze) {}
 
   void periodic() override;
@@ -58,11 +58,11 @@ class Navigator : public Subsystem {
   }
 
  private:
-  const drive::DriveController::CompletionCallback m_should_sense_callback = [this] {
+  const drive::MotionRunner::CompletionCallback m_should_sense_callback = [this] {
     m_should_sense = true;
   };
 
-  const drive::DriveController::CompletionCallback m_done_callback = [this] {
+  const drive::MotionRunner::CompletionCallback m_done_callback = [this] {
     m_done = true;
     // m_position = m_next_position;
     // m_direction = m_next_direction;

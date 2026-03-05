@@ -8,6 +8,10 @@ namespace robot {
 
 class CellPositions {
  public:
+  /**
+   * The position of the robot when its back is against the back wall of a cell, like how it starts in the
+   * maze.
+   */
   static units::millimeter_t back_wall() {
     hardware::RobotMeasurements& m = get_robot_measurements();
     return m.center_to_back + maze::Cell::HALF_WALL_THICKNESS;
@@ -17,6 +21,11 @@ class CellPositions {
 
   static constexpr units::millimeter_t SENSING_SPOT = CENTERED + 65_mm;
 
+  static constexpr units::millimeter_t SIDE_WALL_OUT_OF_VIEW_SPOT = 85_mm;
+
+  static constexpr units::millimeter_t SEARCH_TURN_START = maze::Cell::WIDTH - SENSING_SPOT;
+
+  // Start the turn at SEARCH_TURN_START and end at SENSING_SPOT
   static constexpr units::millimeter_t SEARCH_TURN_RADIUS =
       maze::Cell::HALF_WIDTH - (maze::Cell::WIDTH - SENSING_SPOT);
 };
