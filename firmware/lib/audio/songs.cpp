@@ -33,9 +33,6 @@ const char* song_to_string(Song song) {
       return "Armed Tone";
     case ARMED_TRIGGERING:
       return "Armed and Triggering Tone";
-    case _SONG_COUNT:
-    case _COUNT:
-      break;
   }
   return "Unknown";
 }

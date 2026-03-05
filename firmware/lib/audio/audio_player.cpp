@@ -49,9 +49,6 @@ void AudioPlayer::publish_status_feedback() {
 }
 
 void AudioPlayer::play_song(Song song, bool repeat) {
-  if (song >= Song::_COUNT)
-    return;
-
   LogInfo("play song: {}", song_to_string(song));
 
   m_song_handle = &get_song(song);

@@ -12,8 +12,6 @@ enum class Song : uint8_t {
   HOME_DEPOT = 1,
   NOKIA,
 
-  _SONG_COUNT,
-
   // 128-255 Other noises
 
   STARTUP = 128,
@@ -27,8 +25,6 @@ enum class Song : uint8_t {
 
   ARMED,
   ARMED_TRIGGERING,
-
-  _COUNT,
 };
 
 const char* song_to_string(Song song);
