@@ -2,7 +2,7 @@
 
 #include <micromouse/robot/robot.h>
 #include <micromouse/audio/audio_player.hpp>
-#include <micromouse/drive/drive_controller.hpp>
+#include <micromouse/drive/motion_runner.hpp>
 #include <micromouse/drive/kinematics.hpp>
 #include <micromouse/feedback/feedback_topic.hpp>
 #include <micromouse/hardware/battery_status.hpp>
@@ -47,11 +47,11 @@ class Robot : public Singleton<Robot> {
 
   vision::Vision m_vision;
   audio::AudioPlayer m_audio_player;
-  drive::DriveController m_drive_controller{m_vision, m_speeds.normal_speeds};
-  navigation::Navigator m_navigator{m_drive_controller, m_vision, m_maze};
+  drive::MotionRunner m_motion_runner{m_maze, m_vision, m_speeds.normal_speeds};
+  navigation::Navigator m_navigator{m_motion_runner, m_vision, m_maze};
 
   const std::array<Subsystem*, 4> m_subsystems{
-      &m_drive_controller,
+      &m_motion_runner,
       &m_audio_player,
       &m_vision,
       &m_navigator,
@@ -130,12 +130,15 @@ class Robot : public Singleton<Robot> {
   void start_task_maze_search();
   void start_task_maze_solve(bool fast);
 
-  void start_task_test_drive_straight();
-  void start_task_test_drive_left_turn();
-  void start_task_test_drive_right_turn();
-  void start_task_test_drive_turn_180();
+  void start_task_test_drive_straight_from_back_wall_to_sense_spot();
+  void start_task_test_drive_straight_one_cell();
+  void start_task_test_drive_turn_right_from_sense_spot_to_sense_spot();
+  void start_task_test_drive_turn_left_from_sense_spot_to_sense_spot();
+  void start_task_test_drive_turn_right_in_place();
+  void start_task_test_drive_turn_left_in_place();
+  void start_task_test_drive_turn_180_in_place();
   void start_task_test_gyro();
-  void start_task_test_drive_straight_vision_align();
+  void start_task_test_drive_straight_four_cells_from_back_wall_with_vision_align();
 
   void start_task_manual_chassis_speeds();
 

@@ -13,18 +13,24 @@ const char* task_to_string(Task task) {
       return "[Maze] Slow Solve";
     case MAZE_FAST_SOLVE:
       return "[Maze] Fast Solve";
-    case TEST_DRIVE_STRAIGHT:
-      return "[Test] Drive Straight";
-    case TEST_DRIVE_LEFT_TURN:
-      return "[Test] Drive Left Turn";
-    case TEST_DRIVE_RIGHT_TURN:
-      return "[Test] Drive Right Turn";
-    case TEST_DRIVE_TURN_180:
-      return "[Test] Drive Turn 180";
+    case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
+      return "[Test] Drive Straight from Back Wall to Sense Spot";
+    case TEST_DRIVE_STRAIGHT_ONE_CELL:
+      return "[Test] Drive Straight One Cell";
+    case TEST_DRIVE_TURN_RIGHT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
+      return "[Test] Drive Turn Right from Sense Spot to Sense Spot";
+    case TEST_DRIVE_TURN_LEFT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
+      return "[Test] Drive Turn Left from Sense Spot to Sense Spot";
+    case TEST_DRIVE_TURN_RIGHT_IN_PLACE:
+      return "[Test] Drive Turn Right In Place";
+    case TEST_DRIVE_TURN_LEFT_IN_PLACE:
+      return "[Test] Drive Turn Left In Place";
+    case TEST_DRIVE_TURN_180_IN_PLACE:
+      return "[Test] Drive Turn 180 In Place";
     case TEST_GYRO:
       return "[Test] Gyro";
-    case TEST_DRIVE_STRAIGHT_VISION_ALIGN:
-      return "[Test] Drive Straight Vision Align";
+    case TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN:
+      return "[Test] Drive Straight Four Cells from Back Wall with Vision Align";
     case MANUAL_CHASSIS_SPEEDS:
       return "Manual Chassis Speeds";
     case ARMED:
@@ -35,8 +41,6 @@ const char* task_to_string(Task task) {
       return "[Armed] Triggered";
     case VISION_CALIBRATE:
       return "[Vision] Calibrate";
-    case _COUNT:
-      break;
   }
   return "Unknown";
 }

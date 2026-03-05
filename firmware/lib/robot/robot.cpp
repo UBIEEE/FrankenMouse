@@ -183,7 +183,7 @@ void Robot::start_next_task() {
   // Reset stuff.
 
   m_audio_player.quiet();
-  m_drive_controller.stop();
+  m_motion_runner.stop();
   m_task = m_next_task;
 
   {
@@ -212,23 +212,32 @@ void Robot::start_next_task() {
     case MAZE_FAST_SOLVE:
       start_task_maze_solve(true);
       break;
-    case TEST_DRIVE_STRAIGHT:
-      start_task_test_drive_straight();
+    case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
+      start_task_test_drive_straight_from_back_wall_to_sense_spot();
       break;
-    case TEST_DRIVE_LEFT_TURN:
-      start_task_test_drive_left_turn();
+    case TEST_DRIVE_STRAIGHT_ONE_CELL:
+      start_task_test_drive_straight_one_cell();
       break;
-    case TEST_DRIVE_RIGHT_TURN:
-      start_task_test_drive_right_turn();
+    case TEST_DRIVE_TURN_RIGHT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
+      start_task_test_drive_turn_right_from_sense_spot_to_sense_spot();
       break;
-    case TEST_DRIVE_TURN_180:
-      start_task_test_drive_turn_180();
+    case TEST_DRIVE_TURN_LEFT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
+      start_task_test_drive_turn_left_from_sense_spot_to_sense_spot();
+      break;
+    case TEST_DRIVE_TURN_RIGHT_IN_PLACE:
+      start_task_test_drive_turn_right_in_place();
+      break;
+    case TEST_DRIVE_TURN_LEFT_IN_PLACE:
+      start_task_test_drive_turn_left_in_place();
+      break;
+    case TEST_DRIVE_TURN_180_IN_PLACE:
+      start_task_test_drive_turn_180_in_place();
       break;
     case TEST_GYRO:
       start_task_test_gyro();
       break;
-    case TEST_DRIVE_STRAIGHT_VISION_ALIGN:
-      start_task_test_drive_straight_vision_align();
+    case TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN:
+      start_task_test_drive_straight_four_cells_from_back_wall_with_vision_align();
       break;
     case MANUAL_CHASSIS_SPEEDS:
       start_task_manual_chassis_speeds();
@@ -273,50 +282,70 @@ void Robot::start_task_maze_solve(bool fast) {
   // m_navigator.solve_to(Maze::GOAL_ENDPOINTS, fast);
 }
 
-void Robot::start_task_test_drive_straight() {
-  m_drive_controller.reset();
+void Robot::start_task_test_drive_straight_from_back_wall_to_sense_spot() {
+  m_motion_runner.reset();
 
-  const units::millimeter_t forward_distance = maze::Cell::WIDTH - CellPositions::back_wall();
+  const units::millimeter_t forward_distance = CellPositions::SENSING_SPOT - CellPositions::back_wall();
 
-  m_drive_controller.enqueue_forward(forward_distance, false);
+  m_motion_runner.enqueue_forward(CellPositions::back_wall(), forward_distance, false);
 }
 
-void Robot::start_task_test_drive_left_turn() {
-  m_drive_controller.reset();
+void Robot::start_task_test_drive_straight_one_cell() {
+  m_motion_runner.reset();
 
-  const units::millimeter_t forward_distance = maze::Cell::WIDTH - CellPositions::back_wall();
-
-  m_drive_controller.enqueue_forward(forward_distance);
-  m_drive_controller.enqueue_turn(drive::DriveController::TurnAngle::CCW_90, maze::Cell::WIDTH / 2.f);
-  m_drive_controller.enqueue_forward(maze::Cell::WIDTH, false);
+  m_motion_runner.enqueue_forward(0_mm, maze::Cell::WIDTH, false);
 }
 
-void Robot::start_task_test_drive_right_turn() {
-  m_drive_controller.reset();
+void Robot::start_task_test_drive_turn_right_from_sense_spot_to_sense_spot() {
+  m_motion_runner.reset();
 
-  const units::millimeter_t forward_distance = maze::Cell::WIDTH - CellPositions::back_wall();
+  const units::millimeter_t forward_distance =
+      (maze::Cell::WIDTH - CellPositions::SENSING_SPOT) + CellPositions::SEARCH_TURN_START;
 
-  m_drive_controller.enqueue_forward(forward_distance);
-  m_drive_controller.enqueue_turn(drive::DriveController::TurnAngle::CW_90, maze::Cell::WIDTH / 2.f);
-  m_drive_controller.enqueue_forward(maze::Cell::WIDTH, false);
+  m_motion_runner.enqueue_forward(0_mm, forward_distance, true);
+  m_motion_runner.enqueue_turn(drive::MotionRunner::TurnAngle::CW_90, CellPositions::SEARCH_TURN_RADIUS);
+  m_motion_runner.enqueue_forward(0_mm, 0_mm, false);
 }
 
-void Robot::start_task_test_drive_turn_180() {
-  m_drive_controller.reset();
-  m_drive_controller.enqueue_turn(drive::DriveController::TurnAngle::CW_180);
+void Robot::start_task_test_drive_turn_left_from_sense_spot_to_sense_spot() {
+  m_motion_runner.reset();
+
+  const units::millimeter_t forward_distance =
+      (maze::Cell::WIDTH - CellPositions::SENSING_SPOT) + CellPositions::SEARCH_TURN_START;
+
+  m_motion_runner.enqueue_forward(0_mm, forward_distance, true);
+  m_motion_runner.enqueue_turn(drive::MotionRunner::TurnAngle::CCW_90, CellPositions::SEARCH_TURN_RADIUS);
+  m_motion_runner.enqueue_forward(0_mm, 0_mm, false);
+}
+
+void Robot::start_task_test_drive_turn_right_in_place() {
+  m_motion_runner.reset();
+  m_motion_runner.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CW_90);
+}
+
+void Robot::start_task_test_drive_turn_left_in_place() {
+  m_motion_runner.reset();
+  m_motion_runner.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_90);
+}
+
+void Robot::start_task_test_drive_turn_180_in_place() {
+  m_motion_runner.reset();
+  m_motion_runner.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180);
 }
 
 void Robot::start_task_test_gyro() {
+  m_motion_runner.reset();
   drive::ChassisSpeeds speeds{};
   m_drivetrain.set_chassis_speeds(speeds);
 }
 
-void Robot::start_task_test_drive_straight_vision_align() {
+void Robot::start_task_test_drive_straight_four_cells_from_back_wall_with_vision_align() {
+  m_motion_runner.reset();
   // TODO
 }
 
 void Robot::start_task_manual_chassis_speeds() {
-  m_drive_controller.reset();
+  m_motion_runner.reset();
   m_chassis_speeds = drive::ChassisSpeeds{};
   m_chassis_speeds_timer->reset();
   m_chassis_speeds_timer->start();
@@ -374,14 +403,18 @@ void Robot::process_current_task() {
     case MAZE_FAST_SOLVE:
       process_task_maze_solve(true);
       break;
-    case TEST_DRIVE_STRAIGHT:
-    case TEST_DRIVE_LEFT_TURN:
-    case TEST_DRIVE_RIGHT_TURN:
+    case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
+    case TEST_DRIVE_STRAIGHT_ONE_CELL:
+    case TEST_DRIVE_TURN_RIGHT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
+    case TEST_DRIVE_TURN_LEFT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
+    case TEST_DRIVE_TURN_RIGHT_IN_PLACE:
+    case TEST_DRIVE_TURN_LEFT_IN_PLACE:
+    case TEST_DRIVE_TURN_180_IN_PLACE:
       process_task_test_drive();
       break;
     case TEST_GYRO:
       break;
-    case TEST_DRIVE_STRAIGHT_VISION_ALIGN:
+    case TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN:
       break;
     case MANUAL_CHASSIS_SPEEDS:
       process_task_manual_chassis_speeds();
@@ -395,8 +428,7 @@ void Robot::process_current_task() {
     case ARMED_TRIGGERED:
       process_task_armed_triggered();
       break;
-    default:
-      // TODO Error
+    case VISION_CALIBRATE:
       break;
   }
 }
@@ -453,7 +485,7 @@ void Robot::process_task_maze_solve(bool fast) {
 }
 
 void Robot::process_task_test_drive() {
-  if (m_drive_controller.is_done()) {
+  if (m_motion_runner.is_done()) {
     end_task();
   }
 }
@@ -479,16 +511,10 @@ void Robot::process_task_armed() {
   if (!left_blocked && !right_blocked)
     return;
 
-#if 0
   m_armed_trigger_side = ArmedTriggerSide::LEFT;
-  if (right_blocked) {
+  if (right_blocked && !left_blocked) {
     m_armed_trigger_side = ArmedTriggerSide::RIGHT;
   }
-#else
-  if (left_blocked || right_blocked) {
-    m_armed_trigger_side = ArmedTriggerSide::RIGHT;
-  }
-#endif
 
   run_task(Task::ARMED_TRIGGERING);
 }

@@ -31,11 +31,6 @@ class TrapezoidProfile {
     Velocity_t max_velocity{0};
     Acceleration_t max_acceleration{0};
 
-    constexpr Constraints() = default;
-
-    constexpr Constraints(Velocity_t max_velocity, Acceleration_t max_acceleration)
-        : max_velocity(max_velocity), max_acceleration(max_acceleration) {}
-
     constexpr bool is_valid() const {
       return max_velocity > Velocity_t{0} && max_acceleration > Acceleration_t{0};
     }
@@ -200,7 +195,7 @@ class TrapezoidProfile {
       result = m_final;
     }
 
-    Distance_t distance = m_final.position - m_initial.position;
+    Distance_t distance = result.position - m_initial.position;
     return SampledState(direct(result), distance);
   }
 
