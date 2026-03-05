@@ -26,20 +26,64 @@ class TaskRunCommand final : public Command {
   };
 
   static constexpr const char* s_stop = "Stop";
+  static constexpr const char* s_maze_search = "MazeSearch";
+  static constexpr const char* s_maze_slow_solve = "MazeSlowSolve";
+  static constexpr const char* s_maze_fast_solve = "MazeFastSolve";
+  static constexpr const char* s_test_drive_straight_from_back_wall_to_sense_spot =
+      "TestDriveStraightFromBackWallToSenseSpot";
+  static constexpr const char* s_test_drive_straight_one_cell = "TestDriveStraightOneCell";
+  static constexpr const char* s_test_drive_turn_right_from_sense_spot_to_sense_spot =
+      "TestDriveTurnRightFromSenseSpotToSenseSpot";
+  static constexpr const char* s_test_drive_turn_left_from_sense_spot_to_sense_spot =
+      "TestDriveTurnLeftFromSenseSpotToSenseSpot";
+  static constexpr const char* s_test_drive_turn_right_in_place = "TestDriveTurnRightInPlace";
+  static constexpr const char* s_test_drive_turn_left_in_place = "TestDriveTurnLeftInPlace";
+  static constexpr const char* s_test_drive_turn_180_in_place = "TestDriveTurn180InPlace";
+  static constexpr const char* s_test_gyro = "TestGyro";
+  static constexpr const char* s_test_drive_straight_four_cells_from_back_wall_with_vision_align =
+      "TestDriveStraightFourCellsFromBackWallWithVisionAlign";
 
   static inline const std::map<std::string, RobotTask> s_tasks{
       {s_stop, RobotTask::STOPPED},
+      {s_maze_search, RobotTask::MAZE_SEARCH},
+      {s_maze_slow_solve, RobotTask::MAZE_SLOW_SOLVE},
+      {s_maze_fast_solve, RobotTask::MAZE_FAST_SOLVE},
+      {s_test_drive_straight_from_back_wall_to_sense_spot,
+       RobotTask::TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT},
+      {s_test_drive_straight_one_cell, RobotTask::TEST_DRIVE_STRAIGHT_ONE_CELL},
+      {s_test_drive_turn_right_from_sense_spot_to_sense_spot,
+       RobotTask::TEST_DRIVE_TURN_RIGHT_FROM_SENSE_SPOT_TO_SENSE_SPOT},
+      {s_test_drive_turn_left_from_sense_spot_to_sense_spot,
+       RobotTask::TEST_DRIVE_TURN_LEFT_FROM_SENSE_SPOT_TO_SENSE_SPOT},
+      {s_test_drive_turn_right_in_place, RobotTask::TEST_DRIVE_TURN_RIGHT_IN_PLACE},
+      {s_test_drive_turn_left_in_place, RobotTask::TEST_DRIVE_TURN_LEFT_IN_PLACE},
+      {s_test_drive_turn_180_in_place, RobotTask::TEST_DRIVE_TURN_180_IN_PLACE},
+      {s_test_gyro, RobotTask::TEST_GYRO},
+      {s_test_drive_straight_four_cells_from_back_wall_with_vision_align,
+       RobotTask::TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN},
   };
 
   static inline const std::vector<std::string> s_non_options{
       s_stop,
+      s_maze_search,
+      s_maze_slow_solve,
+      s_maze_fast_solve,
+      s_test_drive_straight_from_back_wall_to_sense_spot,
+      s_test_drive_straight_one_cell,
+      s_test_drive_turn_right_from_sense_spot_to_sense_spot,
+      s_test_drive_turn_left_from_sense_spot_to_sense_spot,
+      s_test_drive_turn_right_in_place,
+      s_test_drive_turn_left_in_place,
+      s_test_drive_turn_180_in_place,
+      s_test_gyro,
+      s_test_drive_straight_four_cells_from_back_wall_with_vision_align,
   };
 
  public:
   static const char* name() { return "task-run"; }
   static PromptInfo prompt_info() {
     return PromptInfo{.usage_text = "task-run <task> [options]",
-                      .short_description_text = "Play a song on the MicroMouse",
+                      .short_description_text = "Run a task on the MicroMouse",
                       .long_description_text =
                           "Run a task on the MicroMouse. By default, this command will "
                           "start running a task and then exit. Use the --keep-alive option "
