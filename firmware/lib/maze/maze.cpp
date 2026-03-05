@@ -12,7 +12,7 @@ Maze::Maze() {
 void Maze::reset() {
   LogInfo("reset maze");
 
-  for (std::size_t i = 0; i < MazeDimensions::TOTAL_CELLS; ++i) {
+  for (std::size_t i = 0; i < Maze::TOTAL_CELLS; ++i) {
     m_cells[i].reset();
   }
 
@@ -23,22 +23,22 @@ void Maze::init_start_cell(StartLocation start_location) {
   using enum Direction;
 
   if (start_location == StartLocation::WEST_OF_GOAL) {
-    m_cells[0].set_wall(EAST);
+    m_cells[Coordinate(0, 0)].set_wall(EAST);
+    m_cells[Coordinate(1, 0)].set_wall(WEST);
   } else {
-    m_cells[15].set_wall(WEST);
+    m_cells[Coordinate(15, 0)].set_wall(WEST);
+    m_cells[Coordinate(14, 0)].set_wall(EAST);
   }
 }
 
 void Maze::init_boundaries() {
   using enum Direction;
 
-  for (uint8_t i = 0; i < MazeDimensions::WIDTH_CELLS; ++i) {  // O(n)
+  for (uint8_t i = 0; i < WIDTH_CELLS; ++i) {  // O(n)
     const uint8_t south = i;
-    const uint8_t north =
-        (i + (MazeDimensions::WIDTH_CELLS * (MazeDimensions::WIDTH_CELLS - 1)));
-    const uint8_t west = (i * MazeDimensions::WIDTH_CELLS);
-    const uint8_t east =
-        ((i * MazeDimensions::WIDTH_CELLS) + (MazeDimensions::WIDTH_CELLS - 1));
+    const uint8_t north = (i + (WIDTH_CELLS * (WIDTH_CELLS - 1)));
+    const uint8_t west = (i * WIDTH_CELLS);
+    const uint8_t east = ((i * WIDTH_CELLS) + (WIDTH_CELLS - 1));
 
     // (0,0) -> (15,0) have south wall.
     m_cells[south].set_wall(SOUTH);
@@ -60,8 +60,7 @@ void Maze::set_wall(Coordinate coord, Direction dir, bool present) {
   }
 }
 
-std::optional<Coordinate> Maze::neighbor_coordinate(Coordinate coord,
-                                                    Direction direction) const {
+std::optional<Coordinate> Maze::neighbor_coordinate(Coordinate coord, Direction direction) {
   int8_t x = coord.x();
   int8_t y = coord.y();
 
@@ -81,15 +80,14 @@ std::optional<Coordinate> Maze::neighbor_coordinate(Coordinate coord,
       break;
   }
 
-  if (x < 0 || x >= MazeDimensions::WIDTH_CELLS || y < 0 ||
-      y >= MazeDimensions::WIDTH_CELLS)
+  if (x < 0 || x >= WIDTH_CELLS || y < 0 || y >= WIDTH_CELLS) {
     return std::nullopt;
+  }
 
   return Coordinate(x, y);
 }
 
 Cell* Maze::neighbor_cell(Coordinate coord, Direction direction) {
-  const std::optional<Coordinate> neighbor =
-      neighbor_coordinate(coord, direction);
+  const std::optional<Coordinate> neighbor = neighbor_coordinate(coord, direction);
   return neighbor ? &m_cells[neighbor.value()] : nullptr;
 }
