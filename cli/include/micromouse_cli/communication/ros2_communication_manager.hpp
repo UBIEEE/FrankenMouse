@@ -17,7 +17,6 @@ class ROS2CommunicationManager final : public CommunicationManager, public rclcp
   rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr m_main_task_pub;
   rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr m_main_command_pub;
   rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr m_main_song_pub;
-  rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr m_vision_calibrate_pub;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr m_drive_pid_pub;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr m_drive_chassis_speeds_pub;
 

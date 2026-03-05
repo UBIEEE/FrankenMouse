@@ -13,7 +13,6 @@ void ROS2CommunicationManager::configure_publishers() {
   m_main_task_pub = this->create_publisher<std_msgs::msg::UInt8MultiArray>("/client/main/task", 10);
   m_main_command_pub = this->create_publisher<std_msgs::msg::UInt8>("/client/main/command", 10);
   m_main_song_pub = this->create_publisher<std_msgs::msg::UInt8>("/client/main/song", 10);
-  m_vision_calibrate_pub = this->create_publisher<std_msgs::msg::UInt8>("/client/vision/calibrate", 10);
   m_drive_pid_pub = this->create_publisher<std_msgs::msg::Float32MultiArray>("/client/drive/pid", 10);
   m_drive_chassis_speeds_pub =
       this->create_publisher<geometry_msgs::msg::Twist>("/client/drive/chassis_speeds", 10);
