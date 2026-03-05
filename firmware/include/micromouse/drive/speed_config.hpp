@@ -23,23 +23,23 @@ struct SpeedConfig {
       .linear_acceleration = 300_mmps_sq,
       .angular_velocity = 180_deg_per_s,
       .angular_acceleration = 360_deg_per_s_sq,
-      .turn_linear_velocity = 300_mmps,
+      .turn_linear_velocity = 100_mmps,
   };
 
   const SpeedConstraints normal_speeds = {
-      .linear_velocity = 100_mmps,
+      .linear_velocity = 200_mmps,
       .linear_acceleration = 500_mmps_sq,
-      .angular_velocity = 180_deg_per_s,
-      .angular_acceleration = 360_deg_per_s_sq,
-      .turn_linear_velocity = 300_mmps,
+      .angular_velocity = 360_deg_per_s,
+      .angular_acceleration = 720_deg_per_s_sq,
+      .turn_linear_velocity = 200_mmps,
   };
 
   const SpeedConstraints fast_speeds = {
       .linear_velocity = 500_mmps,
       .linear_acceleration = 1000_mmps_sq,
-      .angular_velocity = 180_deg_per_s,
-      .angular_acceleration = 360_deg_per_s_sq,
-      .turn_linear_velocity = 500_mmps,
+      .angular_velocity = 360_deg_per_s,
+      .angular_acceleration = 720_deg_per_s_sq,
+      .turn_linear_velocity = 250_mmps,
   };
 };
 
