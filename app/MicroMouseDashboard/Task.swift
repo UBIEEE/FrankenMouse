@@ -7,18 +7,21 @@ enum Task: UInt8, CaseIterable, Identifiable {
   case mazeSlowSolve = 2
   case mazeFastSolve = 3
 
-  // 11-20: Test drive tasks.
+  // 11-40: Test drive tasks.
   
-  case testDriveStraight = 11
-  case testDriveLeftTurn = 12
-  case testDriveRightTurn = 13
-  case testDriveTurn180 = 14
-  case testGyro = 15
-  case testDriveStraightVisionAlign = 16
+  case testDriveStraightFromBackWallToSenseSpot = 11
+  case testDriveStraightOneCell = 12
+  case testDriveTurnRightFromSenseSpotToSenseSpot = 13
+  case testDriveTurnLeftFromSenseSpotToSenseSpot = 14
+  case testDriveTurnRightInPlace = 15
+  case testDriveTurnLeftInPlace = 16
+  case testDriveTurn180InPlace = 17
+  case testGyro = 18
+  case testDriveStraightFourCellsFromBackWallWithVisionAlign = 19
   
-  // 21-30: Manual control tasks.
+  // 41-50: Manual control tasks.
   
-  case manualChassisSpeeds = 21
+  case manualChassisSpeeds = 41
 
   // 100+: Other
 
@@ -40,12 +43,15 @@ let TaskNames: [Task: String] = [
   .mazeSlowSolve: "Maze Slow Solve",
   .mazeFastSolve: "Maze Fast Solve",
 
-  .testDriveStraight: "TEST - Drive Straight",
-  .testDriveLeftTurn: "TEST - Left Turn",
-  .testDriveRightTurn: "TEST - Right Turn",
-  .testDriveTurn180: "TEST - Turn 180˚",
+  .testDriveStraightFromBackWallToSenseSpot: "TEST - Drive Straight From Back Wall To Sense Spot",
+  .testDriveStraightOneCell: "TEST - Drive Straight One Cell",
+  .testDriveTurnRightFromSenseSpotToSenseSpot: "TEST - Drive Turn Right From Sense Spot To Sense Spot",
+  .testDriveTurnLeftFromSenseSpotToSenseSpot: "TEST - Drive Turn Left From Sense Spot To Sense Spot",
+  .testDriveTurnRightInPlace: "TEST - Drive Turn Right In Place",
+  .testDriveTurnLeftInPlace: "TEST - Drive Turn Left In Place",
+  .testDriveTurn180InPlace: "TEST - Drive Turn 180 In Place",
   .testGyro: "TEST - Gyro",
-  .testDriveStraightVisionAlign: "TEST - Drive Straight Vision Align",
+  .testDriveStraightFourCellsFromBackWallWithVisionAlign: "TEST - Drive Straight Four Cells From Back Wall With Vision Align",
   
   .manualChassisSpeeds: "Manual Control - Chassis Speeds",
 
@@ -65,10 +71,13 @@ let TaskDescriptions: [Task: String] = [
   .mazeSlowSolve: "Solve the maze using the same control method as Search mode",
   .mazeFastSolve: "Solve the maze as fast as possible while using previous search data",
 
-  .testDriveStraight: "Drive straight for 2 cell lengths",
-  .testDriveLeftTurn: "Make a left turn",
-  .testDriveRightTurn: "Make a right turn",
-  .testDriveTurn180: "Turn 180 degrees in place",
+  .testDriveStraightFromBackWallToSenseSpot: "Drive straight from back wall to sense spot",
+  .testDriveStraightOneCell: "Drive straight for one cell",
+  .testDriveTurnRightFromSenseSpotToSenseSpot: "Make a right turn from sense spot to sense spot",
+  .testDriveTurnLeftFromSenseSpotToSenseSpot: "Make a left turn from sense spot to sense spot",
+  .testDriveTurnRightInPlace: "Turn right in place",
+  .testDriveTurnLeftInPlace: "Turn left in place",
+  .testDriveTurn180InPlace: "Turn 180 degrees in place",
   .testGyro: "Maintain a rotational velocity of 0 deg/s",
-  .testDriveStraightVisionAlign: "Drive straight while staying centered between maze walls",
+  .testDriveStraightFourCellsFromBackWallWithVisionAlign: "Drive straight four cells from back wall with vision align",
 ]
