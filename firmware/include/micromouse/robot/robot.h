@@ -32,7 +32,7 @@ void Robot_ReportError(void);
 void Robot_DelegateReceivedFeedback(uint8_t topic, uint8_t* data);
 
 // Period to call Robot_Periodic()
-#define ROBOT_UPDATE_PERIOD_MS 20
+#define ROBOT_UPDATE_PERIOD_MS 2
 #define ROBOT_UPDATE_PERIOD_S (ROBOT_UPDATE_PERIOD_MS / 1000.f)
 
 // Period to call Robot_PublishPeriodicFeedback()
