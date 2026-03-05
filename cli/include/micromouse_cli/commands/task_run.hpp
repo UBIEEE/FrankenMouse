@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <map>
 #include <string>
+#include <chrono>
 
 class TaskRunCommand final : public Command {
   enum {
@@ -105,6 +106,8 @@ class TaskRunCommand final : public Command {
   RobotTask m_task = RobotTask::STOPPED;
   RobotStartPosition m_start_position = RobotStartPosition::LEFT_OF_GOAL;
 
+  std::chrono::steady_clock::time_point m_start_time;
+
  public:
   TaskRunCommand(const CommandArguments args, CommunicationManager& communication_manager);
   ~TaskRunCommand();
@@ -113,7 +116,9 @@ class TaskRunCommand final : public Command {
   void process() override;
   void end(bool interrupted) override;
 
-  CommandStatus status() const override { return m_is_done ? CommandStatus::DONE : CommandStatus::CONTINUING; }
+  CommandStatus status() const override {
+    return m_is_done ? CommandStatus::DONE : CommandStatus::CONTINUING;
+  }
 
  private:
   // Returns true if the command should keep running.

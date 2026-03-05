@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <map>
 #include <string>
+#include <chrono>
 
 class SongPlayCommand final : public Command {
   enum {
@@ -63,6 +64,8 @@ class SongPlayCommand final : public Command {
   bool m_keep_alive = false;
   RobotSong m_song = RobotSong::NONE;
 
+  std::chrono::steady_clock::time_point m_start_time;
+
  public:
   SongPlayCommand(const CommandArguments args, CommunicationManager& communication_manager);
   ~SongPlayCommand();
@@ -71,7 +74,9 @@ class SongPlayCommand final : public Command {
   void process() override;
   void end(bool interrupted) override;
 
-  CommandStatus status() const override { return m_is_done ? CommandStatus::DONE : CommandStatus::CONTINUING; }
+  CommandStatus status() const override {
+    return m_is_done ? CommandStatus::DONE : CommandStatus::CONTINUING;
+  }
 
  private:
   // Returns true if the command should keep running.

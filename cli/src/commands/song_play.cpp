@@ -12,10 +12,17 @@ void SongPlayCommand::init() {
     return;
 
   m_communication_manager.write<FeedbackTopicWrite::MAIN_SONG>(m_song);
+
+  m_start_time = std::chrono::steady_clock::now();
 }
 
 void SongPlayCommand::process() {
-  // TODO: Wait a second for robot to start playing the song
+  // Wait for the robot to acknowledge the task change before checking if it's done yet.
+  auto now = std::chrono::steady_clock::now();
+  if (now - m_start_time < std::chrono::seconds(1)) {
+    return;
+  }
+
   m_is_done = (m_communication_manager.get_value<FeedbackTopicNotify::MAIN_SONG>() == RobotSong::NONE);
 }
 
