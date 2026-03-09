@@ -21,6 +21,12 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
       return mainServiceFound
         && [.mainTask, .mainCommand, .mainSong].allSatisfy { foundWriteChars.keys.contains($0) }
         && [.mainTask, .mainError, .mainSong, .mainStatus].allSatisfy { foundReceiveChars.keys.contains($0) }
+   }
+    
+    var mainService2Found = false
+    var mainService2Ready: Bool {
+      return mainService2Found
+        && [.mainBatteryVoltage].allSatisfy { foundReceiveChars.keys.contains($0) }
     }
 
     var visionServiceFound = false
@@ -43,7 +49,7 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
     }
 
     var isReady: Bool {
-      return deviceFound && deviceConnected && mainServiceReady && visionServiceReady && driveServiceReady && mazeServiceReady
+      return deviceFound && deviceConnected && mainServiceReady && mainService2Ready && visionServiceReady && driveServiceReady && mazeServiceReady
     }
   }
 
@@ -70,6 +76,8 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
     var song: Song = .none
     
     var statusTopics: [StatusTopic: UInt8] = [:]
+    
+    var batteryVoltage: Float32 = 0
   }
 
   @Published var mainService = MainService()
@@ -245,6 +253,8 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
         switch service.uuid {
         case AppConstants.Bluetooth.MainService.ServiceUUID:
           connectionState.mainServiceFound = true
+        case AppConstants.Bluetooth.MainService2.ServiceUUID:
+          connectionState.mainService2Found = true
         case AppConstants.Bluetooth.VisionService.ServiceUUID:
           connectionState.visionServiceFound = true
         case AppConstants.Bluetooth.DriveService.ServiceUUID:
@@ -288,6 +298,11 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
           setNotify()
         case AppConstants.Bluetooth.MainService.StatusUUID:  // Notify
           connectionState.foundReceiveChars[.mainStatus] = ch
+          setNotify()
+          
+        // Main service 2
+        case AppConstants.Bluetooth.MainService2.BatteryVoltageUUID: // Notify
+          connectionState.foundReceiveChars[.mainBatteryVoltage] = ch
           setNotify()
 
           // Vision service
@@ -377,6 +392,10 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
     case AppConstants.Bluetooth.MainService.StatusUUID:
       let topic = StatusTopic(rawValue: ch.value![0])!
       mainService.statusTopics[topic] = ch.value![1]
+      
+      // Main service 2
+    case AppConstants.Bluetooth.MainService2.BatteryVoltageUUID:
+      mainService.batteryVoltage = getFloatValue(ch.value!)
 
       // Vision service
     case AppConstants.Bluetooth.VisionService.RawReadingsUUID:

@@ -15,6 +15,9 @@ struct ConnectionStatusPage: View {
           "\(Utilities.boolToEmoji(feedback.connectionState.mainServiceReady)) Main Service discovered"
         )
         Text(
+          "\(Utilities.boolToEmoji(feedback.connectionState.mainService2Ready)) Main Service 2 discovered"
+        )
+        Text(
           "\(Utilities.boolToEmoji(feedback.connectionState.visionServiceReady)) Vision Service discovered"
         )
         Text(

@@ -9,6 +9,9 @@ class ROS2AppFeedback: NSObject, AppFeedbackBase, ObservableObject {
 
     var mainServiceFound = true
     var mainServiceReady = true
+    
+    var mainService2Found = true
+    var mainService2Ready = true
 
     var visionServiceFound = true
     var visionServiceReady = true
@@ -41,6 +44,8 @@ class ROS2AppFeedback: NSObject, AppFeedbackBase, ObservableObject {
     var song: Song = .none
     
     var statusTopics: [StatusTopic: UInt8] = [:]
+    
+    var batteryVoltage: Float32 = 0
   }
 
   @Published var mainService = MainService()
@@ -153,6 +158,9 @@ class ROS2AppFeedback: NSObject, AppFeedbackBase, ObservableObject {
       { _self, _statusTopic, value in
         let statusTopic = StatusTopic(rawValue: _statusTopic)!
         _self!.mainService.statusTopics[statusTopic] = value;
+      },
+      { _self, batteryVoltage in
+        _self!.mainService.batteryVoltage = batteryVoltage
       },
       { _self, _data in
         let data = _data!.compactMap { $0 as? Float32 }

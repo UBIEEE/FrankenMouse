@@ -7,6 +7,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <std_msgs/msg/u_int8.hpp>
 #include <std_msgs/msg/u_int8_multi_array.hpp>
@@ -44,6 +45,7 @@ class Feedback : public rclcpp::Node {
   AddMainErrorCallback m_add_error_cb;
   UpdateMainSongCallback m_main_song_cb;
   UpdateMainStatusCallback m_main_status_cb;
+  UpdateMainBatteryVoltageCallback m_main_battery_voltage_cb;
   UpdateVisionRawDataCallback m_vision_raw_readings_cb;
   UpdateVisionNormDataCallback m_vision_distances_cb;
   UpdateDriveMotorDataCallback m_drive_motor_data_cb;
@@ -64,6 +66,7 @@ class Feedback : public rclcpp::Node {
   rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr m_main_error_sub;
   rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr m_main_song_sub;
   rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr m_main_status_sub;
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr m_main_battery_voltage_sub;
   rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr m_vision_raw_readings_sub;
   rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr m_vision_distances_sub;
   rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr m_drive_motor_data_sub;
@@ -79,6 +82,7 @@ class Feedback : public rclcpp::Node {
           AddMainErrorCallback add_error_cb,
           UpdateMainSongCallback main_song_cb,
           UpdateMainStatusCallback main_status_cb,
+          UpdateMainBatteryVoltageCallback main_battery_voltage_cb,
           UpdateVisionRawDataCallback vision_raw_readings_cb,
           UpdateVisionNormDataCallback vision_distances_cb,
           UpdateDriveMotorDataCallback drive_motor_data_cb,
@@ -93,6 +97,7 @@ class Feedback : public rclcpp::Node {
         m_add_error_cb(add_error_cb),
         m_main_song_cb(main_song_cb),
         m_main_status_cb(main_status_cb),
+        m_main_battery_voltage_cb(main_battery_voltage_cb),
         m_vision_raw_readings_cb(vision_raw_readings_cb),
         m_vision_distances_cb(vision_distances_cb),
         m_drive_motor_data_cb(drive_motor_data_cb),
@@ -135,6 +140,13 @@ class Feedback : public rclcpp::Node {
         "/robot/main/status", 10, [this](const std_msgs::msg::UInt8MultiArray& msg) {
           if (m_main_status_cb && msg.data.size() == 2) {
             m_main_status_cb(m_self, msg.data[0], msg.data[1]);
+          }
+        });
+          
+    m_main_battery_voltage_sub = this->create_subscription<std_msgs::msg::Float32>(
+        "/robot/main/battery_voltage", 10, [this](const std_msgs::msg::Float32& msg) {
+          if (m_main_battery_voltage_cb) {
+            m_main_battery_voltage_cb(m_self, msg.data);
           }
         });
 
@@ -243,6 +255,7 @@ BOOL ros2Init(ROS2AppFeedback* _self,
               AddMainErrorCallback add_error_cb,
               UpdateMainSongCallback main_song_cb,
               UpdateMainStatusCallback main_status_cb,
+              UpdateMainBatteryVoltageCallback main_battery_voltage_cb,
               UpdateVisionRawDataCallback vision_raw_readings_cb,
               UpdateVisionNormDataCallback vision_distances_cb,
               UpdateDriveMotorDataCallback drive_motor_data_cb,
@@ -255,7 +268,7 @@ BOOL ros2Init(ROS2AppFeedback* _self,
   rclcpp::init(0, nullptr, rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
 
   s_feedback = std::make_shared<Feedback>(
-      _self, main_task_cb, add_error_cb, main_song_cb, main_status_cb, vision_raw_readings_cb,
+      _self, main_task_cb, add_error_cb, main_song_cb, main_status_cb, main_battery_voltage_cb, vision_raw_readings_cb,
       vision_distances_cb, drive_motor_data_cb, drive_imu_data_cb, drive_pid_data_cb,
       drive_chassis_speeds_cb, maze_cell_cb, maze_coord_cb);
 

@@ -8,12 +8,19 @@ class AppConstants {
     class MainService {
       static let ServiceUUID = CBUUID(string: "00000000-CC7A-482A-984A-7F2ED5B3E58F")
 
-      // Characteristics (0000-0009)
+      // Characteristics (0000-0004)
       static let TaskUUID = CBUUID(string: "00000000-8E22-4541-9D4C-21EDAE82ED19")  // Write & Notify
       static let CommandUUID = CBUUID(string: "00000001-8E22-4541-9D4C-21EDAE82ED19")  // Write
       static let ErrorUUID = CBUUID(string: "00000002-8E22-4541-9D4C-21EDAE82ED19")  // Notify
       static let SongUUID = CBUUID(string: "00000003-8E22-4541-9D4C-21EDAE82ED19") // Write & Notify
       static let StatusUUID = CBUUID(string: "00000004-8E22-4541-9D4C-21EDAE82ED19") // Notify
+    }
+    
+    class MainService2 {
+      static let ServiceUUID = CBUUID(string: "00000004-CC7A-482A-984A-7F2ED5B3E58F")
+      
+      // Characteristics (0005-0009)
+      static let BatteryVoltageUUID = CBUUID(string: "00000005-8E22-4541-9D4C-21EDAE82ED19") // Notify
     }
 
     class VisionService {
@@ -40,7 +47,6 @@ class AppConstants {
       // Characteristics (0014-0018)
       static let CellUUID = CBUUID(string: "00000014-8E22-4541-9D4C-21EDAE82ED19")  // Write
       static let MousePositionUUID = CBUUID(string: "00000015-8E22-4541-9D4C-21EDAE82ED19")  // Notify
-
     }
   }
 }

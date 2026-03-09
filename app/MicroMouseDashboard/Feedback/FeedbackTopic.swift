@@ -16,6 +16,7 @@ enum FeedbackTopicReceive: UInt8, CaseIterable, Identifiable {
   case mainError
   case mainSong
   case mainStatus
+  case mainBatteryVoltage
 
   case visionRawReadings
   case visionDistances
