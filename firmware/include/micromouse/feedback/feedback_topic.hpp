@@ -10,6 +10,7 @@
 #include <micromouse/robot/status_topic.hpp>
 #include <micromouse/hardware/drivetrain.hpp>
 #include <micromouse/hardware/imu.hpp>
+#include <units/voltage.h>
 #include <cstdint>
 #include <array>
 
@@ -76,6 +77,7 @@ enum class TopicSend : uint8_t {
   MAIN_ERROR = FB_TOPIC_SEND_MAIN_ERROR,
   MAIN_SONG = FB_TOPIC_SEND_MAIN_SONG,
   MAIN_STATUS = FB_TOPIC_SEND_MAIN_STATUS,
+  MAIN_BATTERY_VOLTAGE = FB_TOPIC_SEND_MAIN_BATTERY_VOLTAGE,
 
   VISION_RAW_READINGS = FB_TOPIC_SEND_VISION_RAW_READINGS,
   VISION_DISTANCES = FB_TOPIC_SEND_VISION_DISTANCES,
@@ -111,6 +113,10 @@ struct TopicSendData<TopicSend::MAIN_STATUS> {
   using type = std::pair<robot::StatusTopic, uint8_t>;
 };
 template <>
+struct TopicSendData<TopicSend::MAIN_BATTERY_VOLTAGE> {
+  using type = units::volt_t;
+};
+template <>
 struct TopicSendData<TopicSend::VISION_RAW_READINGS> {
   using type = std::array<float, 4>;
   static_assert(sizeof(type) == sizeof(float[4]));
@@ -123,7 +129,7 @@ struct TopicSendData<TopicSend::VISION_DISTANCES> {
 template <>
 struct TopicSendData<TopicSend::DRIVE_MOTOR_DATA> {
   using type = hardware::Drivetrain::MotorData;
-  static_assert(sizeof(type) == sizeof(float[4+3]));
+  static_assert(sizeof(type) == sizeof(float[6]));
 };
 template <>
 struct TopicSendData<TopicSend::DRIVE_IMU_DATA> {

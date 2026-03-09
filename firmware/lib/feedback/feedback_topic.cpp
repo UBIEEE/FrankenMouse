@@ -30,6 +30,8 @@ const char* topic_send_to_string(TopicSend topic) {
       return "[Main] Song";
     case MAIN_STATUS:
       return "[Main] Status";
+    case MAIN_BATTERY_VOLTAGE:
+      return "[Main] Battery Voltage";
     case VISION_RAW_READINGS:
       return "[Vision] Raw Readings";
     case VISION_DISTANCES:

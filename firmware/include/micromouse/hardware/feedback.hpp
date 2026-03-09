@@ -14,8 +14,6 @@ class Feedback : public Component {
  public:
   template <feedback::TopicSend Topic>
   void publish(const typename feedback::TopicSendData<Topic>::type& value) {
-    using ValueType = feedback::TopicSendData<Topic>::type;
-
     const uint8_t* data = reinterpret_cast<const uint8_t*>(&value);
     publish_topic(Topic, data);  //, sizeof(ValueType));
   }
