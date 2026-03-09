@@ -112,7 +112,7 @@ target_include_directories(micromouse PUBLIC include)
 
 # Enable all warnings
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-  target_compile_options(micromouse PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(micromouse PRIVATE -Wall -Wextra -Wpedantic -Wno-psabi)
 endif()
 
 # Thirdparty libraries
