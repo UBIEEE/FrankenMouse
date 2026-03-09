@@ -4,9 +4,9 @@
 
 namespace hardware {
 
-class BatteryStatus : public Component {
+class Battery : public Component {
  protected:
-  BatteryStatus() = default;
+  Battery() = default;
 
  public:
   virtual float get_charge_percentage() = 0;
@@ -18,10 +18,10 @@ class BatteryStatus : public Component {
 }  // namespace hardware
 
 /**
- * @brief Returns an instance of the platform-specific battery status.
+ * Returns an instance of the platform Battery.
  *
  * This function is to be implemented by the user in platform-specific code.
  *
- * @return hardware::BatteryStatus&
+ * @return The battery component.
  */
-hardware::BatteryStatus& get_platform_battery_status();
+hardware::Battery& get_platform_battery();

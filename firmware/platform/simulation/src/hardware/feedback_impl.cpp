@@ -44,6 +44,8 @@ FeedbackImpl::FeedbackImpl() : Node("micromouse_feedback") {
   m_main_error_pub = this->create_publisher<std_msgs::msg::UInt8MultiArray>("/robot/main/error", 10);
   m_main_song_pub = this->create_publisher<std_msgs::msg::UInt8>("/robot/main/song", 10);
   m_main_status_pub = this->create_publisher<std_msgs::msg::UInt8MultiArray>("/robot/main/status", 10);
+  m_main_battery_voltage_pub =
+      this->create_publisher<std_msgs::msg::Float32>("/robot/main/battery_voltage", 10);
   m_vision_raw_readings_pub =
       this->create_publisher<std_msgs::msg::Float32MultiArray>("/robot/vision/raw_readings", 10);
   m_vision_distances_pub =
@@ -83,6 +85,12 @@ void FeedbackImpl::publish_topic(feedback::TopicSend topic, const uint8_t* data)
       std_msgs::msg::UInt8MultiArray msg;
       msg.data = std::vector<uint8_t>(data, data + 2);
       m_main_status_pub->publish(msg);
+      break;
+    }
+    case MAIN_BATTERY_VOLTAGE: {
+      std_msgs::msg::Float32 msg;
+      msg.data = *reinterpret_cast<const float*>(data);
+      m_main_battery_voltage_pub->publish(msg);
       break;
     }
     case VISION_RAW_READINGS: {

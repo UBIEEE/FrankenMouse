@@ -51,8 +51,9 @@ class Maze {
 
  public:
   // Center four cells.
-  inline static const std::array<Coordinate, 4> GOAL_ENDPOINTS = {Coordinate(7, 7), Coordinate(7, 8),
-                                                                  Coordinate(8, 7), Coordinate(8, 8)};
+  // inline static const std::array<Coordinate, 4> GOAL_ENDPOINTS = {Coordinate(7, 7), Coordinate(7, 8),
+  //                                                                 Coordinate(8, 7), Coordinate(8, 8)};
+  inline static const std::array<Coordinate, 1> GOAL_ENDPOINTS = {Coordinate(2, 1)};
 
   // The two possible start locations for the mouse.
   enum class StartLocation : uint8_t {

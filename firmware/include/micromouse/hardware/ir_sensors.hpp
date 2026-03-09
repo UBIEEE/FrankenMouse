@@ -47,10 +47,10 @@ class IRSensors : public Component {
 }  // namespace hardware
 
 /**
- * @brief Returns an instance of the platform-specific IR sensors.
+ * Returns an instance of the platform-specific IR sensors.
  *
  * This function is to be implemented by the user in platform-specific code.
  *
- * @return hardware::IRSensors&
+ * @return The IR sensors component.
  */
 hardware::IRSensors& get_platform_ir_sensors();

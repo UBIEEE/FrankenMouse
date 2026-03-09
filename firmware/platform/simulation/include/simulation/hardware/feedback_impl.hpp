@@ -6,6 +6,7 @@
 
 #include <geometry_msgs/msg/twist.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <std_msgs/msg/u_int8.hpp>
 #include <std_msgs/msg/u_int8_multi_array.hpp>
@@ -21,6 +22,7 @@ class FeedbackImpl : public hardware::Feedback, public rclcpp::Node {
   rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr m_main_error_pub;
   rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr m_main_song_pub;
   rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr m_main_status_pub;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr m_main_battery_voltage_pub;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr m_vision_raw_readings_pub;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr m_vision_distances_pub;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr m_drive_motor_data_pub;

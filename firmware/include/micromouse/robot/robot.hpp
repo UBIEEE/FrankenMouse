@@ -5,7 +5,7 @@
 #include <micromouse/drive/motion_runner.hpp>
 #include <micromouse/drive/kinematics.hpp>
 #include <micromouse/feedback/feedback_topic.hpp>
-#include <micromouse/hardware/battery_status.hpp>
+#include <micromouse/hardware/battery.hpp>
 #include <micromouse/hardware/buttons.hpp>
 #include <micromouse/hardware/buzzer.hpp>
 #include <micromouse/hardware/component.hpp>
@@ -31,7 +31,7 @@ class Robot : public Singleton<Robot> {
 
   // Hardware Components
 
-  hardware::BatteryStatus& m_battery_status = get_platform_battery_status();
+  hardware::Battery& m_battery = get_platform_battery();
   hardware::Buzzer& m_buzzer = get_platform_buzzer();
   hardware::Drivetrain& m_drivetrain = get_platform_drivetrain();
   hardware::IMU& m_imu = get_platform_imu();
@@ -40,7 +40,7 @@ class Robot : public Singleton<Robot> {
   hardware::Buttons& m_buttons = get_platform_buttons();
 
   const std::array<hardware::Component*, 7> m_components{
-      &m_battery_status, &m_buzzer, &m_drivetrain, &m_imu, &m_ir_sensors, &m_feedback, &m_buttons,
+      &m_battery, &m_buzzer, &m_drivetrain, &m_imu, &m_ir_sensors, &m_feedback, &m_buttons,
   };
 
   // Logic Subsystems

@@ -21,6 +21,9 @@ void FeedbackImpl::publish_topic(feedback::TopicSend topic, const uint8_t* _data
     case MAIN_STATUS:
       Custom_STM_App_Update_Char(CUSTOM_STM_MAIN_STATUS_CHAR, data);
       break;
+    case MAIN_BATTERY_VOLTAGE:
+      Custom_STM_App_Update_Char(CUSTOM_STM_MAIN_BATTERYVOLTAGE_CHAR, data);
+      break;
     case VISION_RAW_READINGS:
       Custom_STM_App_Update_Char(CUSTOM_STM_VISION_RAWREADINGS_CHAR, data);
       break;
