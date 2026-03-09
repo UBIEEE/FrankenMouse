@@ -23,7 +23,7 @@ file(GLOB_RECURSE USER_SOURCES Core/Src/*.cpp)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${USER_SOURCES})
 
 # STM32 generated code has a lot of pointless warnings
-target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -w)
+target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -w -Wno-psabi)
 
 # Link to core library
 target_link_libraries(${CMAKE_PROJECT_NAME} micromouse)
