@@ -90,7 +90,7 @@ class ROS2AppFeedback: NSObject, AppFeedbackBase, ObservableObject {
     var pid = [Float32](repeating: 0, count: 6)
     var linearVelocity: Float32 = 0
     var angularVelocity: Float32 = 0
-
+    
     var motorLeftPosition: Float32 {
       return driveData[0]
     }
@@ -98,25 +98,21 @@ class ROS2AppFeedback: NSObject, AppFeedbackBase, ObservableObject {
     var motorLeftVelocity: Float32 {
       return driveData[1]
     }
-
-    var motorRightPosition: Float32 {
+    
+    var motorLeftTicks: Float32 {
       return driveData[2]
     }
 
-    var motorRightVelocity: Float32 {
+    var motorRightPosition: Float32 {
       return driveData[3]
     }
 
-    var xPos: Float32 {
+    var motorRightVelocity: Float32 {
       return driveData[4]
     }
 
-    var yPos: Float32 {
+    var motorRightTicks: Float32 {
       return driveData[5]
-    }
-
-    var thetaRad: Float32 {
-      return driveData[6]
     }
   }
 
