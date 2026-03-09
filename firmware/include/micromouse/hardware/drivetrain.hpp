@@ -19,17 +19,14 @@ class Drivetrain : public Component {
   struct EncoderData {
     units::millimeter_t position = 0_mm;
     units::millimeters_per_second_t velocity = 0_mmps;
+    int32_t ticks = 0;
   };
 
   struct MotorData {
-    struct {
-      EncoderData left;
-      EncoderData right;
-    } encoder;
-
-    drive::Pose pose;
+    EncoderData left_encoder;
+    EncoderData right_encoder;
   };
-  static_assert(sizeof(MotorData) == sizeof(float[4 + 3]));
+  static_assert(sizeof(MotorData) == sizeof(float[6]));
 };
 
 }  // namespace hardware

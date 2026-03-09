@@ -8,8 +8,6 @@ TimerImpl::TimerImpl() {
 
 void TimerImpl::reset() {
   m_start_time_point = m_stop_time_point = std::chrono::high_resolution_clock::now();
-
-  m_is_running = false;
 }
 
 void TimerImpl::start() {

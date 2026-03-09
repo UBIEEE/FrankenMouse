@@ -98,11 +98,11 @@ void DrivetrainImpl::update_encoders() {
   const EncoderData left_data = m_left_encoder.update(left_ticks);
   const EncoderData right_data = m_right_encoder.update(right_ticks);
 
-  const units::millimeter_t& delta_left = left_data.position - m_drive_data.encoder.left.position;
-  const units::millimeter_t& delta_right = right_data.position - m_drive_data.encoder.right.position;
+  const units::millimeter_t& delta_left = left_data.position - m_drive_data.left_encoder.position;
+  const units::millimeter_t& delta_right = right_data.position - m_drive_data.right_encoder.position;
 
-  m_drive_data.encoder.left = left_data;
-  m_drive_data.encoder.right = right_data;
+  m_drive_data.left_encoder = left_data;
+  m_drive_data.right_encoder = right_data;
 
   // Odometry::update(m_drive_data.pose, delta_left_mm, delta_right_mm);
 }
@@ -128,10 +128,10 @@ void DrivetrainImpl::update_pid_controllers() {
     auto [v_l, v_r] = to_wheel_speeds(chassis_speeds, m_measurements.track_width);
 
     control_data.final_right_speed +=
-        m_translational_right_pid.calculate(m_drive_data.encoder.right.velocity.value(), v_r.value());
+        m_translational_right_pid.calculate(m_drive_data.right_encoder.velocity.value(), v_r.value());
 
     control_data.final_left_speed +=
-        m_translational_left_pid.calculate(m_drive_data.encoder.left.velocity.value(), v_l.value());
+        m_translational_left_pid.calculate(m_drive_data.left_encoder.velocity.value(), v_l.value());
   }
 
   float final_left = control_data.final_left_speed, final_right = control_data.final_right_speed;

@@ -4,6 +4,7 @@
 
 #include <micromouse/robot/robot.h>
 #include <cmath>
+#include <units/math.h>
 #include "main.h"
 
 using namespace drive;
@@ -21,8 +22,8 @@ static constexpr IMU::Axis PITCH_AXIS = IMU::Axis::X;
 static constexpr float TRANSLATIONAL_KP = 0.0004616805171f;
 static constexpr float TRANSLATIONAL_KI = 0.0f;
 static constexpr float TRANSLATIONAL_KD = 0.0f;
-static constexpr float ANGULAR_KP = 0.5f;
-static constexpr float ANGULAR_KI = 0.00025f;
+static constexpr float ANGULAR_KP = 0.06f;
+static constexpr float ANGULAR_KI = 0.0f;
 static constexpr float ANGULAR_KD = 0.0f;
 
 DrivetrainImpl::DrivetrainImpl()
@@ -96,13 +97,11 @@ void DrivetrainImpl::update_encoders() {
   const EncoderData left_data = m_left_encoder.update(left_ticks);
   const EncoderData right_data = m_right_encoder.update(right_ticks);
 
-  const units::millimeter_t& delta_left = left_data.position - m_drive_data.encoder.left.position;
-  const units::millimeter_t& delta_right = right_data.position - m_drive_data.encoder.right.position;
+  const units::millimeter_t& delta_left = left_data.position - m_drive_data.left_encoder.position;
+  const units::millimeter_t& delta_right = right_data.position - m_drive_data.right_encoder.position;
 
-  m_drive_data.encoder.left = left_data;
-  m_drive_data.encoder.right = right_data;
-
-  // Odometry::update(m_drive_data.pose, delta_left_mm, delta_right_mm);
+  m_drive_data.left_encoder = left_data;
+  m_drive_data.right_encoder = right_data;
 }
 
 void DrivetrainImpl::update_pid_controllers() {
@@ -112,8 +111,10 @@ void DrivetrainImpl::update_pid_controllers() {
   {
     const units::degrees_per_second_t gyro_z = m_imu.get_angular_velocity(YAW_AXIS);
 
-    control_data.final_angular += units::degrees_per_second_t{
-        m_angular_pid.calculate(gyro_z.value(), control_data.target_speeds.angular_velocity.value())};
+    if (units::math::abs(gyro_z) > 1.5_deg_per_s) {
+      control_data.final_angular += units::degrees_per_second_t{
+          m_angular_pid.calculate(gyro_z.value(), control_data.target_speeds.angular_velocity.value())};
+    }
   }
 
   ChassisSpeeds chassis_speeds = {
@@ -126,19 +127,19 @@ void DrivetrainImpl::update_pid_controllers() {
     auto [v_l, v_r] = to_wheel_speeds(chassis_speeds, m_measurements.track_width);
 
     control_data.final_right_speed +=
-        m_translational_right_pid.calculate(m_drive_data.encoder.right.velocity.value(), v_r.value());
+        m_translational_right_pid.calculate(m_drive_data.right_encoder.velocity.value(), v_r.value());
 
     control_data.final_left_speed +=
-        m_translational_left_pid.calculate(m_drive_data.encoder.left.velocity.value(), v_l.value());
+        m_translational_left_pid.calculate(-m_drive_data.left_encoder.velocity.value(), v_l.value());
   }
 
   float final_left = control_data.final_left_speed, final_right = control_data.final_right_speed;
 
   // Clamp the values.
-  if (std::abs(final_left) < 0.05f) {
+  if (std::abs(final_left) < 0.1f) {
     final_left = 0.f;
   }
-  if (std::abs(final_right) < 0.05f) {
+  if (std::abs(final_right) < 0.1f) {
     final_right = 0.f;
   }
 
@@ -150,6 +151,9 @@ void DrivetrainImpl::update_pid_controllers() {
 }
 
 void DrivetrainImpl::set_motors(float left_percent, float right_percent) {
+  left_percent = std::clamp(left_percent, -1.f, 1.f);
+  right_percent = std::clamp(right_percent, -1.f, 1.f);
+
   const uint16_t left_out(std::abs(left_percent) * 7199);
   const uint16_t right_out(std::abs(right_percent) * 7199);
 

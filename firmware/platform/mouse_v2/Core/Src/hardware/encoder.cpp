@@ -35,7 +35,8 @@ hardware::Drivetrain::EncoderData Encoder::update(uint16_t ticks) {
   m_velocity = delta_ticks / ROBOT_UPDATE_PERIOD_S;
 
   return {.position = m_ticks * ENCODER_DISTANCE_PER_TICK,
-          .velocity = (m_velocity / 1_s) * ENCODER_DISTANCE_PER_TICK};
+          .velocity = (m_velocity / 1_s) * ENCODER_DISTANCE_PER_TICK,
+          .ticks = static_cast<int32_t>(m_ticks)};
 }
 
 int32_t Encoder::calc_delta_ticks(uint16_t current, uint16_t last) {
