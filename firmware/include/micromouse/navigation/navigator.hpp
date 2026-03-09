@@ -34,7 +34,7 @@ class Navigator : public Subsystem {
 
   enum class Move {
     FORWARD,
-    FORWARD_STOP,
+    FINISH, // Turns around and stops
     TURN_LEFT,
     TURN_RIGHT,
     TURN_AROUND,
@@ -55,19 +55,12 @@ class Navigator : public Subsystem {
   // TODO: solve_to() for faster?
 
   bool is_done() const {
-    return false;
-    // return m_done;
+    return m_done;
   }
 
  private:
   const drive::MotionRunner::CompletionCallback m_should_sense_callback = [this] {
     m_should_sense = true;
-  };
-
-  const drive::MotionRunner::CompletionCallback m_done_callback = [this] {
-    m_done = true;
-    // m_position = m_next_position;
-    // m_direction = m_next_direction;
   };
 
   void move(Move move);
