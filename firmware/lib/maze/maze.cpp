@@ -1,4 +1,5 @@
 #include <micromouse/maze/maze.hpp>
+#include <micromouse/hardware/feedback.hpp>
 
 #define LOG_PREFIX "[maze] "
 #include <micromouse/logging.hpp>
@@ -17,6 +18,9 @@ void Maze::reset() {
   }
 
   init_boundaries();
+
+  // Reset the maze by sending -1
+  get_platform_feedback().publish<feedback::TopicSend::MAZE_CELL>({Coordinate(-1), Cell()});
 }
 
 void Maze::init_start_cell(StartLocation start_location) {
@@ -29,6 +33,11 @@ void Maze::init_start_cell(StartLocation start_location) {
     m_cells[Coordinate(15, 0)].set_wall(WEST);
     m_cells[Coordinate(14, 0)].set_wall(EAST);
   }
+
+  Coordinate start_coord = start(start_location);
+  m_cells[start_coord].set_visited();
+
+  get_platform_feedback().publish<feedback::TopicSend::MAZE_CELL>({start_coord, cell(start_coord)});
 }
 
 void Maze::init_boundaries() {

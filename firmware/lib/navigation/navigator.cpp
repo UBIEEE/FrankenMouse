@@ -76,6 +76,9 @@ void Navigator::periodic() {
   m_maze.set_wall(m_next_position, front_direction, is_front_wall);
   cell.set_visited();
 
+  m_feedback.publish<feedback::TopicSend::MAZE_CELL>({m_next_position, cell});
+  m_feedback.publish<feedback::TopicSend::MAZE_MOUSE_POSITION>(m_next_position);
+
   // Solve the maze, decide where to move to.
 
   Direction move_direction = m_solver->next(m_next_position, m_targets);

@@ -12,6 +12,8 @@ namespace navigation {
 class Navigator : public Subsystem {
   drive::MotionRunner& m_drive;
   vision::Vision& m_vision;
+  hardware::Feedback& m_feedback = get_platform_feedback();
+
   Maze& m_maze;
 
   Solver* m_solver = nullptr;
