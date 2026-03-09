@@ -122,39 +122,17 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
   //
 
   struct DriveService {
-    var driveData = [Float32](repeating: 0, count: 4 + 3)
+    var motorLeftPosition: Float32 = 0
+    var motorLeftVelocity: Float32 = 0
+    var motorLeftTicks: Int32 = 0
+    var motorRightPosition: Float32 = 0
+    var motorRightVelocity: Float32 = 0
+    var motorRightTicks: Int32 = 0
+    
     var imuData = [Float32](repeating: 0, count: 6)
     var pid = [Float32](repeating: -1, count: 6)
     var linearVelocity: Float32 = 0
     var angularVelocity: Float32 = 0
-
-    var motorLeftPosition: Float32 {
-      return driveData[0]
-    }
-
-    var motorLeftVelocity: Float32 {
-      return driveData[1]
-    }
-
-    var motorRightPosition: Float32 {
-      return driveData[2]
-    }
-
-    var motorRightVelocity: Float32 {
-      return driveData[3]
-    }
-
-    var xPos: Float32 {
-      return driveData[4]
-    }
-
-    var yPos: Float32 {
-      return driveData[5]
-    }
-
-    var thetaRad: Float32 {
-      return driveData[6]
-    }
   }
 
   @Published var driveService = DriveService()
@@ -356,6 +334,16 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
     _ peripheral: CBPeripheral,
     didUpdateValueFor ch: CBCharacteristic, error: Error?
   ) {
+    
+    func getFloatValue(_ data: Data) -> Float32 {
+      let value = data.withUnsafeBytes { $0.load(as: Float32.self) }
+      return value
+    }
+    
+    func getIntValue(_ data: Data) -> Int32 {
+      let value = data.withUnsafeBytes { $0.load(as: Int32.self) }
+      return value
+    }
 
     func getFloatValues(_ data: Data, numValues: Int) -> [Float32] {
       var values: [Float32] = []
@@ -398,7 +386,13 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
       
       // Drive service
     case AppConstants.Bluetooth.DriveService.MotorDataUUID:
-      driveService.driveData = getFloatValues(ch.value!, numValues: 4 + 3)
+      let data = ch.value!
+      driveService.motorLeftPosition = getFloatValue(data.subdata(in: 0..<4))
+      driveService.motorLeftVelocity = getFloatValue(data.subdata(in: 4..<8))
+      driveService.motorLeftTicks = getIntValue(data.subdata(in: 8..<12))
+      driveService.motorRightPosition = getFloatValue(data.subdata(in: 12..<16))
+      driveService.motorRightVelocity = getFloatValue(data.subdata(in: 16..<20))
+      driveService.motorRightTicks = getIntValue(data.subdata(in: 20..<24))
     case AppConstants.Bluetooth.DriveService.IMUDataUUID:
       driveService.imuData = getFloatValues(ch.value!, numValues: 6)
     case AppConstants.Bluetooth.DriveService.PIDUUID:

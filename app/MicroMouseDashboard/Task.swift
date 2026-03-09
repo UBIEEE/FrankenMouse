@@ -19,11 +19,12 @@ enum Task: UInt8, CaseIterable, Identifiable {
   case testGyro = 18
   case testDriveStraightFourCellsFromBackWallWithVisionAlign = 19
   
-  // 41-50: Manual control tasks.
+  // 41-50: Other
   
   case manualChassisSpeeds = 41
+  case idle = 42
 
-  // 100+: Other
+  // 100+: Internal
 
   case armed = 100
   case armedTriggering
@@ -54,6 +55,8 @@ let TaskNames: [Task: String] = [
   .testDriveStraightFourCellsFromBackWallWithVisionAlign: "TEST - Drive Straight Four Cells From Back Wall With Vision Align",
   
   .manualChassisSpeeds: "Manual Control - Chassis Speeds",
+  .idle: "Idle",
+  
 
   .armed: "Armed",
   .armedTriggering: "Armed Triggering",
@@ -80,4 +83,6 @@ let TaskDescriptions: [Task: String] = [
   .testDriveTurn180InPlace: "Turn 180 degrees in place",
   .testGyro: "Maintain a rotational velocity of 0 deg/s",
   .testDriveStraightFourCellsFromBackWallWithVisionAlign: "Drive straight four cells from back wall with vision align",
+  
+  .idle: "Idle",
 ]

@@ -2,9 +2,6 @@ import SwiftUI
 
 struct MainPage: View {
   @EnvironmentObject var feedback: AppFeedback
-  
-  // Tasks before the cutoff are selectable by the user.
-  let userSelectionCutoff = Task.manualChassisSpeeds
 
   @State private var selectedTask = Task.mazeSearch
 
@@ -33,20 +30,22 @@ struct MainPage: View {
 
         Section(header: Text("User task Selection"), footer: Text(TaskDescriptions[selectedTask] ?? ""))
         {
-
-          if selectedTask == .mazeSearch {
-            Picker("Starting Position", selection: $startingPosition) {
-              ForEach(StartingPosition.allCases, id: \.self) { startingPosition in
-                Text(startingPositionNames[startingPosition]!)
+          Picker("Task", selection: $selectedTask) {
+            ForEach(Task.allCases, id: \.self) { task in
+              if task != .none && TaskDescriptions[task] != nil { // Tasks with no description will not be options
+                Text(TaskNames[task]!)
               }
             }
           }
-
-          Picker("Task", selection: $selectedTask) {
-            ForEach(Task.allCases, id: \.self) { task in
-              if task != .none && task.rawValue < userSelectionCutoff.rawValue {
-                Text(TaskNames[task]!)
-              }
+#if !os(macOS)
+          .pickerStyle(.wheel)
+#endif
+        }
+        
+        if selectedTask == .mazeSearch {
+          Picker("Starting Position", selection: $startingPosition) {
+            ForEach(StartingPosition.allCases, id: \.self) { startingPosition in
+              Text(startingPositionNames[startingPosition]!)
             }
           }
         }
