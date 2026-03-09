@@ -70,7 +70,7 @@ void ROS2CommunicationManager::configure_subscribers() {
 
   m_drive_motor_data_sub = this->create_subscription<std_msgs::msg::Float32MultiArray>(
       "/robot/drive/motors", 10, [this](const std_msgs::msg::Float32MultiArray& msg) {
-        if (msg.data.size() == 7) {
+        if (msg.data.size() == 6) {
           std::copy(msg.data.begin(), msg.data.end(), m_drive_data.motor_data);
         }
       });

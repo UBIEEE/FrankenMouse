@@ -28,13 +28,14 @@ enum class RobotTask : uint8_t {
   TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN = 19,
 
   //
-  // 41-50: Manual control tasks.
+  // 41-50: Other
   //
 
   MANUAL_CHASSIS_SPEEDS = 41,
+  IDLE = 42,
 
   //
-  // 100+: other
+  // 100+: Internal
   //
 
   ARMED = 100,

@@ -138,7 +138,7 @@ struct FeedbackTopicNotifyData<FeedbackTopicNotify::VISION_DISTANCES> {
 };
 template <>
 struct FeedbackTopicNotifyData<FeedbackTopicNotify::DRIVE_MOTOR_DATA> {
-  using type = float[4 + 3];
+  using type = float[3 + 3];
 };
 template <>
 struct FeedbackTopicNotifyData<FeedbackTopicNotify::DRIVE_IMU_DATA> {
@@ -229,7 +229,7 @@ class CommunicationManager {
   const VisionNotifyData& vision_data() const { return m_vision_data; }
 
   struct DriveNotifyData {
-    float motor_data[4 + 3] = {0};
+    float motor_data[3 + 3] = {0};
     float imu_data[3 + 3] = {0};
     float pid_data[3 + 3] = {0};
     drive::ChassisSpeeds chassis_speeds = {};
