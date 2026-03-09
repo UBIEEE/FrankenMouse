@@ -1,5 +1,6 @@
 #pragma once
 
+#include <micromouse_cli/maze/direction.hpp>
 #include <cstdint>
 
 /**
@@ -40,10 +41,27 @@ class Cell final {
   bool is_south() const { return m_bits.south; }
   bool is_west() const { return m_bits.west; }
 
+  bool is_wall(Direction dir) const {
+    const uint8_t mask = 1 << static_cast<uint8_t>(dir);
+    return (m_data & mask) != 0;
+  }
+
+  bool is_exit(Direction dir) const {
+    const uint8_t mask = 1 << static_cast<uint8_t>(dir);
+    return (m_data & mask) == 0;
+  }
+
   void set_north(bool value = true) { m_bits.north = value; }
   void set_east(bool value = true) { m_bits.east = value; }
   void set_south(bool value = true) { m_bits.south = value; }
   void set_west(bool value = true) { m_bits.west = value; }
+
+  void set_wall(Direction dir, bool value = true) {
+    const uint8_t mask = 1 << static_cast<uint8_t>(dir);
+    m_data &= ~mask;
+    if (value)
+      m_data |= mask;
+  }
 
   bool is_visited() const { return m_bits.visited != 0; }
   void set_visited() noexcept { m_bits.visited = 1; }
