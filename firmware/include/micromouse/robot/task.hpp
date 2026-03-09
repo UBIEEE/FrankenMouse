@@ -30,13 +30,14 @@ enum class Task : uint8_t {
   TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN = 19,
 
   //
-  // 41-50: Manual control tasks.
+  // 41-50: Other
   //
 
   MANUAL_CHASSIS_SPEEDS = 41,
+  IDLE = 42,
 
   //
-  // 128+: other
+  // 128+: Internal
   //
 
   ARMED = 128,

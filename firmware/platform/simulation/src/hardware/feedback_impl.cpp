@@ -31,10 +31,9 @@ FeedbackImpl::FeedbackImpl() : Node("micromouse_feedback") {
 
   m_drive_chassis_speeds_sub = this->create_subscription<geometry_msgs::msg::Twist>(
       "/client/drive/chassis_speeds", 10, [this](const geometry_msgs::msg::Twist& msg) {
-        const float speeds[6] = {
-            static_cast<float>(msg.linear.x),  static_cast<float>(msg.linear.y),
-            static_cast<float>(msg.linear.z),  static_cast<float>(msg.angular.x),
-            static_cast<float>(msg.angular.y), static_cast<float>(msg.angular.z),
+        const float speeds[2] = {
+            static_cast<float>(msg.linear.x),
+            static_cast<float>(msg.angular.z),
         };
 
         Robot::get().delegate_received_feedback(feedback::TopicReceive::DRIVE_CHASSIS_SPEEDS,
@@ -99,8 +98,14 @@ void FeedbackImpl::publish_topic(feedback::TopicSend topic, const uint8_t* data)
       break;
     }
     case DRIVE_MOTOR_DATA: {
+      auto motor_data = reinterpret_cast<hardware::Drivetrain::MotorData*>(const_cast<uint8_t*>(data));
       std_msgs::msg::Float32MultiArray msg;
-      msg.data = std::vector<float>((float*)data, (float*)data + 7);
+      msg.data = {motor_data->left_encoder.position.value(),
+                  motor_data->left_encoder.velocity.value(),
+                  static_cast<float>(motor_data->left_encoder.ticks),
+                  motor_data->right_encoder.position.value(),
+                  motor_data->right_encoder.velocity.value(),
+                  static_cast<float>(motor_data->right_encoder.ticks)};
       m_drive_motor_data_pub->publish(msg);
       break;
     }
@@ -121,11 +126,7 @@ void FeedbackImpl::publish_topic(feedback::TopicSend topic, const uint8_t* data)
 
       const float* float_data = reinterpret_cast<const float*>(data);
       msg.linear.x = float_data[0];
-      msg.linear.y = float_data[1];
-      msg.linear.z = float_data[2];
-      msg.angular.x = float_data[3];
-      msg.angular.y = float_data[4];
-      msg.angular.z = float_data[5];
+      msg.angular.z = float_data[1];
 
       m_drive_chassis_speeds_pub->publish(msg);
       break;
@@ -142,9 +143,6 @@ void FeedbackImpl::publish_topic(feedback::TopicSend topic, const uint8_t* data)
       m_maze_coordinates_pub->publish(msg);
       break;
     }
-    default:
-      // TODO:
-      break;
   }
 }
 

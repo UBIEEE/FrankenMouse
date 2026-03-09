@@ -1,6 +1,7 @@
 #include <micromouse/robot/robot.hpp>
 
 #include <micromouse/robot/cell_positions.hpp>
+#include "micromouse/robot/task.hpp"
 
 #define LOG_PREFIX "[robot] "
 #include <micromouse/logging.hpp>
@@ -242,6 +243,9 @@ void Robot::start_next_task() {
     case MANUAL_CHASSIS_SPEEDS:
       start_task_manual_chassis_speeds();
       break;
+    case IDLE:
+      // Do nothing, or something
+      break;
     case ARMED:
       start_task_armed();
       break;
@@ -251,8 +255,7 @@ void Robot::start_next_task() {
     case ARMED_TRIGGERED:
       start_task_armed_triggered();
       break;
-    default:
-      // TODO Error
+    case VISION_CALIBRATE:
       break;
   }
 
@@ -418,6 +421,9 @@ void Robot::process_current_task() {
       break;
     case MANUAL_CHASSIS_SPEEDS:
       process_task_manual_chassis_speeds();
+      break;
+    case IDLE:
+      // Do nothing, or something
       break;
     case ARMED:
       process_task_armed();

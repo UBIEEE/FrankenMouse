@@ -4,6 +4,7 @@
 #include <micromouse/vision/vision_distances.hpp>
 #include <micromouse/math.hpp>
 #include <units/math.h>
+#include <cassert>
 
 #define LOG_PREFIX "[drive] "
 #include <micromouse/logging.hpp>
@@ -164,6 +165,7 @@ ChassisSpeeds MotionRunner::process_motion(units::second_t t) {
     case Motion::Type::TURN:
       return process_turn_motion(static_cast<TurnMotion&>(*m_current_motion), t);
   }
+  return ChassisSpeeds{};
 }
 
 ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units::second_t t) {

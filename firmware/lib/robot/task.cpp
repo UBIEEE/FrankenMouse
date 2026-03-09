@@ -33,6 +33,8 @@ const char* task_to_string(Task task) {
       return "[Test] Drive Straight Four Cells from Back Wall with Vision Align";
     case MANUAL_CHASSIS_SPEEDS:
       return "Manual Chassis Speeds";
+    case IDLE:
+      return "Idle";
     case ARMED:
       return "[Armed]";
     case ARMED_TRIGGERING:

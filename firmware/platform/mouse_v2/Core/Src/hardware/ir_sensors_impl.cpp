@@ -6,14 +6,14 @@
 
 extern ADC_HandleTypeDef hadc1;  // main.c
 
-static constexpr GPIO_TypeDef* EMIT_PORTS[] = {
+static GPIO_TypeDef* EMIT_PORTS[] = {
     IR_FAR_RIGHT_EMIT_GPIO_Port,
     IR_MID_RIGHT_EMIT_GPIO_Port,
     IR_MID_LEFT_EMIT_GPIO_Port,
     IR_FAR_LEFT_EMIT_GPIO_Port,
 };
 
-static constexpr uint16_t EMIT_PINS[] = {
+static const uint16_t EMIT_PINS[] = {
     IR_FAR_RIGHT_EMIT_Pin,
     IR_MID_RIGHT_EMIT_Pin,
     IR_MID_LEFT_EMIT_Pin,
