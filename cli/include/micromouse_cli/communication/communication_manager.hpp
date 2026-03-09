@@ -23,6 +23,7 @@ enum FeedbackTopic {
   FB_TOPIC_MAIN_ERROR,
   FB_TOPIC_MAIN_SONG,
   FB_TOPIC_MAIN_STATUS,
+  FB_TOPIC_MAIN_BATTERY_VOLTAGE,
 
   FB_TOPIC_VISION_RAW_READINGS,
   FB_TOPIC_VISION_DISTANCES,
@@ -97,6 +98,7 @@ enum class FeedbackTopicNotify {
   MAIN_ERROR = FB_TOPIC_MAIN_ERROR,
   MAIN_SONG = FB_TOPIC_MAIN_SONG,
   MAIN_STATUS = FB_TOPIC_MAIN_STATUS,
+  MAIN_BATTERY_VOLTAGE = FB_TOPIC_MAIN_BATTERY_VOLTAGE,
 
   VISION_RAW_READINGS = FB_TOPIC_VISION_RAW_READINGS,
   VISION_DISTANCES = FB_TOPIC_VISION_DISTANCES,
@@ -128,6 +130,10 @@ struct FeedbackTopicNotifyData<FeedbackTopicNotify::MAIN_SONG> {
 template <>
 struct FeedbackTopicNotifyData<FeedbackTopicNotify::MAIN_STATUS> {
   using type = std::pair<RobotStatusTopic, uint8_t>;
+};
+template <>
+struct FeedbackTopicNotifyData<FeedbackTopicNotify::MAIN_BATTERY_VOLTAGE> {
+  using type = float;
 };
 template <>
 struct FeedbackTopicNotifyData<FeedbackTopicNotify::VISION_RAW_READINGS> {
@@ -220,6 +226,7 @@ class CommunicationManager {
     std::map<uint32_t, RobotError> errors;
     RobotSong song;
     std::map<RobotStatusTopic, uint8_t> statusTopics;
+    float battery_voltage = 0;
   };
   const MainNotifyData& main_data() const { return m_main_data; }
   MainNotifyData& main_data() { return m_main_data; }
@@ -267,6 +274,8 @@ class CommunicationManager {
       return m_main_data.song;
     } else if constexpr (Topic == MAIN_STATUS) {
       static_assert(false, "Use main_data().statusTopics to access all status topics");
+    } else if constexpr (Topic == MAIN_BATTERY_VOLTAGE) {
+      return m_main_data.battery_voltage;
     } else if constexpr (Topic == VISION_RAW_READINGS) {
       return m_vision_data.raw_readings;
     } else if constexpr (Topic == VISION_DISTANCES) {

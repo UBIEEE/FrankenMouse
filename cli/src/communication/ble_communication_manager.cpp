@@ -13,6 +13,7 @@ enum BLEService {
   SERVICE_VISION,
   SERVICE_DRIVE,
   SERVICE_MAZE,
+  SERVICE_MAIN2,
   _SERVICE_COUNT,
 };
 
@@ -23,15 +24,19 @@ static const SimpleBLE::BluetoothUUID s_services[_SERVICE_COUNT] = {
     [SERVICE_VISION] = "00000001-cc7a-482a-984a-7f2ed5b3e58f"s,
     [SERVICE_DRIVE] = "00000002-cc7a-482a-984a-7f2ed5b3e58f"s,
     [SERVICE_MAZE] = "00000003-cc7a-482a-984a-7f2ed5b3e58f"s,
+    [SERVICE_MAIN2] = "00000004-cc7a-482a-984a-7f2ed5b3e58f"s,
 };
 
 static const SimpleBLE::BluetoothUUID s_characteristics[_FB_TOPIC_COUNT] = {
-    // Main (0000-0009)
+    // Main (0000-0004)
     [FB_TOPIC_MAIN_TASK] = "00000000-8e22-4541-9d4c-21edae82ed19"s,
     [FB_TOPIC_MAIN_COMMAND] = "00000001-8e22-4541-9d4c-21edae82ed19"s,
     [FB_TOPIC_MAIN_ERROR] = "00000002-8e22-4541-9d4c-21edae82ed19"s,
     [FB_TOPIC_MAIN_SONG] = "00000003-8e22-4541-9d4c-21edae82ed19"s,
     [FB_TOPIC_MAIN_STATUS] = "00000004-8e22-4541-9d4c-21edae82ed19"s,
+
+    // Main 2 (0005-0009)
+    [FB_TOPIC_MAIN_BATTERY_VOLTAGE] = "00000005-8e22-4541-9d4c-21edae82ed19"s,
 
     // Vision (000A-000E)
     [FB_TOPIC_VISION_RAW_READINGS] = "0000000a-8e22-4541-9d4c-21edae82ed19"s,
@@ -199,6 +204,7 @@ bool BLECommunicationManager::configure_peripheral_notifications() {
   notify<FeedbackTopicNotify::MAIN_STATUS>([&](const std::pair<RobotStatusTopic, uint8_t>& status) {
     m_main_data.statusTopics[status.first] = status.second;
   });
+  notify<FeedbackTopicNotify::MAIN_BATTERY_VOLTAGE>(m_main_data.battery_voltage);
 
   notify<FeedbackTopicNotify::VISION_RAW_READINGS>(m_vision_data.raw_readings);
   notify<FeedbackTopicNotify::VISION_DISTANCES>(m_vision_data.distances);
@@ -234,6 +240,8 @@ static BLEService get_characteristic_service(FeedbackTopic char_id) {
     case FB_TOPIC_MAIN_SONG:
     case FB_TOPIC_MAIN_STATUS:
       return SERVICE_MAIN;
+    case FB_TOPIC_MAIN_BATTERY_VOLTAGE:
+      return SERVICE_MAIN2;
     case FB_TOPIC_VISION_RAW_READINGS:
     case FB_TOPIC_VISION_DISTANCES:
       return SERVICE_VISION;

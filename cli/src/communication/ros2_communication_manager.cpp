@@ -54,6 +54,11 @@ void ROS2CommunicationManager::configure_subscribers() {
         }
       });
 
+  m_main_battery_voltage_sub = this->create_subscription<std_msgs::msg::Float32>(
+      "/robot/main/battery_voltage", 10, [this](const std_msgs::msg::Float32& msg) {
+        m_main_data.battery_voltage = msg.data;
+      });
+
   m_vision_raw_readings_sub = this->create_subscription<std_msgs::msg::Float32MultiArray>(
       "/robot/vision/raw_readings", 10, [this](const std_msgs::msg::Float32MultiArray& msg) {
         if (msg.data.size() == 4) {
