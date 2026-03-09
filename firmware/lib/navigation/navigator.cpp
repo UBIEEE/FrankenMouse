@@ -35,8 +35,8 @@ void Navigator::periodic() {
     }
   }
   if (at_goal) {
-    m_next_direction = m_direction;
-    move(Move::FORWARD_STOP);
+    m_next_direction = maze::opposite(m_direction);
+    move(Move::FINISH);
     return;
   }
 
@@ -116,8 +116,13 @@ void Navigator::search_to(maze::CoordinateSpan targets, Solver& solver) {
   m_done = false;
 
   units::millimeter_t sense_distance = robot::CellPositions::SENSING_SPOT - m_start_cell_position;
-  m_drive.enqueue_forward(m_position, m_start_cell_position, m_direction, sense_distance, true, true,
-                          m_should_sense_callback);
+  assert(sense_distance >= 0_mm);
+  if (sense_distance > 0_mm) {
+    m_drive.enqueue_forward(m_position, m_start_cell_position, m_direction, sense_distance, true, true,
+                            m_should_sense_callback);
+  } else {
+    m_should_sense = true;
+  }
 
   units::millimeter_t remaining_distance = maze::Cell::WIDTH - robot::CellPositions::SENSING_SPOT;
   m_drive.enqueue_forward(m_position, robot::CellPositions::SENSING_SPOT, m_direction, remaining_distance,
@@ -145,10 +150,16 @@ void Navigator::move(Move move) {
       // Drive to end of cell
       m_drive.enqueue_forward(m_position, sense_distance, m_direction, remaining_distance, true, true);
       break;
-    case FORWARD_STOP:
-      // Drive to end of cell and stop
-      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::WIDTH, false, true, m_done_callback);
-      m_start_cell_position = 0_mm;
+    case FINISH:
+      // Drive to middle of cell and stop
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, false, true);
+      // Turn Around
+      m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180, [&] {
+        m_position = m_next_position;
+        m_direction = m_next_direction;
+        m_start_cell_position = maze::Cell::HALF_WIDTH;
+        m_done = true;
+      });
       break;
     case TURN_LEFT:
       // Drive to turn start
