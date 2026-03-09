@@ -66,7 +66,7 @@ struct VisionPage: View {
           )
         ) {
           VStack(alignment: .leading) {
-            let isCalibrated = feedback.mainService.statusTopics[.isCalibrated] ?? 0
+            let isCalibrated = feedback.mainService.statusTopics[.isVisionCalibrated] ?? 0
             
             Text("\(isCalibrated > 0 ? "Calibrated" : "Not Calibrated")")
             Text("Is Calibrated?")
