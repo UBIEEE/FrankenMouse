@@ -6,7 +6,6 @@
 #include <micromouse_cli/options/argument_parser.hpp>
 #include <micromouse_cli/robot/task.hpp>
 #include <micromouse_cli/robot/start_position.hpp>
-#include <cstdio>
 #include <map>
 #include <string>
 #include <chrono>
@@ -43,6 +42,7 @@ class TaskRunCommand final : public Command {
   static constexpr const char* s_test_gyro = "TestGyro";
   static constexpr const char* s_test_drive_straight_four_cells_from_back_wall_with_vision_align =
       "TestDriveStraightFourCellsFromBackWallWithVisionAlign";
+  static constexpr const char* s_idle = "Idle";
 
   static inline const std::map<std::string, RobotTask> s_tasks{
       {s_stop, RobotTask::STOPPED},
@@ -62,6 +62,7 @@ class TaskRunCommand final : public Command {
       {s_test_gyro, RobotTask::TEST_GYRO},
       {s_test_drive_straight_four_cells_from_back_wall_with_vision_align,
        RobotTask::TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN},
+      {s_idle, RobotTask::IDLE},
   };
 
   static inline const std::vector<std::string> s_non_options{
