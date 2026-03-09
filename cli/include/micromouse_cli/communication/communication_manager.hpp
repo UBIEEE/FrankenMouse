@@ -3,6 +3,7 @@
 #include <micromouse_cli/diagnostics.hpp>
 #include <micromouse_cli/drive/chassis_speeds.hpp>
 #include <micromouse_cli/maze/cell.hpp>
+#include <micromouse_cli/maze/maze.hpp>
 #include <micromouse_cli/maze/coordinate.hpp>
 #include <micromouse_cli/robot/command.hpp>
 #include <micromouse_cli/robot/error.hpp>
@@ -221,12 +222,14 @@ class CommunicationManager {
     std::map<RobotStatusTopic, uint8_t> statusTopics;
   };
   const MainNotifyData& main_data() const { return m_main_data; }
+  MainNotifyData& main_data() { return m_main_data; }
 
   struct VisionNotifyData {
     float raw_readings[4] = {0};
     float distances[4] = {0};
   };
   const VisionNotifyData& vision_data() const { return m_vision_data; }
+  VisionNotifyData& vision_data() { return m_vision_data; }
 
   struct DriveNotifyData {
     float motor_data[3 + 3] = {0};
@@ -235,12 +238,15 @@ class CommunicationManager {
     drive::ChassisSpeeds chassis_speeds = {};
   };
   const DriveNotifyData& drive_data() const { return m_drive_data; }
+  DriveNotifyData& drive_data() { return m_drive_data; }
 
   struct MazeNotifyData {
-    Cell cells[16 * 16] = {};
+    Maze maze;
+    bool was_maze_just_updated = false;
     Coordinate mouse_position;
   };
   const MazeNotifyData& maze_data() const { return m_maze_data; }
+  MazeNotifyData& maze_data() { return m_maze_data; }
 
   /**
    * Get the value of a feedback topic.

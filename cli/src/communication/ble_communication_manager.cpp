@@ -210,10 +210,18 @@ bool BLECommunicationManager::configure_peripheral_notifications() {
 
   notify<FeedbackTopicNotify::MAZE_CELL>([&](const std::pair<Coordinate, Cell>& cell_with_position) {
     const auto& [position, cell] = cell_with_position;
-    m_maze_data.cells[position] = cell;
+    m_maze_data.was_maze_just_updated = true;
+    if (position == Coordinate(-1)) { // Reset the maze if -1
+      m_maze_data.maze.reset();
+    } else {
+      m_maze_data.maze.set_cell(position, cell);
+    }
   });
 
-  notify<FeedbackTopicNotify::MAZE_MOUSE_POSITION>(m_maze_data.mouse_position);
+  notify<FeedbackTopicNotify::MAZE_MOUSE_POSITION>([&](const Coordinate& coord) {
+    m_maze_data.mouse_position = coord;
+    m_maze_data.was_maze_just_updated = true;
+  });
 
   return true;
 }

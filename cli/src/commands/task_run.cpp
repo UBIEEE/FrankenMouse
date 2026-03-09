@@ -1,4 +1,6 @@
 #include <micromouse_cli/commands/task_run.hpp>
+#include "micromouse_cli/communication/communication_manager.hpp"
+#include <micromouse_cli/macros.hpp>
 
 TaskRunCommand::TaskRunCommand(const CommandArguments args, CommunicationManager& communication_manager)
     : Command(args), m_arg_parser(args, s_options), m_communication_manager(communication_manager) {
@@ -24,6 +26,13 @@ void TaskRunCommand::process() {
   }
 
   m_is_done = (m_communication_manager.get_value<FeedbackTopicNotify::MAIN_TASK>() == RobotTask::STOPPED);
+
+  CommunicationManager::MazeNotifyData& maze_data = m_communication_manager.maze_data();
+  if (m_monitor_maze && maze_data.was_maze_just_updated) {
+    maze_data.was_maze_just_updated = false;
+    printf(CLEAR_SCREEN());
+    printf("%s\n", maze_data.maze.to_string(maze_data.mouse_position).c_str());
+  }
 }
 
 void TaskRunCommand::end(bool interrupted) {
@@ -46,6 +55,12 @@ bool TaskRunCommand::validate_args() {
   if (options.contains(OPTION_HELP)) {
     help(name(), prompt_info(), stdout);
     return false;
+  }
+
+  // Maze monitor
+
+  if (options.contains(OPTION_MAZE_MONITOR)) {
+    m_monitor_maze = true;
   }
 
   // Task

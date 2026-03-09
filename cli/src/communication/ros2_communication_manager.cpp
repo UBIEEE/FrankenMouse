@@ -100,7 +100,12 @@ void ROS2CommunicationManager::configure_subscribers() {
         if (msg.data.size() == 2) {
           Coordinate coord(msg.data[0]);
           Cell cell(msg.data[1]);
-          m_maze_data.cells[coord] = cell;
+          m_maze_data.was_maze_just_updated = true;
+          if (coord == Coordinate(-1)) {  // Reset the maze if -1
+            m_maze_data.maze.reset();
+          } else {
+            m_maze_data.maze.set_cell(coord, cell);
+          }
         }
       });
 
@@ -108,6 +113,7 @@ void ROS2CommunicationManager::configure_subscribers() {
       "/robot/maze/coordinates", 10, [this](const std_msgs::msg::UInt8& msg) {
         Coordinate coord(msg.data);
         m_maze_data.mouse_position = coord;
+        m_maze_data.was_maze_just_updated = true;
       });
 }
 

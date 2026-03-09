@@ -15,6 +15,7 @@ class TaskRunCommand final : public Command {
     OPTION_HELP,
     OPTION_KEEP_ALIVE,
     OPTION_START_POSITION,
+    OPTION_MAZE_MONITOR,
   };
 
   static inline const std::vector<Option> s_options{
@@ -22,6 +23,7 @@ class TaskRunCommand final : public Command {
       {OPTION_HELP,           OptionName("help",       "h"),                  false, nullptr, "Show this help message"},
       {OPTION_KEEP_ALIVE,     OptionName("keep-alive", "k"),                  false, nullptr, "Keep the process alive until the task is done running"},
       {OPTION_START_POSITION, OptionName("start-position", "start-pos", "p"), true, "position", "Robot start corner, relative to maze center (left|right)"},
+      {OPTION_MAZE_MONITOR,   OptionName("maze", "m"),                        false, nullptr, "Monitor the maze while the task is running (only when keep-alive is enabled)"},
       // clang-format on
   };
 
@@ -101,6 +103,8 @@ class TaskRunCommand final : public Command {
   CommunicationManager& m_communication_manager;
 
   bool m_args_valid = false;
+
+  bool m_monitor_maze = false;
 
   bool m_is_done = true;
   bool m_keep_alive = false;
