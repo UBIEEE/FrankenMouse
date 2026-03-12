@@ -82,3 +82,7 @@ _deps
 !.vscode/c_cpp_properties.json
 
 .history/
+
+# VSCode STM32 Extension
+.settings/
+.clangd

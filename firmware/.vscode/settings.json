@@ -99,17 +99,9 @@
   },
   "git.openRepositoryInParentFolders": "always",
   "cmake.configureArgs": [
-    "-DBUILD_SIMULATION=ON",
-    "-DBUILD_MOUSE_V3=OFF",
+    "-DBUILD_MOUSE_V3=ON",
     "-DBUILD_MOUSE_V2=OFF",
-    "-DBUILD_TESTS=ON"
-    // , "-DCMAKE_COMMAND=cube-cmake"
+    "-DBUILD_SIMULATION=OFF",
+    "-DBUILD_TESTS=OFF",
   ],
-  "stm32cube-ide-clangd.path": "cube",
-  "stm32cube-ide-clangd.arguments": [
-    "starm-clangd",
-    "--query-driver=${env:CUBE_BUNDLE_PATH}/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc",
-    "--query-driver=${env:CUBE_BUNDLE_PATH}/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-g++"
-  ],
-  // "cmake.cmakePath": "cube-cmake",
 }
