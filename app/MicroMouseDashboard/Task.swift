@@ -6,6 +6,7 @@ enum Task: UInt8, CaseIterable, Identifiable {
   case mazeSearch = 1
   case mazeSlowSolve = 2
   case mazeFastSolve = 3
+  case mazeSearchWithStopStartMotion = 4
 
   // 11-40: Test drive tasks.
   
@@ -43,6 +44,7 @@ let TaskNames: [Task: String] = [
   .mazeSearch: "Maze Search",
   .mazeSlowSolve: "Maze Slow Solve",
   .mazeFastSolve: "Maze Fast Solve",
+  .mazeSearchWithStopStartMotion: "Maze Search (w/ Start+Stop Motion)",
 
   .testDriveStraightFromBackWallToSenseSpot: "TEST - Drive Straight From Back Wall To Sense Spot",
   .testDriveStraightOneCell: "TEST - Drive Straight One Cell",
@@ -73,6 +75,7 @@ let TaskDescriptions: [Task: String] = [
   .mazeSearch: "Search to the center of the maze, then back to the start",
   .mazeSlowSolve: "Solve the maze using the same control method as Search mode",
   .mazeFastSolve: "Solve the maze as fast as possible while using previous search data",
+  .mazeSearchWithStopStartMotion: "Search the to the center of the maze, then back to the start (with Start+Stop Motion)",
 
   .testDriveStraightFromBackWallToSenseSpot: "Drive straight from back wall to sense spot",
   .testDriveStraightOneCell: "Drive straight for one cell",
