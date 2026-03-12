@@ -12,10 +12,10 @@ class IRSensors : public Component {
 
  public:
   enum Sensor {
-    FAR_LEFT = 0,
-    MID_LEFT = 1,
-    MID_RIGHT = 2,
-    FAR_RIGHT = 3,
+    FAR_RIGHT = 0,
+    MID_RIGHT = 1,
+    MID_LEFT = 2,
+    FAR_LEFT = 3,
   };
 
   virtual void set_enabled(bool enabled) { (void)enabled; }
