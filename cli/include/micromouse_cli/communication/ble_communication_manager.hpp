@@ -102,7 +102,7 @@ class BLECommunicationManager final : public CommunicationManager {
 
   template <FeedbackTopicNotify Topic>
   void notify(std::function<void(const typename FeedbackTopicNotifyData<Topic>::type& data)> callback) {
-    notify_topic(Topic, [&](SimpleBLE::ByteArray payload) {
+    notify_topic(Topic, [=](SimpleBLE::ByteArray payload) {
       typename FeedbackTopicNotifyData<Topic>::type data;
       notification_callback<Topic>(data, payload);
       callback(data);
