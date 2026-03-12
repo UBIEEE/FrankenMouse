@@ -31,6 +31,7 @@ class TaskRunCommand final : public Command {
   static constexpr const char* s_maze_search = "MazeSearch";
   static constexpr const char* s_maze_slow_solve = "MazeSlowSolve";
   static constexpr const char* s_maze_fast_solve = "MazeFastSolve";
+  static constexpr const char* s_maze_search_start_stop_motion = "MazeSearchWithStartAndStopMotion";
   static constexpr const char* s_test_drive_straight_from_back_wall_to_sense_spot =
       "TestDriveStraightFromBackWallToSenseSpot";
   static constexpr const char* s_test_drive_straight_one_cell = "TestDriveStraightOneCell";
@@ -51,6 +52,7 @@ class TaskRunCommand final : public Command {
       {s_maze_search, RobotTask::MAZE_SEARCH},
       {s_maze_slow_solve, RobotTask::MAZE_SLOW_SOLVE},
       {s_maze_fast_solve, RobotTask::MAZE_FAST_SOLVE},
+      {s_maze_search_start_stop_motion, RobotTask::MAZE_SEARCH_START_STOP_MOTION},
       {s_test_drive_straight_from_back_wall_to_sense_spot,
        RobotTask::TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT},
       {s_test_drive_straight_one_cell, RobotTask::TEST_DRIVE_STRAIGHT_ONE_CELL},
@@ -72,6 +74,7 @@ class TaskRunCommand final : public Command {
       s_maze_search,
       s_maze_slow_solve,
       s_maze_fast_solve,
+      s_maze_search_start_stop_motion,
       s_test_drive_straight_from_back_wall_to_sense_spot,
       s_test_drive_straight_one_cell,
       s_test_drive_turn_right_from_sense_spot_to_sense_spot,
