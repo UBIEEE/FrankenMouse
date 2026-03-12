@@ -127,7 +127,7 @@ class Robot : public Singleton<Robot> {
 
   void start_next_task();
 
-  void start_task_maze_search();
+  void start_task_maze_search(navigation::Navigator::MovementStyle movement_style);
   void start_task_maze_solve(bool fast);
 
   void start_task_test_drive_straight_from_back_wall_to_sense_spot();

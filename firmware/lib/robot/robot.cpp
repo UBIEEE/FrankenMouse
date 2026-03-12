@@ -205,13 +205,16 @@ void Robot::start_next_task() {
     case STOPPED:
       break;
     case MAZE_SEARCH:
-      start_task_maze_search();
+      start_task_maze_search(navigation::Navigator::MovementStyle::SMOOTH_MOTION);
       break;
     case MAZE_SLOW_SOLVE:
       start_task_maze_solve(false);
       break;
     case MAZE_FAST_SOLVE:
       start_task_maze_solve(true);
+      break;
+    case MAZE_SEARCH_START_STOP_MOTION:
+      start_task_maze_search(navigation::Navigator::MovementStyle::START_AND_STOP_MOTION);
       break;
     case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
       start_task_test_drive_straight_from_back_wall_to_sense_spot();
@@ -262,11 +265,19 @@ void Robot::start_next_task() {
   publish_current_task();
 }
 
-void Robot::start_task_maze_search() {
+void Robot::start_task_maze_search(navigation::Navigator::MovementStyle movement_style) {
   m_search_stage = SearchStage::START_TO_GOAL;
 
   m_maze.reset();
   m_maze.init_start_cell(Maze::StartLocation::WEST_OF_GOAL);
+
+  m_motion_runner.reset();
+  if (movement_style == navigation::Navigator::MovementStyle::SMOOTH_MOTION) {
+    m_motion_runner.set_speeds(m_speeds.normal_speeds);
+  } else {
+    m_motion_runner.set_speeds(m_speeds.slow_speeds);
+  }
+  m_navigator.set_movement_style(movement_style);
 
   m_navigator.reset_position(Maze::start(m_start_location), maze::Direction::NORTH,
                              CellPositions::back_wall());
@@ -279,6 +290,8 @@ void Robot::start_task_maze_solve(bool fast) {
 
   m_solve_stage = SolveStage::START_TO_GOAL;
 
+  m_motion_runner.reset();
+  m_motion_runner.set_speeds(m_speeds.normal_speeds);
   m_navigator.reset_position(Maze::start(m_start_location), maze::Direction::NORTH,
                              CellPositions::back_wall());
 
@@ -398,6 +411,7 @@ void Robot::process_current_task() {
     case STOPPED:
       break;
     case MAZE_SEARCH:
+    case MAZE_SEARCH_START_STOP_MOTION:
       process_task_maze_search();
       break;
     case MAZE_SLOW_SOLVE:
@@ -461,9 +475,6 @@ void Robot::process_task_maze_search() {
         break;
       case GOAL_TO_START:
         end_task();
-        return;
-      default:
-        // TODO Error
         return;
     }
 

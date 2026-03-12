@@ -34,7 +34,7 @@ class Navigator : public Subsystem {
 
   enum class Move {
     FORWARD,
-    FINISH, // Turns around and stops
+    FINISH,  // Turns around and stops
     TURN_LEFT,
     TURN_RIGHT,
     TURN_AROUND,
@@ -51,19 +51,26 @@ class Navigator : public Subsystem {
                       maze::Direction direction,
                       units::millimeter_t cell_position);
 
+  enum class MovementStyle {
+    SMOOTH_MOTION,
+    START_AND_STOP_MOTION,
+  };
+
+  void set_movement_style(MovementStyle style) { m_movement_style = style; }
+
   void search_to(maze::CoordinateSpan targets, Solver& solver);
   // TODO: solve_to() for faster?
 
-  bool is_done() const {
-    return m_done;
-  }
+  bool is_done() const { return m_done; }
 
  private:
-  const drive::MotionRunner::CompletionCallback m_should_sense_callback = [this] {
-    m_should_sense = true;
-  };
+  const drive::MotionRunner::CompletionCallback m_should_sense_callback = [this] { m_should_sense = true; };
+
+  MovementStyle m_movement_style = MovementStyle::SMOOTH_MOTION;
 
   void move(Move move);
+  void move_smooth_motion();
+  void move_start_and_stop_motion();
 };
 
 }  // namespace navigation

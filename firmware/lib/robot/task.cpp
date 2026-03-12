@@ -13,6 +13,8 @@ const char* task_to_string(Task task) {
       return "[Maze] Slow Solve";
     case MAZE_FAST_SOLVE:
       return "[Maze] Fast Solve";
+    case MAZE_SEARCH_START_STOP_MOTION:
+      return "[Maze] Search (Start+Stop Motion)";
     case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
       return "[Test] Drive Straight from Back Wall to Sense Spot";
     case TEST_DRIVE_STRAIGHT_ONE_CELL:
