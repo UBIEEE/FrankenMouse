@@ -15,6 +15,8 @@ enum class Task : uint8_t {
   MAZE_SLOW_SOLVE = 2,
   MAZE_FAST_SOLVE = 3,
 
+  MAZE_SEARCH_START_STOP_MOTION = 4,
+
   //
   // 11-40: test drive tasks.
   //
