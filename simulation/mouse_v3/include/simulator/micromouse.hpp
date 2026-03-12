@@ -11,10 +11,10 @@ class MicroMouse : public CharacterBody3D {
   GDCLASS(MicroMouse, CharacterBody3D)
 
   enum {
-    FAR_LEFT = 0,
-    MID_LEFT = 1,
-    MID_RIGHT = 2,
-    FAR_RIGHT = 3,
+    FAR_RIGHT = 0,
+    MID_RIGHT = 1,
+    MID_LEFT = 2,
+    FAR_LEFT = 3,
   };
 
   RayCast3D* m_ir_sensors[4];
