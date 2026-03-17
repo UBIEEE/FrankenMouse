@@ -1,6 +1,7 @@
 #include <micromouse/robot/robot.hpp>
 
 #include <micromouse/robot/cell_positions.hpp>
+#include "micromouse/feedback/feedback_topic.hpp"
 #include "micromouse/robot/task.hpp"
 
 #define LOG_PREFIX "[robot] "
@@ -97,7 +98,6 @@ void Robot::delegate_received_feedback(feedback::TopicReceive topic, const uint8
       // Handled earlier by platform code.
       break;
     case DRIVE_CHASSIS_SPEEDS:
-      // TODO:
       std::memcpy(&m_chassis_speeds, data, sizeof(m_chassis_speeds));
       m_chassis_speeds_timer->reset();
       m_chassis_speeds_timer->start();
@@ -124,6 +124,16 @@ void Robot::handle_command(Command command) {
       m_vision.reset_calibration();
       break;
   }
+}
+
+void Robot::handle_error(const Error& error) {
+  LogInfo("error occurred: {}", error.to_string());
+
+  run_task(Task::STOPPED);
+
+  m_feedback.publish<feedback::TopicSend::MAIN_ERROR>(error);
+
+  // TODO: Buzzer play error sound.
 }
 
 void Robot::handle_button_1() {
