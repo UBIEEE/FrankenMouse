@@ -42,7 +42,6 @@ typedef struct
   uint8_t               Main_task_char_Notification_Status;
   uint8_t               Main_error_char_Notification_Status;
   uint8_t               Main_song_char_Notification_Status;
-  uint8_t               Main_status_char_Notification_Status;
   /* visionService */
   uint8_t               Vision_rawreadings_char_Notification_Status;
   uint8_t               Vision_distances_char_Notification_Status;
@@ -105,8 +104,6 @@ static void Custom_Main_error_char_Update_Char(void);
 static void Custom_Main_error_char_Send_Notification(void);
 static void Custom_Main_song_char_Update_Char(void);
 static void Custom_Main_song_char_Send_Notification(void);
-static void Custom_Main_status_char_Update_Char(void);
-static void Custom_Main_status_char_Send_Notification(void);
 /* visionService */
 static void Custom_Vision_rawreadings_char_Update_Char(void);
 static void Custom_Vision_rawreadings_char_Send_Notification(void);
@@ -199,18 +196,6 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
       /* USER CODE BEGIN CUSTOM_STM_MAIN_SONG_CHAR_NOTIFY_DISABLED_EVT */
 
       /* USER CODE END CUSTOM_STM_MAIN_SONG_CHAR_NOTIFY_DISABLED_EVT */
-      break;
-
-    case CUSTOM_STM_MAIN_STATUS_CHAR_NOTIFY_ENABLED_EVT:
-      /* USER CODE BEGIN CUSTOM_STM_MAIN_STATUS_CHAR_NOTIFY_ENABLED_EVT */
-
-      /* USER CODE END CUSTOM_STM_MAIN_STATUS_CHAR_NOTIFY_ENABLED_EVT */
-      break;
-
-    case CUSTOM_STM_MAIN_STATUS_CHAR_NOTIFY_DISABLED_EVT:
-      /* USER CODE BEGIN CUSTOM_STM_MAIN_STATUS_CHAR_NOTIFY_DISABLED_EVT */
-
-      /* USER CODE END CUSTOM_STM_MAIN_STATUS_CHAR_NOTIFY_DISABLED_EVT */
       break;
 
     /* visionService */
@@ -551,45 +536,6 @@ void Custom_Main_song_char_Send_Notification(void) /* Property Notification */
   /* USER CODE BEGIN Main_song_char_NS_Last*/
 
   /* USER CODE END Main_song_char_NS_Last*/
-
-  return;
-}
-
-void Custom_Main_status_char_Update_Char(void) /* Property Read */
-{
-  uint8_t updateflag = 0;
-
-  /* USER CODE BEGIN Main_status_char_UC_1*/
-
-  /* USER CODE END Main_status_char_UC_1*/
-
-  if (updateflag != 0)
-  {
-    Custom_STM_App_Update_Char(CUSTOM_STM_MAIN_STATUS_CHAR, (uint8_t *)UpdateCharData);
-  }
-
-  /* USER CODE BEGIN Main_status_char_UC_Last*/
-
-  /* USER CODE END Main_status_char_UC_Last*/
-  return;
-}
-
-void Custom_Main_status_char_Send_Notification(void) /* Property Notification */
-{
-  uint8_t updateflag = 0;
-
-  /* USER CODE BEGIN Main_status_char_NS_1*/
-
-  /* USER CODE END Main_status_char_NS_1*/
-
-  if (updateflag != 0)
-  {
-    Custom_STM_App_Update_Char(CUSTOM_STM_MAIN_STATUS_CHAR, (uint8_t *)NotifyCharData);
-  }
-
-  /* USER CODE BEGIN Main_status_char_NS_Last*/
-
-  /* USER CODE END Main_status_char_NS_Last*/
 
   return;
 }

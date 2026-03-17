@@ -3,7 +3,6 @@
 #include "main.h"
 #include "micromouse/feedback/feedback_topic.hpp"
 #include "micromouse/hardware/battery.hpp"
-#include "micromouse/robot/status_topic.hpp"
 #include <units/math.h>
 #include <cmath>
 #include <algorithm>
@@ -152,20 +151,7 @@ void IRSensorsImpl::handle_raw_battery_reading() {
   m_battery_voltage = ((y2 - y1) / (x2 - x1)) * (raw_voltage - x1) + y1;
 
   // Feedback
-  {
-    m_feedback.publish<feedback::TopicSend::MAIN_BATTERY_VOLTAGE>(m_battery_voltage);
-    m_feedback.publish<feedback::TopicSend::MAIN_STATUS>(
-        {robot::StatusTopic::POWER_SOURCE, is_battery() ? 1 : 0});
-    uint8_t battery_status = 0;
-    if (is_battery()) {
-      if (m_battery_voltage < LOW_VOLTAGE) {
-        battery_status = 2;
-      } else if (m_battery_voltage < MEDIUM_VOLTAGE) {
-        battery_status = 1;
-      }
-      m_feedback.publish<feedback::TopicSend::MAIN_STATUS>({robot::StatusTopic::BATTERY_STATUS, battery_status});
-    }
-  }
+  m_feedback.publish<feedback::TopicSend::MAIN_BATTERY_VOLTAGE>(m_battery_voltage);
 }
 
   bool IRSensorsImpl::is_battery() const {
