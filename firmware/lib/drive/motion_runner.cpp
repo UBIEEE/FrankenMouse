@@ -2,9 +2,10 @@
 #include <micromouse/drive/kinematics.hpp>
 #include <micromouse/robot/cell_positions.hpp>
 #include <micromouse/vision/vision_distances.hpp>
+#include <micromouse/robot/robot.hpp>
 #include <micromouse/math.hpp>
+#include "micromouse/robot/error.hpp"
 #include <units/math.h>
-#include <cassert>
 
 #define LOG_PREFIX "[drive] "
 #include <micromouse/logging.hpp>
@@ -194,12 +195,15 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
     if (motion.monitor_vision) {  // We only care about cell when we're monitoring vision.
       std::optional<maze::Coordinate> next_cell =
           maze::Maze::neighbor_coordinate(exec.current_cell, motion.direction);
-      assert(next_cell.has_value());
+      if (!next_cell.has_value()) {
+        Robot::get().error(robot::NavigationErrorCode::MAZE_EXIT_IN_BOUNDARY);
+        return ChassisSpeeds{};
+      }
       exec.current_cell = *next_cell;
     }
     exec.initial_velocity = linear_velocity;
     exec.current_cell_position -= maze::Cell::WIDTH;
-    assert(exec.current_cell_position + distance < maze::Cell::WIDTH);
+    // assert(exec.current_cell_position + distance < maze::Cell::WIDTH);
     exec.remaining_distance -= distance;
     exec.did_vision_adjust_for_current_cell = false;
 

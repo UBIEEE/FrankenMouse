@@ -98,5 +98,5 @@ std::optional<Coordinate> Maze::neighbor_coordinate(Coordinate coord, Direction 
 
 Cell* Maze::neighbor_cell(Coordinate coord, Direction direction) {
   const std::optional<Coordinate> neighbor = neighbor_coordinate(coord, direction);
-  return neighbor ? &m_cells[neighbor.value()] : nullptr;
+  return neighbor.has_value() ? &m_cells[neighbor.value()] : nullptr;
 }

@@ -1,7 +1,7 @@
 #include <micromouse/navigation/navigator.hpp>
-
-#include <cassert>
+#include <micromouse/robot/robot.hpp>
 #include <micromouse/robot/cell_positions.hpp>
+#include "micromouse/robot/error.hpp"
 
 #define LOG_PREFIX "[nav] "
 #include <micromouse/logging.hpp>
@@ -23,7 +23,10 @@ void Navigator::periodic() {
   // The robot's next cell.
 
   std::optional<maze::Coordinate> new_position = m_maze.neighbor_coordinate(m_position, m_direction);
-  assert(new_position);
+  if (!new_position.has_value()) {
+    Robot::get().error(robot::NavigationErrorCode::MAZE_EXIT_IN_BOUNDARY);
+    return;
+  }
 
   m_next_position = *new_position;
 
@@ -58,15 +61,18 @@ void Navigator::periodic() {
 
   if (was_left_wall && !is_left_wall) {
     LogError("something went wrong, left wall missing");
-    // assert(false);
+    Robot::get().error(robot::NavigationErrorCode::MAZE_WALL_INCONSISTENCY);
+    return;
   }
   if (was_right_wall && !is_right_wall) {
     LogError("something went wrong, right wall missing");
-    // assert(false);
+    Robot::get().error(robot::NavigationErrorCode::MAZE_WALL_INCONSISTENCY);
+    return;
   }
   if (was_front_wall && !is_front_wall) {
     LogError("something went wrong, front wall missing");
-    // assert(false);
+    Robot::get().error(robot::NavigationErrorCode::MAZE_WALL_INCONSISTENCY);
+    return;
   }
 
   LogInfo("left: {}, right: {}, front: {}", is_left_wall, is_right_wall, is_front_wall);
@@ -116,7 +122,7 @@ void Navigator::search_to(maze::CoordinateSpan targets, Solver& solver) {
   m_done = false;
 
   units::millimeter_t sense_distance = robot::CellPositions::SENSING_SPOT - m_start_cell_position;
-  assert(sense_distance >= 0_mm);
+  // assert(sense_distance >= 0_mm);
   if (sense_distance > 0_mm) {
     m_drive.enqueue_forward(m_position, m_start_cell_position, m_direction, sense_distance, true, true,
                             m_should_sense_callback);

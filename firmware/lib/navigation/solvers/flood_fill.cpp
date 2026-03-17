@@ -1,6 +1,4 @@
 #include <micromouse/navigation/solvers/flood_fill.hpp>
-
-#include <cassert>
 #include <queue>
 #include <sstream>
 
@@ -42,7 +40,11 @@ void FloodFillSolver::solve(CoordinateSpan endpoints) {
     for (Direction d : {NORTH, EAST, SOUTH, WEST}) {
       if (cell.is_exit(d)) {
         std::optional<Coordinate> next_coord_tmp = m_maze.neighbor_coordinate(coord, d);
-        assert(next_coord_tmp.has_value());
+        if (!next_coord_tmp.has_value()) {
+          LogError("maze exit in boundary at ({}, {}) in direction {}", coord.x(), coord.y(),
+                   maze::direction_to_string(d));
+          continue;
+        }
         Coordinate next_coord = *next_coord_tmp;
         if (m_cell_values[next_coord] > new_value) {
           m_cell_values[next_coord] = new_value;

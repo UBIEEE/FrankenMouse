@@ -101,8 +101,15 @@ class Robot : public Singleton<Robot> {
 
   Task current_task() const { return m_task; }
 
+  template <ErrorCode Code>
+  void error(Code code) {
+    Error error = Error::create<Code>(0, code);
+    handle_error(error);
+  }
+
  private:
   void handle_command(Command command);
+  void handle_error(const Error& error);
 
   void handle_button_1();
   void handle_button_2();
@@ -163,3 +170,5 @@ class Robot : public Singleton<Robot> {
 };
 
 }  // namespace robot
+
+using robot::Robot;
