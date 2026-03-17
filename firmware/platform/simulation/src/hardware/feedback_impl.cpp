@@ -81,12 +81,6 @@ void FeedbackImpl::publish_topic(feedback::TopicSend topic, const uint8_t* data)
       m_main_song_pub->publish(msg);
       break;
     }
-    case MAIN_STATUS: {
-      std_msgs::msg::UInt8MultiArray msg;
-      msg.data = std::vector<uint8_t>(data, data + 2);
-      m_main_status_pub->publish(msg);
-      break;
-    }
     case MAIN_BATTERY_VOLTAGE: {
       std_msgs::msg::Float32 msg;
       msg.data = *reinterpret_cast<const float*>(data);

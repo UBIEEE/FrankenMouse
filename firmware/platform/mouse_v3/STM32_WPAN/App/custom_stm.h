@@ -41,7 +41,6 @@ typedef enum
   CUSTOM_STM_MAIN_COMMAND_CHAR,
   CUSTOM_STM_MAIN_ERROR_CHAR,
   CUSTOM_STM_MAIN_SONG_CHAR,
-  CUSTOM_STM_MAIN_STATUS_CHAR,
   /* visionService */
   CUSTOM_STM_VISION_RAWREADINGS_CHAR,
   CUSTOM_STM_VISION_DISTANCES_CHAR,
@@ -72,9 +71,6 @@ typedef enum
   CUSTOM_STM_MAIN_SONG_CHAR_WRITE_EVT,
   CUSTOM_STM_MAIN_SONG_CHAR_NOTIFY_ENABLED_EVT,
   CUSTOM_STM_MAIN_SONG_CHAR_NOTIFY_DISABLED_EVT,
-  /* main_status_notifyChar */
-  CUSTOM_STM_MAIN_STATUS_CHAR_NOTIFY_ENABLED_EVT,
-  CUSTOM_STM_MAIN_STATUS_CHAR_NOTIFY_DISABLED_EVT,
   /* vision_rawReadings_notifyChar */
   CUSTOM_STM_VISION_RAWREADINGS_CHAR_NOTIFY_ENABLED_EVT,
   CUSTOM_STM_VISION_RAWREADINGS_CHAR_NOTIFY_DISABLED_EVT,
@@ -133,7 +129,6 @@ extern uint8_t SizeMain_Task_Char;
 extern uint8_t SizeMain_Command_Char;
 extern uint8_t SizeMain_Error_Char;
 extern uint8_t SizeMain_Song_Char;
-extern uint8_t SizeMain_Status_Char;
 extern uint8_t SizeVision_Rawreadings_Char;
 extern uint8_t SizeVision_Distances_Char;
 extern uint8_t SizeDrive_Data_Char;
