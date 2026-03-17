@@ -42,6 +42,9 @@ void Robot::on_disconnect() {
 
   m_audio_player.play_song(audio::Song::BLE_DISCONNECT);
   m_feedback_connected = false;
+
+  // Stop the current task.
+  run_task(Task::STOPPED);
 }
 
 void Robot::publish_periodic_feedback() {
