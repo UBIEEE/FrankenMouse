@@ -116,6 +116,8 @@ void IMUImpl::set_standby(bool on_standby) {
 
   status = write_register(REG_PWR_MGMT0, value);
   UNUSED(status);
+
+  std::memset(&m_data, 0, sizeof(m_data));
 }
 
 HAL_StatusTypeDef IMUImpl::write_register(uint8_t reg, uint8_t value) {
@@ -224,7 +226,6 @@ void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef* hi2c) {
   assert_param(hi2c == &hi2c1);
   UNUSED(hi2c);
 
-  // Robot::get().drive().imu().read_complete_handler();
   IMUImpl* imu = reinterpret_cast<IMUImpl*>(&get_platform_imu());
   imu->read_complete_handler();
 }
