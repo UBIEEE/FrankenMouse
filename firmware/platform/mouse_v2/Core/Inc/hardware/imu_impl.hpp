@@ -2,6 +2,7 @@
 
 #include <micromouse/hardware/feedback.hpp>
 #include <micromouse/hardware/imu.hpp>
+#include <micromouse/hardware/timer.hpp>
 #include "stm32wbxx_hal.h"
 
 #include <cstdint>
@@ -24,6 +25,8 @@ class IMUImpl : public hardware::IMU {
   Data m_data;
 
   uint8_t m_data_raw[12];
+
+  std::unique_ptr<hardware::Timer> m_time_since_standby_timer = make_platform_timer();
 
  public:
   struct Config {
@@ -119,13 +122,9 @@ class IMUImpl : public hardware::IMU {
   void set_standby(bool on_standby) override;
   bool is_on_standby() override { return m_standby; }
 
-  units::degrees_per_second_t get_angular_velocity(Axis axis) override {
-    return m_data.gyro_data[axis];
-  }
+  units::degrees_per_second_t get_angular_velocity(Axis axis) override { return m_data.gyro_data[axis]; }
 
-  units::standard_gravity_t get_linear_accel(Axis axis) override {
-    return m_data.accel_data[axis];
-  }
+  units::standard_gravity_t get_linear_accel(Axis axis) override { return m_data.accel_data[axis]; }
 
  private:
   HAL_StatusTypeDef write_register(uint8_t reg, uint8_t value);
