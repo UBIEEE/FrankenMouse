@@ -112,7 +112,7 @@ TEST(Maze, TestCell) {
   ASSERT_TRUE(empty_cell.is_exit(SOUTH));
   ASSERT_TRUE(empty_cell.is_exit(WEST));
 
-  ASSERT_FALSE(empty_cell.is_visited());
+  ASSERT_FALSE(empty_cell.is_fully_discovered());
 
   // Init full.
 
@@ -127,7 +127,7 @@ TEST(Maze, TestCell) {
   ASSERT_FALSE(full_cell.is_exit(SOUTH));
   ASSERT_FALSE(full_cell.is_exit(WEST));
 
-  ASSERT_FALSE(full_cell.is_visited());
+  ASSERT_TRUE(full_cell.is_fully_discovered());
 
   Cell cell;
 
@@ -140,15 +140,19 @@ TEST(Maze, TestCell) {
   cell.set_wall(NORTH);
   ASSERT_TRUE(cell.is_wall(NORTH));
   ASSERT_FALSE(cell.is_exit(NORTH));
+  ASSERT_TRUE(cell.is_seen(NORTH));
   cell.set_wall(EAST);
   ASSERT_TRUE(cell.is_wall(EAST));
   ASSERT_FALSE(cell.is_exit(EAST));
+  ASSERT_TRUE(cell.is_seen(EAST));
   cell.set_wall(SOUTH);
   ASSERT_TRUE(cell.is_wall(SOUTH));
   ASSERT_FALSE(cell.is_exit(SOUTH));
+  ASSERT_TRUE(cell.is_seen(SOUTH));
   cell.set_wall(WEST);
   ASSERT_TRUE(cell.is_wall(WEST));
   ASSERT_FALSE(cell.is_exit(WEST));
+  ASSERT_TRUE(cell.is_seen(WEST));
 
   ASSERT_EQ(full_cell, cell);
 
@@ -167,12 +171,7 @@ TEST(Maze, TestCell) {
   ASSERT_FALSE(cell.is_wall(WEST));
   ASSERT_TRUE(cell.is_exit(WEST));
 
-  ASSERT_EQ(empty_cell, cell);
-
-  // Set visited.
-
-  cell.set_visited();
-  ASSERT_TRUE(cell.is_visited());
+  ASSERT_TRUE(cell.is_fully_discovered());
 }
 
 TEST(Maze, TestGetNeighborCell) {

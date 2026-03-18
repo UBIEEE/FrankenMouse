@@ -26,16 +26,11 @@ void Maze::reset() {
 void Maze::init_start_cell(StartLocation start_location) {
   using enum Direction;
 
-  if (start_location == StartLocation::WEST_OF_GOAL) {
-    m_cells[Coordinate(0, 0)].set_wall(EAST);
-    m_cells[Coordinate(1, 0)].set_wall(WEST);
-  } else {
-    m_cells[Coordinate(15, 0)].set_wall(WEST);
-    m_cells[Coordinate(14, 0)].set_wall(EAST);
-  }
-
   Coordinate start_coord = start(start_location);
-  m_cells[start_coord].set_visited();
+
+  set_wall(start_coord, EAST, true);
+  set_wall(start_coord, WEST, true);
+  set_wall(start_coord, NORTH, false);
 
   get_platform_feedback().publish<feedback::TopicSend::MAZE_CELL>({start_coord, cell(start_coord)});
 }
@@ -43,7 +38,7 @@ void Maze::init_start_cell(StartLocation start_location) {
 void Maze::init_boundaries() {
   using enum Direction;
 
-  for (uint8_t i = 0; i < WIDTH_CELLS; ++i) {  // O(n)
+  for (uint8_t i = 0; i < WIDTH_CELLS; ++i) {
     const uint8_t south = i;
     const uint8_t north = (i + (WIDTH_CELLS * (WIDTH_CELLS - 1)));
     const uint8_t west = (i * WIDTH_CELLS);

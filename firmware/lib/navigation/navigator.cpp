@@ -45,9 +45,9 @@ void Navigator::periodic() {
 
   // Update the walls.
 
-  bool is_left_wall = m_vision.left_wall();
-  bool is_right_wall = m_vision.right_wall();
-  bool is_front_wall = m_vision.front_wall();
+  bool is_left_wall_present = m_vision.left_wall();
+  bool is_right_wall_present = m_vision.right_wall();
+  bool is_front_wall_present = m_vision.front_wall();
 
   Direction left_direction = maze::left_of(m_direction);
   Direction right_direction = maze::right_of(m_direction);
@@ -55,32 +55,35 @@ void Navigator::periodic() {
 
   maze::Cell& cell = m_maze.cell(m_next_position);
 
-  bool was_left_wall = cell.is_wall(left_direction);
-  bool was_right_wall = cell.is_wall(right_direction);
-  bool was_front_wall = cell.is_wall(front_direction);
+  bool was_left_wall_present = cell.is_wall(left_direction);
+  bool was_right_wall_present = cell.is_wall(right_direction);
+  bool was_front_wall_present = cell.is_wall(front_direction);
 
-  if (was_left_wall && !is_left_wall) {
-    LogError("something went wrong, left wall missing");
+  bool was_left_direction_seen = cell.is_seen(left_direction);
+  bool was_right_direction_seen = cell.is_seen(right_direction);
+  bool was_front_direction_seen = cell.is_seen(front_direction);
+
+  if (was_left_direction_seen && (was_left_wall_present != is_left_wall_present)) {
+    LogError("something went wrong, left wall {}", is_left_wall_present ? "missing" : "appeared");
     Robot::get().error(robot::NavigationErrorCode::MAZE_WALL_INCONSISTENCY);
     return;
   }
-  if (was_right_wall && !is_right_wall) {
-    LogError("something went wrong, right wall missing");
+  if (was_right_direction_seen && (was_right_wall_present != is_right_wall_present)) {
+    LogError("something went wrong, right wall {}", is_right_wall_present ? "missing" : "appeared");
     Robot::get().error(robot::NavigationErrorCode::MAZE_WALL_INCONSISTENCY);
     return;
   }
-  if (was_front_wall && !is_front_wall) {
-    LogError("something went wrong, front wall missing");
+  if (was_front_direction_seen && (was_front_wall_present != is_front_wall_present)) {
+    LogError("something went wrong, front wall {}", is_front_wall_present ? "missing" : "appeared");
     Robot::get().error(robot::NavigationErrorCode::MAZE_WALL_INCONSISTENCY);
     return;
   }
 
-  LogInfo("left: {}, right: {}, front: {}", is_left_wall, is_right_wall, is_front_wall);
+  LogInfo("left: {}, right: {}, front: {}", is_left_wall_present, is_right_wall_present, is_front_wall_present);
 
-  m_maze.set_wall(m_next_position, left_direction, is_left_wall);
-  m_maze.set_wall(m_next_position, right_direction, is_right_wall);
-  m_maze.set_wall(m_next_position, front_direction, is_front_wall);
-  cell.set_visited();
+  m_maze.set_wall(m_next_position, left_direction, is_left_wall_present);
+  m_maze.set_wall(m_next_position, right_direction, is_right_wall_present);
+  m_maze.set_wall(m_next_position, front_direction, is_front_wall_present);
 
   m_feedback.publish<feedback::TopicSend::MAZE_CELL>({m_next_position, cell});
   m_feedback.publish<feedback::TopicSend::MAZE_MOUSE_POSITION>(m_next_position);
@@ -111,8 +114,6 @@ void Navigator::reset_position(maze::Coordinate position,
   m_position = m_next_position = position;
   m_direction = m_next_direction = direction;
   m_start_cell_position = cell_position;
-
-  m_maze.cell(m_position).set_visited();
 }
 
 void Navigator::search_to(maze::CoordinateSpan targets, Solver& solver) {
