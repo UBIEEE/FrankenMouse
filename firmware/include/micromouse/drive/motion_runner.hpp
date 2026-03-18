@@ -163,7 +163,8 @@ class MotionRunner : public Subsystem {
   struct TurnMotion : public Motion {
     Type type() const override { return Type::TURN; }
 
-    units::degree_t angle;
+    TurnAngle angle;
+    units::degree_t angle_value;
     units::millimeter_t turn_radius;
 
     TurnMotionExecutionProperties exec_properties;
