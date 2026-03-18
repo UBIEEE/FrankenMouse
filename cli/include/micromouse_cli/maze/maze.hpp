@@ -19,10 +19,8 @@ class Maze {
 
   bool is_wall(Coordinate coord, Direction dir) const { return m_cells[coord].is_wall(dir); }
   bool is_exit(Coordinate coord, Direction dir) const { return m_cells[coord].is_exit(dir); }
+  bool is_seen(Coordinate coord, Direction dir) const { return m_cells[coord].is_seen(dir); }
   void set_wall(Coordinate coord, Direction dir, bool present = true);
-
-  bool is_cell_visited(Coordinate coord) const { return m_cells[coord].is_visited(); }
-  void set_cell_visited(Coordinate coord) { m_cells[coord].set_visited(); }
 
   const Cell& cell(Coordinate coord) const { return m_cells[coord]; }
   const Cell& operator[](Coordinate coord) const { return m_cells[coord]; }

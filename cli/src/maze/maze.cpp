@@ -46,9 +46,6 @@ void Maze::set_cell(Coordinate coord, Cell cell) {
   set_wall(coord, Direction::EAST, cell.is_east());
   set_wall(coord, Direction::SOUTH, cell.is_south());
   set_wall(coord, Direction::WEST, cell.is_west());
-  if (cell.is_visited()) {
-    set_cell_visited(coord);
-  }
 }
 
 std::optional<Coordinate> Maze::neighbor_coordinate(Coordinate coord, Direction direction) {
