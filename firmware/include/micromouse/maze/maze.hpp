@@ -35,13 +35,13 @@ class Maze {
   Cell m_cells[TOTAL_CELLS];
 
   // Southwest corner cell (goal is to the right).
-  inline static const Coordinate WEST_START {0, 0};
+  inline static const Coordinate WEST_START{0, 0};
   // Southeast corner cell (goal is to the left).
-  inline static const Coordinate EAST_START {15, 0};
+  inline static const Coordinate EAST_START{15, 0};
 
   // The cell next to the start cell.
-  inline static const Coordinate WEST_OUTSIDE_START {0, 1};
-  inline static const Coordinate EAST_OUTSIDE_START {15, 1};
+  inline static const Coordinate WEST_OUTSIDE_START{0, 1};
+  inline static const Coordinate EAST_OUTSIDE_START{15, 1};
 
   inline static const std::array<Coordinate, 1> WEST_START_ENDPOINTS = {WEST_START};
   inline static const std::array<Coordinate, 1> EAST_START_ENDPOINTS = {EAST_START};
@@ -128,10 +128,8 @@ class Maze {
 
   bool is_wall(Coordinate coord, Direction dir) const { return m_cells[coord].is_wall(dir); }
   bool is_exit(Coordinate coord, Direction dir) const { return m_cells[coord].is_exit(dir); }
+  bool is_seen(Coordinate coord, Direction dir) const { return m_cells[coord].is_seen(dir); }
   void set_wall(Coordinate coord, Direction dir, bool present = true);
-
-  bool is_cell_visited(Coordinate coord) const { return m_cells[coord].is_visited(); }
-  void set_cell_visited(Coordinate coord) { m_cells[coord].set_visited(); }
 
   Cell& cell(Coordinate coord) { return m_cells[coord]; }
   Cell& operator[](Coordinate coord) { return m_cells[coord]; }
