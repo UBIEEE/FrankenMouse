@@ -106,6 +106,9 @@ void IMUImpl::set_standby(bool on_standby) {
   UNUSED(status);
 
   std::memset(&m_data, 0, sizeof(m_data));
+
+  m_time_since_standby_timer->reset();
+  m_time_since_standby_timer->start();
 }
 
 HAL_StatusTypeDef IMUImpl::write_register(uint8_t reg, uint8_t value) {
@@ -133,6 +136,10 @@ HAL_StatusTypeDef IMUImpl::read_register(uint8_t reg, uint8_t* buf, uint8_t len)
 void IMUImpl::begin_read() {
   if (m_is_receiving)
     return;
+
+  if (m_standby || m_time_since_standby_timer->get() < 5_ms) {
+    return;
+  }
 
   HAL_StatusTypeDef status;
 
