@@ -579,8 +579,8 @@ void Robot::process_task_armed_triggered() {
     return;
 
   // Trigger side points to goal.
-  m_start_location = m_armed_trigger_side == ArmedTriggerSide::LEFT ? Maze::StartLocation::WEST_OF_GOAL
-                                                                    : Maze::StartLocation::EAST_OF_GOAL;
+  m_start_location = m_armed_trigger_side == ArmedTriggerSide::RIGHT ? Maze::StartLocation::WEST_OF_GOAL
+                                                                     : Maze::StartLocation::EAST_OF_GOAL;
 
   // TODO: Calibration
 
