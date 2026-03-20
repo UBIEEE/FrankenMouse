@@ -3,7 +3,9 @@
 #include <micromouse/hardware/feedback.hpp>
 #include <micromouse/hardware/imu.hpp>
 #include <micromouse/hardware/timer.hpp>
+#include <micromouse/filter/median_filter.hpp>
 #include "stm32wbxx_hal.h"
+#include "units/angular_velocity.h"
 
 #include <cstdint>
 
@@ -27,6 +29,9 @@ class IMUImpl : public hardware::IMU {
   uint8_t m_data_raw[12];
 
   std::unique_ptr<hardware::Timer> m_time_since_standby_timer = make_platform_timer();
+
+  // TODO: Tune the filter size.
+  MedianFilter<units::degrees_per_second_t, 5> m_gyro_filters[3];
 
  public:
   struct Config {
