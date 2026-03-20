@@ -2,6 +2,7 @@
 
 #include <micromouse/robot/cell_positions.hpp>
 #include "micromouse/feedback/feedback_topic.hpp"
+#include "micromouse/robot/status_topic.hpp"
 #include "micromouse/robot/task.hpp"
 
 #define LOG_PREFIX "[robot] "
@@ -57,6 +58,13 @@ void Robot::publish_periodic_feedback() {
   }
   for (auto c : m_components) {
     c->publish_periodic_feedback();
+  }
+
+  // Send pending status updates
+  if (!m_status_updates_to_publish.empty()) {
+    const auto [topic, value] = *m_status_updates_to_publish.begin();
+    m_feedback.publish<feedback::TopicSend::MAIN_STATUS>(StatusUpdate{topic, value});
+    m_status_updates_to_publish.erase(topic);
   }
 }
 
