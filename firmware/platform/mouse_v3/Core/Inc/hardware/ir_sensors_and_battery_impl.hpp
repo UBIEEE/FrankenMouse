@@ -43,7 +43,7 @@ class IRSensorsImpl : public hardware::IRSensors {
 
   std::unique_ptr<hardware::Timer> m_battery_read_timer = make_platform_timer();
 
-public:
+ public:
   IRSensorsImpl();
 
   void periodic() override;
@@ -55,7 +55,8 @@ public:
   const std::array<units::millimeter_t, 4>& get_distances() const override { return m_distances; }
 
   bool is_battery() const;
-  float get_charge_percentage();
+  float get_charge_percentage() const;
+  units::volt_t get_voltage() const;
 
  private:
   void set_emitter(Sensor sensor, GPIO_PinState state);
@@ -74,7 +75,8 @@ public:
 class BatteryImpl : public hardware::Battery {
  public:
   bool is_battery() const override;
-  float get_charge_percentage() override;
+  float get_charge_percentage() const override;
+  units::volt_t get_voltage() const override;
 };
 
 // Two separate classes so that single class doesn't have process() called twice.
