@@ -20,7 +20,10 @@
 #include <micromouse/navigation/solvers/flood_fill.hpp>
 #include <micromouse/singleton.hpp>
 #include <micromouse/robot/task.hpp>
+#include <micromouse/robot/status_topic.hpp>
 #include <micromouse/vision/vision.hpp>
+#include <array>
+#include <unordered_map>
 
 namespace robot {
 
@@ -90,6 +93,8 @@ class Robot : public Singleton<Robot> {
   drive::ChassisSpeeds m_chassis_speeds{};
   std::unique_ptr<hardware::Timer> m_chassis_speeds_timer = make_platform_timer();
 
+  std::unordered_map<StatusTopic, float> m_status_updates_to_publish;
+
  public:
   void init();
   void periodic();
@@ -103,8 +108,15 @@ class Robot : public Singleton<Robot> {
 
   template <ErrorCode Code>
   void error(Code code) {
-    Error error = Error::create<Code>(0, code);
+    Error error = Error::create<Code>(get_system_timestamp().to<uint32_t>(), code);
     handle_error(error);
+  }
+
+  template <StatusTopic Topic>
+  void feedback_status_update(float value = 0.f) {
+    if (Topic != StatusTopic::NONE) {
+      m_status_updates_to_publish[Topic] = value;
+    }
   }
 
  private:
