@@ -145,9 +145,13 @@ class Robot : public Singleton<Robot> {
   void end_task();
 
   void start_next_task();
+  void process_current_task();
 
   void start_task_maze_search(navigation::Navigator::MovementStyle movement_style);
+  void process_task_maze_search();
+
   void start_task_maze_solve(bool fast);
+  void process_task_maze_solve(bool fast);
 
   void start_task_test_drive_straight_from_back_wall_to_sense_spot();
   void start_task_test_drive_straight_one_cell();
@@ -156,27 +160,28 @@ class Robot : public Singleton<Robot> {
   void start_task_test_drive_turn_right_in_place();
   void start_task_test_drive_turn_left_in_place();
   void start_task_test_drive_turn_180_in_place();
-  void start_task_test_gyro();
-  void start_task_test_drive_straight_four_cells_from_back_wall_with_vision_align();
-
-  void start_task_manual_chassis_speeds();
-
-  void start_task_armed();
-  void start_task_armed_triggering();
-  void start_task_armed_triggered();
-
-  void process_current_task();
-
-  void process_task_maze_search();
-  void process_task_maze_solve(bool fast);
-
   void process_task_test_drive();
 
+  void start_task_test_gyro();
+
+  void start_task_test_drive_straight_four_cells_from_back_wall_with_vision_align();
+
+  void start_task_test_drive_raw_speed();
+
+  void start_task_test_drive_constant_speed();
+
+  void start_task_manual_chassis_speeds();
   void process_task_manual_chassis_speeds();
 
+  void start_task_armed();
   void process_task_armed();
+
+  void start_task_armed_triggering();
   void process_task_armed_triggering();
+
+  void start_task_armed_triggered();
   void process_task_armed_triggered();
+
 
   void publish_current_task();
 };

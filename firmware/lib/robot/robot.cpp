@@ -119,7 +119,7 @@ void Robot::handle_command(Command command) {
   switch (command) {
     using enum Command;
     case RESEND_ALL_FEEDBACK:
-      // TODO
+      publish_status_feedback();
       break;
     case RESET_MAZE:
       m_maze.reset();
@@ -264,6 +264,12 @@ void Robot::start_next_task() {
     case TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN:
       start_task_test_drive_straight_four_cells_from_back_wall_with_vision_align();
       break;
+    case TEST_DRIVE_RAW_SPEEDS:
+      start_task_test_drive_raw_speed();
+      break;
+    case TEST_DRIVE_CONSTANT_SPEED:
+      start_task_test_drive_constant_speed();
+      break;
     case MANUAL_CHASSIS_SPEEDS:
       start_task_manual_chassis_speeds();
       break;
@@ -286,6 +292,58 @@ void Robot::start_next_task() {
   publish_current_task();
 }
 
+void Robot::process_current_task() {
+  switch (m_task) {
+    using enum Task;
+    case STOPPED:
+      break;
+    case MAZE_SEARCH:
+    case MAZE_SEARCH_START_STOP_MOTION:
+      process_task_maze_search();
+      break;
+    case MAZE_SLOW_SOLVE:
+      process_task_maze_solve(false);
+      break;
+    case MAZE_FAST_SOLVE:
+      process_task_maze_solve(true);
+      break;
+    case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
+    case TEST_DRIVE_STRAIGHT_ONE_CELL:
+    case TEST_DRIVE_TURN_RIGHT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
+    case TEST_DRIVE_TURN_LEFT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
+    case TEST_DRIVE_TURN_RIGHT_IN_PLACE:
+    case TEST_DRIVE_TURN_LEFT_IN_PLACE:
+    case TEST_DRIVE_TURN_180_IN_PLACE:
+      process_task_test_drive();
+      break;
+    case TEST_GYRO:
+      break;
+    case TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN:
+      break;
+    case TEST_DRIVE_RAW_SPEEDS:
+      break;
+    case TEST_DRIVE_CONSTANT_SPEED:
+      break;
+    case MANUAL_CHASSIS_SPEEDS:
+      process_task_manual_chassis_speeds();
+      break;
+    case IDLE:
+      // Do nothing, or something
+      break;
+    case ARMED:
+      process_task_armed();
+      break;
+    case ARMED_TRIGGERING:
+      process_task_armed_triggering();
+      break;
+    case ARMED_TRIGGERED:
+      process_task_armed_triggered();
+      break;
+    case VISION_CALIBRATE:
+      break;
+  }
+}
+
 void Robot::start_task_maze_search(navigation::Navigator::MovementStyle movement_style) {
   m_search_stage = SearchStage::START_TO_GOAL;
 
@@ -306,6 +364,37 @@ void Robot::start_task_maze_search(navigation::Navigator::MovementStyle movement
   m_navigator.search_to(Maze::GOAL_ENDPOINTS, m_floodfill);
 }
 
+void Robot::process_task_maze_search() {
+  using enum SearchStage;
+
+  if (m_navigator.is_done()) {
+    maze::CoordinateSpan next_target;
+
+    // Check which stage was just finished, and set the next target accordingly.
+    switch (m_search_stage) {
+      case START_TO_GOAL:
+        // Goal -> Outside Start
+        next_target = Maze::outside_start_span(m_start_location);
+        break;
+      case GOAL_TO_OUTSIDE_START:
+        // Outside Start -> Goal
+        next_target = Maze::GOAL_ENDPOINTS;
+        break;
+      case OUTSIDE_START_TO_GOAL:
+        // Goal -> Start
+        next_target = Maze::start_span(m_start_location);
+        break;
+      case GOAL_TO_START:
+        end_task();
+        return;
+    }
+
+    m_navigator.search_to(next_target, m_floodfill);
+
+    m_search_stage = SearchStage(uint8_t(m_search_stage) + 1);
+  }
+}
+
 void Robot::start_task_maze_solve(bool fast) {
   (void)fast;
 
@@ -317,6 +406,23 @@ void Robot::start_task_maze_solve(bool fast) {
                              CellPositions::back_wall());
 
   // m_navigator.solve_to(Maze::GOAL_ENDPOINTS, fast);
+}
+
+void Robot::process_task_maze_solve(bool fast) {
+  (void)fast;
+
+  if (m_navigator.is_done()) {
+    switch (m_solve_stage) {
+      using enum SolveStage;
+      case START_TO_GOAL:
+        // m_navigator.solve_to(Maze::start_span(m_start_location), fast);
+        m_solve_stage = GOAL_TO_START;
+        break;
+      case GOAL_TO_START:
+        end_task();
+        return;
+    }
+  }
 }
 
 void Robot::start_task_test_drive_straight_from_back_wall_to_sense_spot() {
@@ -370,6 +476,12 @@ void Robot::start_task_test_drive_turn_180_in_place() {
   m_motion_runner.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180);
 }
 
+void Robot::process_task_test_drive() {
+  if (m_motion_runner.is_done()) {
+    end_task();
+  }
+}
+
 void Robot::start_task_test_gyro() {
   m_motion_runner.reset();
   drive::ChassisSpeeds speeds{};
@@ -381,6 +493,17 @@ void Robot::start_task_test_drive_straight_four_cells_from_back_wall_with_vision
   // TODO
 }
 
+void Robot::start_task_test_drive_raw_speed() {
+  m_motion_runner.reset();
+  m_drivetrain.set_motors_manual(0.2, 0.2);
+}
+
+void Robot::start_task_test_drive_constant_speed() {
+  m_motion_runner.reset();
+  drive::ChassisSpeeds speeds{.linear_velocity = 200_mmps, .angular_velocity = 0_deg_per_s};
+  m_drivetrain.set_chassis_speeds(speeds);
+}
+
 void Robot::start_task_manual_chassis_speeds() {
   m_motion_runner.reset();
   m_chassis_speeds = drive::ChassisSpeeds{};
@@ -388,8 +511,37 @@ void Robot::start_task_manual_chassis_speeds() {
   m_chassis_speeds_timer->start();
 }
 
+void Robot::process_task_manual_chassis_speeds() {
+  const units::second_t elapsed_time = m_chassis_speeds_timer->get();
+
+  if (elapsed_time > 0.5_s) {
+    m_chassis_speeds = {};
+  }
+
+  m_drivetrain.set_chassis_speeds(m_chassis_speeds);
+}
+
 void Robot::start_task_armed() {
   m_audio_player.play_song(audio::Song::ARMED, true);
+}
+
+void Robot::process_task_armed() {
+  const std::array<float, 4>& readings = m_ir_sensors.get_raw_readings();
+
+  using enum hardware::IRSensors::Sensor;
+
+  const bool left_blocked = readings[MID_LEFT] > 0.8f;
+  const bool right_blocked = readings[MID_RIGHT] > 0.8f;
+
+  if (!left_blocked && !right_blocked)
+    return;
+
+  m_armed_trigger_side = ArmedTriggerSide::LEFT;
+  if (right_blocked && !left_blocked) {
+    m_armed_trigger_side = ArmedTriggerSide::RIGHT;
+  }
+
+  run_task(Task::ARMED_TRIGGERING);
 }
 
 void Robot::start_task_armed_triggering() {
@@ -397,6 +549,31 @@ void Robot::start_task_armed_triggering() {
 
   m_armed_trigger_timer->reset();
   m_armed_trigger_timer->start();
+}
+
+void Robot::process_task_armed_triggering() {
+  const std::array<float, 4>& readings = m_ir_sensors.get_raw_readings();
+
+  using enum hardware::IRSensors::Sensor;
+
+  const hardware::IRSensors::Sensor sensor =
+      (m_armed_trigger_side == ArmedTriggerSide::LEFT) ? MID_LEFT : MID_RIGHT;
+
+  const bool blocked = readings[sensor] > 0.8f;
+
+  // Don't even think about moving until that hand is gone!
+  if (blocked)
+    return;
+
+  const bool time_over = m_armed_trigger_timer->get() > 1_s;
+
+  if (time_over) {
+    run_task(Task::ARMED_TRIGGERED);
+    return;
+  }
+
+  // Go back to armed since they didn't hold their hand there long enough.
+  run_task(Task::ARMED);
 }
 
 void Robot::start_task_armed_triggered() {
@@ -424,162 +601,6 @@ void Robot::start_task_armed_triggered() {
 
   m_armed_trigger_timer->reset();
   m_armed_trigger_timer->start();
-}
-
-void Robot::process_current_task() {
-  switch (m_task) {
-    using enum Task;
-    case STOPPED:
-      break;
-    case MAZE_SEARCH:
-    case MAZE_SEARCH_START_STOP_MOTION:
-      process_task_maze_search();
-      break;
-    case MAZE_SLOW_SOLVE:
-      process_task_maze_solve(false);
-      break;
-    case MAZE_FAST_SOLVE:
-      process_task_maze_solve(true);
-      break;
-    case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
-    case TEST_DRIVE_STRAIGHT_ONE_CELL:
-    case TEST_DRIVE_TURN_RIGHT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
-    case TEST_DRIVE_TURN_LEFT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
-    case TEST_DRIVE_TURN_RIGHT_IN_PLACE:
-    case TEST_DRIVE_TURN_LEFT_IN_PLACE:
-    case TEST_DRIVE_TURN_180_IN_PLACE:
-      process_task_test_drive();
-      break;
-    case TEST_GYRO:
-      break;
-    case TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN:
-      break;
-    case MANUAL_CHASSIS_SPEEDS:
-      process_task_manual_chassis_speeds();
-      break;
-    case IDLE:
-      // Do nothing, or something
-      break;
-    case ARMED:
-      process_task_armed();
-      break;
-    case ARMED_TRIGGERING:
-      process_task_armed_triggering();
-      break;
-    case ARMED_TRIGGERED:
-      process_task_armed_triggered();
-      break;
-    case VISION_CALIBRATE:
-      break;
-  }
-}
-
-void Robot::process_task_maze_search() {
-  using enum SearchStage;
-
-  if (m_navigator.is_done()) {
-    maze::CoordinateSpan next_target;
-
-    // Check which stage was just finished, and set the next target accordingly.
-    switch (m_search_stage) {
-      case START_TO_GOAL:
-        // Goal -> Outside Start
-        next_target = Maze::outside_start_span(m_start_location);
-        break;
-      case GOAL_TO_OUTSIDE_START:
-        // Outside Start -> Goal
-        next_target = Maze::GOAL_ENDPOINTS;
-        break;
-      case OUTSIDE_START_TO_GOAL:
-        // Goal -> Start
-        next_target = Maze::start_span(m_start_location);
-        break;
-      case GOAL_TO_START:
-        end_task();
-        return;
-    }
-
-    m_navigator.search_to(next_target, m_floodfill);
-
-    m_search_stage = SearchStage(uint8_t(m_search_stage) + 1);
-  }
-}
-
-void Robot::process_task_maze_solve(bool fast) {
-  (void)fast;
-
-  if (m_navigator.is_done()) {
-    switch (m_solve_stage) {
-      using enum SolveStage;
-      case START_TO_GOAL:
-        // m_navigator.solve_to(Maze::start_span(m_start_location), fast);
-        m_solve_stage = GOAL_TO_START;
-        break;
-      case GOAL_TO_START:
-        end_task();
-        return;
-    }
-  }
-}
-
-void Robot::process_task_test_drive() {
-  if (m_motion_runner.is_done()) {
-    end_task();
-  }
-}
-
-void Robot::process_task_manual_chassis_speeds() {
-  const units::second_t elapsed_time = m_chassis_speeds_timer->get();
-
-  if (elapsed_time > 0.5_s) {
-    m_chassis_speeds = {};
-  }
-
-  m_drivetrain.set_chassis_speeds(m_chassis_speeds);
-}
-
-void Robot::process_task_armed() {
-  const std::array<float, 4>& readings = m_ir_sensors.get_raw_readings();
-
-  using enum hardware::IRSensors::Sensor;
-
-  const bool left_blocked = readings[MID_LEFT] > 0.8f;
-  const bool right_blocked = readings[MID_RIGHT] > 0.8f;
-
-  if (!left_blocked && !right_blocked)
-    return;
-
-  m_armed_trigger_side = ArmedTriggerSide::LEFT;
-  if (right_blocked && !left_blocked) {
-    m_armed_trigger_side = ArmedTriggerSide::RIGHT;
-  }
-
-  run_task(Task::ARMED_TRIGGERING);
-}
-
-void Robot::process_task_armed_triggering() {
-  const std::array<float, 4>& readings = m_ir_sensors.get_raw_readings();
-
-  using enum hardware::IRSensors::Sensor;
-
-  const hardware::IRSensors::Sensor sensor =
-      (m_armed_trigger_side == ArmedTriggerSide::LEFT) ? MID_LEFT : MID_RIGHT;
-
-  const bool blocked = readings[sensor] > 0.8f;
-
-  // Don't even think about moving until that hand is gone!
-  if (blocked)
-    return;
-
-  const bool time_over = m_armed_trigger_timer->get() > 1_s;
-
-  if (time_over) {
-    run_task(Task::ARMED_TRIGGERED);
-    return;
-  }
-
-  // Go back to armed since they didn't hold their hand there long enough.
-  run_task(Task::ARMED);
 }
 
 void Robot::process_task_armed_triggered() {
