@@ -11,7 +11,7 @@ extern "C" {
 typedef void (*UpdateMainTaskCallback)(ROS2AppFeedback*, uint8_t, uint8_t);
 typedef void (*AddMainErrorCallback)(ROS2AppFeedback*, uint32_t, uint8_t, uint8_t);
 typedef void (*UpdateMainSongCallback)(ROS2AppFeedback*, uint8_t);
-typedef void (*UpdateMainStatusCallback)(ROS2AppFeedback*, uint8_t, uint8_t);
+typedef void (*UpdateMainStatusCallback)(ROS2AppFeedback*, uint8_t, float);
 typedef void (*UpdateMainBatteryVoltageCallback)(ROS2AppFeedback*, float);
 typedef void (*UpdateVisionRawDataCallback)(ROS2AppFeedback*, NSArray*);
 typedef void (*UpdateVisionNormDataCallback)(ROS2AppFeedback*, NSArray*);

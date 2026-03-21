@@ -26,7 +26,7 @@ struct MainPage: View {
 
         Section("Latest Error message") {
           if feedback.mainService.errorCodes.isEmpty {
-            Text("NONE")
+            Text("None")
           }
           else {
             let error = feedback.mainService.errorCodes.first!.value

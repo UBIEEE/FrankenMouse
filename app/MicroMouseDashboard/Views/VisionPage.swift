@@ -59,6 +59,7 @@ struct VisionPage: View {
               .foregroundColor(.secondary)
           }
         }
+        #if false
         Section(
           header: Text("Calibration"),
           footer: Text(
@@ -80,6 +81,7 @@ struct VisionPage: View {
             feedback.publishMainCommand(.calibrateVision)
           }
         }
+        #endif
 
       }
       .navigationTitle("Vision")

@@ -65,7 +65,7 @@ class Feedback : public rclcpp::Node {
   rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr m_main_task_sub;
   rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr m_main_error_sub;
   rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr m_main_song_sub;
-  rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr m_main_status_sub;
+  rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr m_main_status_sub;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr m_main_battery_voltage_sub;
   rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr m_vision_raw_readings_sub;
   rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr m_vision_distances_sub;
@@ -136,10 +136,12 @@ class Feedback : public rclcpp::Node {
           }
         });
           
-    m_main_status_sub = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
-        "/robot/main/status", 10, [this](const std_msgs::msg::UInt8MultiArray& msg) {
+    m_main_status_sub = this->create_subscription<std_msgs::msg::Float32MultiArray>(
+        "/robot/main/status", 10, [this](const std_msgs::msg::Float32MultiArray& msg) {
           if (m_main_status_cb && msg.data.size() == 2) {
-            m_main_status_cb(m_self, msg.data[0], msg.data[1]);
+            if (msg.data[0]) {
+              m_main_status_cb(m_self, static_cast<uint8_t>(msg.data[0]), msg.data[1]);
+            }
           }
         });
           
