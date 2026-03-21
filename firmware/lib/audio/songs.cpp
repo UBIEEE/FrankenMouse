@@ -1,4 +1,6 @@
 #include <micromouse/audio/audio_player.hpp>
+#include "micromouse/audio/note.hpp"
+#include "micromouse/audio/song.hpp"
 
 #include <micromouse/robot/robot.h>
 
@@ -15,6 +17,8 @@ const char* song_to_string(Song song) {
       return "Home Depot Theme";
     case NOKIA:
       return "Nokia Ringtone";
+    case WINDOWS_XP_SHUTDOWN:
+      return "Windows XP Shutdown";
     case STARTUP:
       return "Startup Tone";
     case BLE_CONNECT:
@@ -166,6 +170,16 @@ static constexpr Note SONG_ARMED_AND_TRIGGERING_NOTES[] = {
     REST,
 };
 
+static constexpr uint16_t SONG_WINDOWS_XP_SHUTDOWN_NOTE_LENGTH_MS = 350;
+
+static constexpr Note SONG_WINDOWS_XP_SHUTDOWN_NOTES[] = {
+    {G_SHARP, 5},
+    {E_FLAT, 5},
+    {B_FLAT, 4},
+    {G_SHARP, 4},
+    REST,
+};
+
 const AudioPlayer::SongHandle& AudioPlayer::get_song(Song song) const {
   switch (song) {
     using enum Song;
@@ -179,6 +193,9 @@ const AudioPlayer::SongHandle& AudioPlayer::get_song(Song song) const {
     case NOKIA:
       static constexpr SongHandle NOKIA_SONG_HANDLE = {SONG_NOKIA_NOTES, SONG_NOKIA_NOTE_LENGTH_MS / ROBOT_UPDATE_PERIOD_MS, false};
       return NOKIA_SONG_HANDLE;
+    case WINDOWS_XP_SHUTDOWN:
+      static constexpr SongHandle WINDOWS_XP_SHUTDOW_SONG_HANDLE = {SONG_WINDOWS_XP_SHUTDOWN_NOTES, SONG_WINDOWS_XP_SHUTDOWN_NOTE_LENGTH_MS / ROBOT_UPDATE_PERIOD_MS, false};
+      return WINDOWS_XP_SHUTDOW_SONG_HANDLE;
     case STARTUP:
       static constexpr SongHandle STARTUP_SONG_HANDLE = {SONG_STARTUP_NOTES, SONG_STARTUP_NOTE_LENGTH_MS / ROBOT_UPDATE_PERIOD_MS};
       return STARTUP_SONG_HANDLE;
