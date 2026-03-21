@@ -41,4 +41,10 @@ void Robot_DelegateReceivedFeedback(uint8_t topic, uint8_t* data);
 
 #ifdef __cplusplus
 }
+
+#include <units/time.h>
+
+#define ROBOT_UPDATE_PERIOD units::second_t{ROBOT_UPDATE_PERIOD_S}
+#define ROBOT_PUBLISH_FEEDBACK_PERIOD units::second_t{ROBOT_PUBLISH_FEEDBACK_PERIOD_S}
+
 #endif
