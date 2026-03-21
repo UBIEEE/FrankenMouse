@@ -20,6 +20,7 @@ class DrivetrainImpl : public hardware::Drivetrain, public rclcpp::Node {
   void set_wheel_speeds(const drive::WheelSpeeds& speeds) override {
     set_chassis_speeds(drive::to_chassis_speeds(speeds, m_measurements.track_width));
   }
+  void set_motors_manual(float left_percent, float right_percent) override {};
 };
 
 std::shared_ptr<DrivetrainImpl> get_simulation_drivetrain();

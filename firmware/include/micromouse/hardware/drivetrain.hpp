@@ -15,6 +15,7 @@ class Drivetrain : public Component {
   virtual void stop() = 0;
   virtual void set_wheel_speeds(const drive::WheelSpeeds& wheel_speeds) = 0;
   virtual void set_chassis_speeds(const drive::ChassisSpeeds& chassis_speeds) = 0;
+  virtual void set_motors_manual(float left_percent, float right_percent) = 0;
 
   struct EncoderData {
     units::millimeter_t position = 0_mm;

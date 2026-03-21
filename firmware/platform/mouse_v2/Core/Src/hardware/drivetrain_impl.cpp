@@ -91,6 +91,13 @@ void DrivetrainImpl::set_chassis_speeds(const drive::ChassisSpeeds& speeds) {
   m_control_mode = ControlMode::VELOCITY;
 }
 
+void DrivetrainImpl::set_motors_manual(float left_percent, float right_percent) {
+  m_raw_speed_data.left = left_percent;
+  m_raw_speed_data.right = right_percent;
+
+  m_control_mode = ControlMode::MANUAL;
+}
+
 void DrivetrainImpl::update_encoders() {
   const uint16_t left_ticks = hlptim1.Instance->CNT;
   const uint16_t right_ticks = htim2.Instance->CNT / 2;
@@ -111,12 +118,10 @@ void DrivetrainImpl::update_pid_controllers() {
   auto& control_data = m_velocity_control_data;
 
   // Angular PID controller.
-  {
-    const units::degrees_per_second_t gyro_z = m_imu.get_angular_velocity(YAW_AXIS);
 
-    control_data.final_angular += units::degrees_per_second_t{
-        m_angular_pid.calculate(gyro_z.value(), control_data.target_speeds.angular_velocity.value())};
-  }
+  const units::degrees_per_second_t gyro_z = m_imu.get_angular_velocity(YAW_AXIS);
+  control_data.final_angular += units::degrees_per_second_t{
+      m_angular_pid.calculate(gyro_z.value(), control_data.target_speeds.angular_velocity.value())};
 
   ChassisSpeeds chassis_speeds = {
       .linear_velocity = control_data.target_speeds.linear_velocity,
@@ -124,15 +129,13 @@ void DrivetrainImpl::update_pid_controllers() {
   };
 
   // Translational PID controllers.
-  {
-    auto [v_l, v_r] = to_wheel_speeds(chassis_speeds, m_measurements.track_width);
 
-    control_data.final_right_speed +=
-        m_translational_right_pid.calculate(m_drive_data.right_encoder.velocity.value(), v_r.value());
+  auto [v_l, v_r] = to_wheel_speeds(chassis_speeds, m_measurements.track_width);
 
-    control_data.final_left_speed +=
-        m_translational_left_pid.calculate(m_drive_data.left_encoder.velocity.value(), v_l.value());
-  }
+  control_data.final_right_speed +=
+      m_translational_right_pid.calculate(m_drive_data.right_encoder.velocity.value(), v_r.value());
+  control_data.final_left_speed +=
+      m_translational_left_pid.calculate(m_drive_data.left_encoder.velocity.value(), v_l.value());
 
   float final_left = control_data.final_left_speed, final_right = control_data.final_right_speed;
 
@@ -181,8 +184,10 @@ void DrivetrainImpl::set_motors_raw(uint8_t left,
 void DrivetrainImpl::update_pid_values(const float* translational, const float* angular) {
   using enum drive::PIDController::Term;
   for (auto term : {PROPORTIONAL, INTEGRAL, DERIVATIVE}) {
-    update_pid_value(PIDComponent::TRANSLATIONAL, term, translational[term]);
-    update_pid_value(PIDComponent::ANGULAR, term, angular[term]);
+    float translational_value = translational[term];
+    float angular_value = angular[term];
+    update_pid_value(PIDComponent::TRANSLATIONAL, term, translational_value);
+    update_pid_value(PIDComponent::ANGULAR, term, angular_value);
   }
 
   m_translational_left_pid.reset();
@@ -228,7 +233,19 @@ void DrivetrainImpl::publish_periodic_feedback() {
   m_feedback.publish<TopicSend::DRIVE_MOTOR_DATA>(m_drive_data);
 }
 
-void DrivetrainImpl::publish_status_feedback() {}
+void DrivetrainImpl::publish_status_feedback() {
+  using namespace feedback;
+
+  float pid_values[6] = {
+      m_translational_left_pid.kp(),
+      m_translational_left_pid.ki(),
+      m_translational_left_pid.kd(),
+      m_angular_pid.kp(),
+      m_angular_pid.ki(),
+      m_angular_pid.kd(),
+  };
+  m_feedback.publish<TopicSend::DRIVE_PID>(pid_values);
+}
 
 void DrivetrainImpl_UpdatePIDValues(const float* pid) {
   const float* translational = pid;
