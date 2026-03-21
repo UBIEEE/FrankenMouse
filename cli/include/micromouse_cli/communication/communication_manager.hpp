@@ -129,7 +129,7 @@ struct FeedbackTopicNotifyData<FeedbackTopicNotify::MAIN_SONG> {
 };
 template <>
 struct FeedbackTopicNotifyData<FeedbackTopicNotify::MAIN_STATUS> {
-  using type = std::pair<RobotStatusTopic, uint8_t>;
+  using type = RobotStatusUpdate;
 };
 template <>
 struct FeedbackTopicNotifyData<FeedbackTopicNotify::MAIN_BATTERY_VOLTAGE> {
@@ -225,7 +225,7 @@ class CommunicationManager {
     };
     std::map<uint32_t, RobotError> errors;
     RobotSong song;
-    std::map<RobotStatusTopic, uint8_t> statusTopics;
+    std::map<RobotStatusTopic, float> status_topics;
     float battery_voltage = 0;
   };
   const MainNotifyData& main_data() const { return m_main_data; }

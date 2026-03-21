@@ -24,7 +24,7 @@ class ROS2CommunicationManager final : public CommunicationManager, public rclcp
   rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr m_main_task_sub;
   rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr m_main_error_sub;
   rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr m_main_song_sub;
-  rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr m_main_status_sub;
+  rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr m_main_status_sub;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr m_main_battery_voltage_sub;
   rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr m_vision_raw_readings_sub;
   rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr m_vision_distances_sub;

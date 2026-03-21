@@ -3,7 +3,13 @@
 #include <cstdint>
 
 enum class RobotStatusTopic : uint8_t {
-  IS_VISION_CALIBRATED = 0,
-  POWER_SOURCE = 1,
-  BATTERY_STATUS = 2,
+  NONE = 0,
 };
+
+#pragma pack(push, 1)
+struct RobotStatusUpdate {
+  RobotStatusTopic topic = RobotStatusTopic::NONE;
+  float value = 0;
+};
+#pragma pack(pop)
+static_assert(sizeof(RobotStatusUpdate) == 5);
