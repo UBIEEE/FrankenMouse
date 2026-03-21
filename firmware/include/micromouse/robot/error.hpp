@@ -32,6 +32,8 @@ enum class NavigationErrorCode : uint8_t {
   MAZE_UNSOLVABLE,
   MAZE_WALL_INCONSISTENCY,
   MAZE_EXIT_IN_BOUNDARY,
+
+  NO_REMAINING_DISTANCE,
 };
 
 template <typename T>

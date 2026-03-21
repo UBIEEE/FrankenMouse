@@ -47,6 +47,7 @@ class IRSensorsImpl : public hardware::IRSensors {
   IRSensorsImpl();
 
   void periodic() override;
+  void publish_status_feedback() override;
 
   void set_enabled(bool enabled) override { m_enabled = enabled; }
   bool is_enabled() const override { return m_enabled; }

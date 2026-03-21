@@ -6,6 +6,8 @@ namespace robot {
 
 enum class StatusTopic : uint8_t {
   NONE = 0,
+
+  MAZE_WALL_GONE,
 };
 
 #pragma pack(push, 1)

@@ -274,9 +274,15 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
                 position.value(), robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT.value(),
                 (robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT - position).value());
 
+        Robot::get().feedback_status_update<robot::StatusTopic::MAZE_WALL_GONE>(position.value());
+
         exec.initial_velocity = linear_velocity;
         units::millimeter_t new_cell_position = robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT;
         exec.remaining_distance = (exec.current_cell_position + exec.remaining_distance) - new_cell_position;
+        if (exec.remaining_distance < 0_mm) {
+          Robot::get().error(robot::NavigationErrorCode::NO_REMAINING_DISTANCE);
+          return ChassisSpeeds{};
+        }
         exec.current_cell_position = new_cell_position;
         exec.did_vision_adjust_for_current_cell = true;
 

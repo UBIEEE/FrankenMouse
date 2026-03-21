@@ -90,6 +90,10 @@ void IRSensorsImpl::periodic() {
   }
 }
 
+void IRSensorsImpl::publish_status_feedback() {
+  m_feedback.publish<feedback::TopicSend::MAIN_BATTERY_VOLTAGE>(m_battery_voltage);
+}
+
 void IRSensorsImpl::set_emitter(Sensor sensor, GPIO_PinState state) {
   HAL_GPIO_WritePin(EMIT_PORTS[sensor], EMIT_PINS[sensor], state);
 }
@@ -110,8 +114,11 @@ units::millimeter_t IRSensorsImpl::calculate_distance(const float& R) {
   // Measurements:
   // 120mm: 0.047852
   // 160mm: 0.027344
-  const units::millimeter_t known_distance = 120_mm;
-  const float known_intensity = 0.047852f;
+  // const units::millimeter_t known_distance = 120_mm;
+  // const float known_intensity = 0.047852f;
+
+  const units::millimeter_t known_distance = 84_mm;
+  const float known_intensity = 0.068359f;
 
   // The light intensity emitted gets weaker as the distance increases (by the
   // inverse square law). The distance is actually double, since it needs to
