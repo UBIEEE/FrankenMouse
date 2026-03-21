@@ -16,7 +16,8 @@
 #include <micromouse/hardware/timer.hpp>
 #include <micromouse/maze/coordinate.hpp>
 #include <micromouse/maze/maze.hpp>
-#include <micromouse/navigation/navigator.hpp>
+#include <micromouse/navigation/search_navigator.hpp>
+#include <micromouse/navigation/solve_navigator.hpp>
 #include <micromouse/navigation/solvers/flood_fill.hpp>
 #include <micromouse/singleton.hpp>
 #include <micromouse/robot/task.hpp>
@@ -51,13 +52,15 @@ class Robot : public Singleton<Robot> {
   vision::Vision m_vision;
   audio::AudioPlayer m_audio_player;
   drive::MotionRunner m_motion_runner{m_maze, m_vision, m_speeds.normal_speeds};
-  navigation::Navigator m_navigator{m_motion_runner, m_vision, m_maze};
+  navigation::SearchNavigator m_search_navigator{m_motion_runner, m_vision, m_maze};
+  navigation::SolveNavigator m_solve_navigator{m_motion_runner, m_vision, m_maze};
 
-  const std::array<Subsystem*, 4> m_subsystems{
+  const std::array<Subsystem*, 5> m_subsystems{
       &m_motion_runner,
       &m_audio_player,
       &m_vision,
-      &m_navigator,
+      &m_search_navigator,
+      &m_solve_navigator,
   };
 
   bool m_feedback_connected = false;
@@ -147,7 +150,7 @@ class Robot : public Singleton<Robot> {
   void start_next_task();
   void process_current_task();
 
-  void start_task_maze_search(navigation::Navigator::MovementStyle movement_style);
+  void start_task_maze_search(navigation::SearchNavigator::MovementStyle movement_style);
   void process_task_maze_search();
 
   void start_task_maze_solve(bool fast);

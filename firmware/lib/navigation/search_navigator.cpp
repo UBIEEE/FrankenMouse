@@ -1,14 +1,15 @@
-#include <micromouse/navigation/navigator.hpp>
+#include <micromouse/navigation/search_navigator.hpp>
 #include <micromouse/robot/robot.hpp>
 #include <micromouse/robot/cell_positions.hpp>
-#include "micromouse/robot/error.hpp"
+#include <micromouse/robot/error.hpp>
+#include <cassert>
 
-#define LOG_PREFIX "[nav] "
+#define LOG_PREFIX "[nav1] "
 #include <micromouse/logging.hpp>
 
 using namespace navigation;
 
-void Navigator::periodic() {
+void SearchNavigator::periodic() {
   if (m_done || !m_should_sense)
     return;
 
@@ -79,7 +80,8 @@ void Navigator::periodic() {
     return;
   }
 
-  LogInfo("left: {}, right: {}, front: {}", is_left_wall_present, is_right_wall_present, is_front_wall_present);
+  LogInfo("left: {}, right: {}, front: {}", is_left_wall_present, is_right_wall_present,
+          is_front_wall_present);
 
   m_maze.set_wall(m_next_position, left_direction, is_left_wall_present);
   m_maze.set_wall(m_next_position, right_direction, is_right_wall_present);
@@ -108,7 +110,7 @@ void Navigator::periodic() {
   }
 }
 
-void Navigator::reset_position(maze::Coordinate position,
+void SearchNavigator::reset_position(maze::Coordinate position,
                                maze::Direction direction,
                                units::millimeter_t cell_position) {
   m_position = m_next_position = position;
@@ -116,14 +118,14 @@ void Navigator::reset_position(maze::Coordinate position,
   m_start_cell_position = cell_position;
 }
 
-void Navigator::search_to(maze::CoordinateSpan targets, Solver& solver) {
+void SearchNavigator::search_to(maze::CoordinateSpan targets, SearchSolver& solver) {
   m_drive.stop();
   m_targets = targets;
   m_solver = &solver;
   m_done = false;
 
   units::millimeter_t sense_distance = robot::CellPositions::SENSING_SPOT - m_start_cell_position;
-  // assert(sense_distance >= 0_mm);
+  assert(sense_distance >= 0_mm);
   if (sense_distance > 0_mm) {
     m_drive.enqueue_forward(m_position, m_start_cell_position, m_direction, sense_distance, true, true,
                             m_should_sense_callback);
@@ -141,7 +143,7 @@ void Navigator::search_to(maze::CoordinateSpan targets, Solver& solver) {
   m_move = Move::FORWARD;
 }
 
-void Navigator::move(Move move) {
+void SearchNavigator::move(Move move) {
   m_move = move;
 
   switch (m_movement_style) {
@@ -155,10 +157,13 @@ void Navigator::move(Move move) {
   }
 }
 
-void Navigator::move_smooth_motion() {
+void SearchNavigator::move_smooth_motion() {
   units::millimeter_t sense_distance = robot::CellPositions::SENSING_SPOT;
   units::millimeter_t remaining_distance = maze::Cell::WIDTH - robot::CellPositions::SENSING_SPOT;
   units::millimeter_t turn_distance = robot::CellPositions::SEARCH_TURN_START;
+
+  // Temporary fix for now.
+  units::millimeter_t turn_90_curve_length = 109.194147909_mm + 8_mm;
 
   switch (m_move) {
     using enum Move;
@@ -184,8 +189,10 @@ void Navigator::move_smooth_motion() {
       // Drive to turn start
       m_drive.enqueue_forward(m_position, 0_mm, m_direction, turn_distance, true, true);
       // Turn and reach sense spot
-      m_drive.enqueue_turn(drive::MotionRunner::TurnAngle::CCW_90, robot::CellPositions::SEARCH_TURN_RADIUS,
-                           m_should_sense_callback);
+      // m_drive.enqueue_turn(drive::MotionRunner::TurnAngle::CCW_90,
+      // robot::CellPositions::SEARCH_TURN_RADIUS, m_should_sense_callback);
+      m_drive.enqueue_turn_distance(drive::MotionRunner::TurnAngle::CCW_90, turn_90_curve_length,
+                                    m_should_sense_callback);
       // Drive to end of cell
       m_drive.enqueue_forward(m_position, sense_distance, m_next_direction, remaining_distance, true, true);
       break;
@@ -193,7 +200,9 @@ void Navigator::move_smooth_motion() {
       // Drive to turn start
       m_drive.enqueue_forward(m_position, 0_mm, m_direction, turn_distance, true, true);
       // Turn and reach sense spot
-      m_drive.enqueue_turn(drive::MotionRunner::TurnAngle::CW_90, robot::CellPositions::SEARCH_TURN_RADIUS,
+      // m_drive.enqueue_turn(drive::MotionRunner::TurnAngle::CW_90, robot::CellPositions::SEARCH_TURN_RADIUS,
+      // m_should_sense_callback);
+      m_drive.enqueue_turn_distance(drive::MotionRunner::TurnAngle::CW_90, turn_90_curve_length,
                            m_should_sense_callback);
       // Drive to end of cell
       m_drive.enqueue_forward(m_position, sense_distance, m_next_direction, remaining_distance, true, true);
@@ -217,7 +226,7 @@ void Navigator::move_smooth_motion() {
   }
 }
 
-void Navigator::move_start_and_stop_motion() {
+void SearchNavigator::move_start_and_stop_motion() {
   units::millimeter_t sense_distance = robot::CellPositions::SENSING_SPOT;
   units::millimeter_t remaining_distance = maze::Cell::WIDTH - robot::CellPositions::SENSING_SPOT;
 

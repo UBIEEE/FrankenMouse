@@ -4,7 +4,8 @@
 #include <micromouse/vision/vision_distances.hpp>
 #include <micromouse/robot/robot.hpp>
 #include <micromouse/math.hpp>
-#include "micromouse/robot/error.hpp"
+#include <micromouse/robot/error.hpp>
+#include <micromouse/robot/status_topic.hpp>
 #include <units/math.h>
 #include <cassert>
 #include <numbers>
@@ -30,7 +31,7 @@ struct TurnPath {
     S_z = approximate_integral(S, 0.0f, z);
   }
 
-  units::millimeter_t length(units::millimeter_t turn_radius) const {
+  constexpr units::millimeter_t length(units::millimeter_t turn_radius) const {
     const float R = turn_radius.value();
     const float half_angle = abs_angle.value() / 2.f;
     float L = (2 * R * z * gcem::tan(half_angle)) / (C_z + S_z * gcem::tan(half_angle));
@@ -43,8 +44,8 @@ struct TurnPath {
 };
 
 // Pre-compute turn paths for common angles.
-constexpr TurnPath TURN_CW_90_PATH{-90_deg};
-constexpr TurnPath TURN_CCW_90_PATH{90_deg};
+static constexpr TurnPath TURN_CW_90_PATH{-90_deg};
+static constexpr TurnPath TURN_CCW_90_PATH{90_deg};
 
 void MotionRunner::reset() {
   m_motion_timer->stop();
@@ -119,12 +120,43 @@ void MotionRunner::enqueue_turn(TurnAngle angle,
                                 CompletionCallback completion_func /*= nullptr*/) {
   auto motion = std::make_unique<TurnMotion>();
   motion->completion_func = completion_func;
-  motion->angle = angle;
   motion->angle_value = units::degree_t{static_cast<float>(int16_t(angle))};
   if (units::math::abs(motion->angle_value) >= 180_deg) {  // Force 180 degree turns to be stationary.
     turn_radius = 0_mm;
   }
-  motion->turn_radius = turn_radius;
+  if (units::math::abs(turn_radius) > 0_mm) {
+    switch (angle) {
+      using enum TurnAngle;
+      case CW_90:
+        motion->curve_length = TURN_CW_90_PATH.length(turn_radius);
+        break;
+      case CCW_90:
+        motion->curve_length = TURN_CCW_90_PATH.length(turn_radius);
+        break;
+      case CW_180:
+      case CCW_180:
+        assert(false);
+        break;
+    }
+  }
+
+  m_motions.push(std::move(motion));
+
+  if (m_motion_state == MotionState::NONE) {
+    m_motion_state = MotionState::IDLE;
+  }
+}
+
+void MotionRunner::enqueue_turn_distance(TurnAngle angle,
+                                         units::millimeter_t curve_length,
+                                         CompletionCallback completion_func /*= nullptr*/) {
+  auto motion = std::make_unique<TurnMotion>();
+  motion->completion_func = completion_func;
+  motion->angle_value = units::degree_t{static_cast<float>(int16_t(angle))};
+  if (units::math::abs(motion->angle_value) >= 180_deg) {  // Force 180 degree turns to be stationary.
+    curve_length = 0_mm;
+  }
+  motion->curve_length = curve_length;
 
   m_motions.push(std::move(motion));
 
@@ -175,25 +207,10 @@ void MotionRunner::start_turn_motion(TurnMotion& motion, units::meters_per_secon
   decltype(exec.angular_profile)::Constraints constraints{.max_velocity = m_speeds.angular_velocity,
                                                           .max_acceleration = m_speeds.angular_acceleration};
 
-  if (motion.turn_radius > 0_mm && last_velocity > 0_mmps) {
+  if (motion.curve_length > 0_mm && last_velocity > 0_mmps) {
     exec.linear_velocity = last_velocity;
 
-    units::millimeter_t curve_length;
-    switch (motion.angle) {
-      using enum TurnAngle;
-      case CW_90:
-        curve_length = TURN_CW_90_PATH.length(motion.turn_radius);
-        break;
-      case CCW_90:
-        curve_length = TURN_CCW_90_PATH.length(motion.turn_radius);
-        break;
-      case CW_180:
-      case CCW_180:
-        assert(false);
-        break;
-    }
-
-    const units::second_t total_time = curve_length / exec.linear_velocity;
+    const units::second_t total_time = motion.curve_length / exec.linear_velocity;
 
     // Calculate acceleration and velocity to reach target angle in required time.
     const units::degree_t abs_angle = units::math::abs(motion.angle_value);

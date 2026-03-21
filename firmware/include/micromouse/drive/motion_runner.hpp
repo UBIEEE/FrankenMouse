@@ -104,6 +104,11 @@ class MotionRunner : public Subsystem {
                     units::millimeter_t turn_radius,
                     CompletionCallback completion_func = nullptr);
 
+  // Temporary fix - until we fix turns undershooting, probably due to calculating curve length wrong.
+  void enqueue_turn_distance(TurnAngle angle,
+                             units::millimeter_t curve_length,
+                             CompletionCallback completion_func = nullptr);
+
   // Stops and clears queued motions.
   void stop() {
     m_drivetrain.stop();
@@ -163,9 +168,8 @@ class MotionRunner : public Subsystem {
   struct TurnMotion : public Motion {
     Type type() const override { return Type::TURN; }
 
-    TurnAngle angle;
     units::degree_t angle_value;
-    units::millimeter_t turn_radius;
+    units::millimeter_t curve_length = 0_mm;
 
     TurnMotionExecutionProperties exec_properties;
   };
