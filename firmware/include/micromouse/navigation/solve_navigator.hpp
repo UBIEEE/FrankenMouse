@@ -7,6 +7,7 @@
 #include <micromouse/subsystem.hpp>
 #include <micromouse/maze/direction.hpp>
 #include <units/length.h>
+#include <tuple>
 
 namespace navigation {
 
@@ -19,6 +20,10 @@ class SolveNavigator : public Subsystem {
 
   std::queue<SolveRunStep> m_solution_steps;
 
+  maze::Coordinate m_end_position;
+  maze::Direction m_end_direction;
+  units::millimeter_t m_end_cell_position;
+
   bool m_done = true;
 
  public:
@@ -30,6 +35,10 @@ class SolveNavigator : public Subsystem {
                 units::millimeter_t cell_position,
                 maze::CoordinateSpan targets,
                 FinishSolver& solver);
+
+  std::tuple<maze::Coordinate, maze::Direction, units::millimeter_t> get_end() const {
+    return std::make_tuple(m_end_position, m_end_direction, m_end_cell_position);
+  }
 
   bool is_done() const { return m_done; }
 
