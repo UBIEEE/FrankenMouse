@@ -39,11 +39,10 @@ void Robot::on_connect() {
 void Robot::on_disconnect() {
   LogInfo("feedback disconnected");
 
-  m_audio_player.play_song(audio::Song::BLE_DISCONNECT);
   m_feedback_connected = false;
 
   // Stop the current task.
-  run_task(Task::STOPPED);
+  run_task(Task::STOPPED, audio::Song::BLE_DISCONNECT);
 }
 
 void Robot::publish_periodic_feedback() {
@@ -134,11 +133,12 @@ void Robot::handle_command(Command command) {
 void Robot::handle_error(const Error& error) {
   LogInfo("error occurred: {}", error.to_string());
 
-  run_task(Task::STOPPED);
+  run_task(Task::STOPPED, audio::Song::WINDOWS_XP_SHUTDOWN);
 
   m_feedback.publish<feedback::TopicSend::MAIN_ERROR>(error);
 
   // TODO: Buzzer play error sound.
+
 }
 
 void Robot::handle_button_1() {
@@ -176,7 +176,7 @@ void Robot::arm_task(Task task) {
   run_task(Task::ARMED);
 }
 
-void Robot::run_task(Task task) {
+void Robot::run_task(Task task, audio::Song song_to_play) {
   if (task == m_task) {
     LogInfo("already running task: {}", task_to_string(task));
     return;
@@ -184,6 +184,7 @@ void Robot::run_task(Task task) {
 
   LogInfo("run task: {}", task_to_string(task));
 
+  m_next_task_song = song_to_play;
   m_next_task = task;
   m_is_next_task = true;
 }
@@ -202,6 +203,8 @@ void Robot::start_next_task() {
   // Reset stuff.
 
   m_audio_player.quiet();
+  m_audio_player.play_song(m_next_task_song);
+  m_next_task_song = audio::Song::QUIET;
   m_motion_runner.stop();
   m_task = m_next_task;
 

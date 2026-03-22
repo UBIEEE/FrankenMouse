@@ -67,6 +67,7 @@ class Robot : public Singleton<Robot> {
   Maze::StartLocation m_start_location = Maze::StartLocation::WEST_OF_GOAL;
 
   Task m_task = Task::STOPPED;
+  audio::Song m_next_task_song = audio::Song::QUIET;
 
   Task m_next_task = Task::STOPPED;
   bool m_is_next_task = false;
@@ -143,7 +144,7 @@ class Robot : public Singleton<Robot> {
   // Task things
 
   void arm_task(Task task);
-  void run_task(Task task);
+  void run_task(Task task, audio::Song song_to_play=audio::Song::QUIET);
 
   void end_task();
 

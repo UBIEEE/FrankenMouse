@@ -11,6 +11,7 @@ enum class Song : uint8_t {
 
   HOME_DEPOT = 1,
   NOKIA,
+  WINDOWS_XP_SHUTDOWN,
 
   // 128-255 Other noises
 
