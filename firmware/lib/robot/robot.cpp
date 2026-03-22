@@ -1,10 +1,6 @@
 #include <micromouse/robot/robot.hpp>
 
 #include <micromouse/robot/cell_positions.hpp>
-#include "micromouse/audio/song.hpp"
-#include "micromouse/feedback/feedback_topic.hpp"
-#include "micromouse/robot/status_topic.hpp"
-#include "micromouse/robot/task.hpp"
 
 #define LOG_PREFIX "[robot] "
 #include <micromouse/logging.hpp>
@@ -405,9 +401,7 @@ void Robot::start_task_maze_solve(bool fast) {
 
   m_solve_stage = SolveStage::START_TO_GOAL;
 
-  fast = true;
-
-  m_motion_runner.set_speeds(fast ? m_speeds.fast_speeds : m_speeds.normal_speeds);
+  m_motion_runner.set_speeds(fast ? m_speeds.fast_speeds : m_speeds.moderate_speeds);
   m_motion_runner.set_speeds(m_speeds.fast_speeds);
   m_solve_navigator.solve_to(Maze::start(m_start_location), maze::Direction::NORTH,
                              CellPositions::back_wall(), Maze::GOAL_ENDPOINTS, m_floodfill);
@@ -435,7 +429,7 @@ void Robot::process_task_maze_solve(bool fast) {
 void Robot::start_task_test_drive_straight_from_back_wall_to_sense_spot() {
   const units::millimeter_t forward_distance = CellPositions::SENSING_SPOT - CellPositions::back_wall();
 
-  m_motion_runner.enqueue_forward(CellPositions::back_wall(), forward_distance, false);
+  m_motion_runner.enqueue_forward(CellPositions::back_wall(), forward_distance, {.end_high = false});
 }
 
 void Robot::start_task_maze_search_two_times(navigation::SearchNavigator::MovementStyle movement_style) {
@@ -491,25 +485,25 @@ void Robot::process_task_maze_search_two_times() {
 }
 
 void Robot::start_task_test_drive_straight_one_cell() {
-  m_motion_runner.enqueue_forward(0_mm, maze::Cell::WIDTH, false);
+  m_motion_runner.enqueue_forward(0_mm, maze::Cell::WIDTH, {.end_high = false});
 }
 
 void Robot::start_task_test_drive_turn_right_from_sense_spot_to_sense_spot() {
   const units::millimeter_t forward_distance =
       (maze::Cell::WIDTH - CellPositions::SENSING_SPOT) + CellPositions::SEARCH_TURN_START;
 
-  m_motion_runner.enqueue_forward(0_mm, forward_distance, true);
+  m_motion_runner.enqueue_forward(0_mm, forward_distance, {.end_high = true});
   m_motion_runner.enqueue_turn(drive::MotionRunner::TurnAngle::CW_90, CellPositions::SEARCH_TURN_RADIUS);
-  m_motion_runner.enqueue_forward(0_mm, 0_mm, false);
+  m_motion_runner.enqueue_forward(0_mm, 0_mm, {.end_high = false});
 }
 
 void Robot::start_task_test_drive_turn_left_from_sense_spot_to_sense_spot() {
   const units::millimeter_t forward_distance =
       (maze::Cell::WIDTH - CellPositions::SENSING_SPOT) + CellPositions::SEARCH_TURN_START;
 
-  m_motion_runner.enqueue_forward(0_mm, forward_distance, true);
+  m_motion_runner.enqueue_forward(0_mm, forward_distance, {.end_high = true});
   m_motion_runner.enqueue_turn(drive::MotionRunner::TurnAngle::CCW_90, CellPositions::SEARCH_TURN_RADIUS);
-  m_motion_runner.enqueue_forward(0_mm, 0_mm, false);
+  m_motion_runner.enqueue_forward(0_mm, 0_mm, {.end_high = false});
 }
 
 void Robot::start_task_test_drive_turn_right_in_place() {

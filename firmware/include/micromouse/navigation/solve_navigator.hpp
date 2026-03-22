@@ -35,7 +35,10 @@ class SolveNavigator : public Subsystem {
 
  private:
   void move(const SolveRunStep& move, units::millimeter_t cell_position = 0_mm);
-  void move_forward(maze::Coordinate position, maze::Direction direction, units::millimeter_t cell_position);
+  void move_forward(maze::Coordinate position,
+                    maze::Direction direction,
+                    units::millimeter_t cell_position,
+                    drive::MotionRunner::ForwardMotionEndState end_state);
   void move_turn(bool right,
                  maze::Coordinate position,
                  maze::Direction direction,

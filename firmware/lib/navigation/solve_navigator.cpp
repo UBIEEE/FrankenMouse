@@ -3,8 +3,6 @@
 #include <micromouse/robot/cell_positions.hpp>
 #include <micromouse/robot/error.hpp>
 #include <cassert>
-#include "micromouse/drive/motion_runner.hpp"
-#include "units/length.h"
 
 #define LOG_PREFIX "[nav2] "
 #include <micromouse/logging.hpp>
@@ -41,7 +39,7 @@ void SolveNavigator::solve_to(maze::Coordinate position,
   }
 
   // Drive to middle of cell and stop
-  m_drive.enqueue_forward(step.end, 0_mm, step.direction, maze::Cell::HALF_WIDTH, false, true);
+  m_drive.enqueue_forward(step.end, 0_mm, step.direction, maze::Cell::HALF_WIDTH, {.end_high = false}, true);
   // Turn Around
   m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180, [&] { m_done = true; });
 }
@@ -51,11 +49,16 @@ void SolveNavigator::move(const SolveRunStep& move, units::millimeter_t cell_pos
     using enum SolveRunStep::Type;
     case FORWARD: {
       maze::Coordinate position = move.start;
+      units::millimeter_t distance_remaining = move.num_cells * maze::Cell::WIDTH - cell_position;
       for (int i = 0; i < move.num_cells; ++i) {
-        move_forward(position, move.direction, cell_position);
+        move_forward(position, move.direction, cell_position,
+                     {.end_high = true,
+                      .end_for_turn = (i == move.num_cells - 1),
+                      .distance_until_turn = distance_remaining});
         std::optional<maze::Coordinate> next_position = m_maze.neighbor_coordinate(position, move.direction);
         assert(next_position.has_value());
         position = *next_position;
+        distance_remaining -= maze::Cell::WIDTH - cell_position;
         cell_position = 0_mm;
       }
       break;
@@ -71,18 +74,21 @@ void SolveNavigator::move(const SolveRunStep& move, units::millimeter_t cell_pos
 
 void SolveNavigator::move_forward(maze::Coordinate position,
                                   maze::Direction direction,
-                                  units::millimeter_t cell_position) {
+                                  units::millimeter_t cell_position,
+                                  drive::MotionRunner::ForwardMotionEndState end_state) {
   assert(cell_position <= maze::Cell::WIDTH);
 
+#if 0
   if (cell_position < robot::CellPositions::SENSING_SPOT) {
     units::millimeter_t sense_distance = robot::CellPositions::SENSING_SPOT - cell_position;
-    m_drive.enqueue_forward(position, cell_position, direction, sense_distance, true, true,
+    m_drive.enqueue_forward(position, cell_position, direction, sense_distance, {.end_high = true}, true,
                             std::bind(&SolveNavigator::verify_surroundings, this));
     cell_position += sense_distance;
   }
+#endif
 
   units::millimeter_t remaining_distance = maze::Cell::WIDTH - cell_position;
-  m_drive.enqueue_forward(position, cell_position, direction, remaining_distance, true, true);
+  m_drive.enqueue_forward(position, cell_position, direction, remaining_distance, end_state, true);
 }
 
 void SolveNavigator::move_turn(bool right,
@@ -92,7 +98,7 @@ void SolveNavigator::move_turn(bool right,
   assert(cell_position < maze::Cell::HALF_WIDTH);
 
   units::millimeter_t turn_radius = maze::Cell::HALF_WIDTH - cell_position;
-  units::millimeter_t turn_90_curve_length = 151.191897105_mm + 10_mm;
+  units::millimeter_t turn_90_curve_length = 151.191897105_mm + (robot::is_real() ? 12_mm : 0_mm);
 
   using enum drive::MotionRunner::TurnAngle;
   drive::MotionRunner::TurnAngle angle = right ? CW_90 : CCW_90;
@@ -103,7 +109,7 @@ void SolveNavigator::move_turn(bool right,
 
   if (cell_position < maze::Cell::WIDTH) {
     units::millimeter_t remaining_distance = maze::Cell::WIDTH - cell_position;
-    m_drive.enqueue_forward(position, cell_position, direction, remaining_distance, true, true);
+    m_drive.enqueue_forward(position, cell_position, direction, remaining_distance, {.end_high = true}, true);
   }
 }
 

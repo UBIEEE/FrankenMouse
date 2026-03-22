@@ -91,7 +91,7 @@ void MotionRunner::enqueue_forward(maze::Coordinate start_cell,
                                    units::millimeter_t start_cell_position,
                                    maze::Direction direction,
                                    units::millimeter_t distance,
-                                   bool end_high /*= true*/,
+                                   ForwardMotionEndState end_state,
                                    bool monitor_vision /*= true*/,
                                    CompletionCallback completion_func /*= nullptr*/) {
   auto motion = std::make_unique<ForwardMotion>();
@@ -100,7 +100,7 @@ void MotionRunner::enqueue_forward(maze::Coordinate start_cell,
   motion->start_cell_position = start_cell_position;
   motion->direction = direction;
   motion->distance = distance;
-  motion->end_high = end_high;
+  motion->end_state = end_state;
   motion->monitor_vision = monitor_vision;
 
   m_motions.push(std::move(motion));
@@ -196,8 +196,24 @@ void MotionRunner::start_forward_motion(ForwardMotion& motion, units::meters_per
   const Profile::Constraints constraints{.max_velocity = m_speeds.linear_velocity,
                                          .max_acceleration = m_speeds.linear_acceleration};
   const Profile::State initial{.position = exec.current_cell_position, .velocity = exec.initial_velocity};
+  units::millimeters_per_second_t target_velocity = 0_mmps;
+  if (motion.end_state.end_high) {
+    target_velocity =
+        motion.end_state.end_for_turn ? m_speeds.turn_linear_velocity : m_speeds.linear_velocity;
+
+    if (motion.end_state.distance_until_turn > 0_mm) {
+      // If we're going to be turning soon, we may need to start slowing down early to make the turn.
+      units::millimeter_t remaining_distance_after_motion =
+          motion.end_state.distance_until_turn - exec.remaining_distance;
+      const units::millimeters_per_second_t max_velocity_now_for_turn =
+          units::math::sqrt(units::math::pow<2>(m_speeds.turn_linear_velocity) +
+                            2.f * m_speeds.linear_acceleration * remaining_distance_after_motion);
+      target_velocity = std::min(target_velocity, max_velocity_now_for_turn);
+    }
+  }
+  assert(exec.current_cell_position + exec.remaining_distance > 0_mm);
   const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
-                             .velocity = motion.end_high ? m_speeds.linear_velocity : 0_mmps};
+                             .velocity = target_velocity};
   exec.linear_profile.configure(initial, final, constraints);
 }
 
@@ -267,14 +283,32 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
       exec.current_cell = *next_cell;
     }
     exec.initial_velocity = linear_velocity;
-    exec.current_cell_position -= maze::Cell::WIDTH;
-    // assert(exec.current_cell_position + distance < maze::Cell::WIDTH);
+    exec.current_cell_position += distance - maze::Cell::WIDTH;
     exec.remaining_distance -= distance;
+    exec.remaining_distance = std::max(
+        0_mm,
+        exec.remaining_distance);  // We sometimes overshoot a little when going fast, so just clamp to 0.
     exec.did_vision_adjust_for_current_cell = false;
 
     const Profile::State initial{.position = exec.current_cell_position, .velocity = exec.initial_velocity};
+    units::millimeters_per_second_t target_velocity = 0_mmps;
+    if (motion.end_state.end_high) {
+      target_velocity =
+          motion.end_state.end_for_turn ? m_speeds.turn_linear_velocity : m_speeds.linear_velocity;
+
+      if (motion.end_state.distance_until_turn > 0_mm) {
+        // If we're going to be turning soon, we may need to start slowing down early to make the turn.
+        units::millimeter_t remaining_distance_after_motion =
+            motion.end_state.distance_until_turn - exec.remaining_distance;
+        const units::millimeters_per_second_t max_velocity_now_for_turn =
+            units::math::sqrt(units::math::pow<2>(m_speeds.turn_linear_velocity) +
+                              2.f * m_speeds.linear_acceleration * remaining_distance_after_motion);
+        target_velocity = std::min(target_velocity, max_velocity_now_for_turn);
+      }
+    }
+    assert(exec.current_cell_position + exec.remaining_distance > 0_mm);
     const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
-                               .velocity = motion.end_high ? m_speeds.linear_velocity : 0_mmps};
+                               .velocity = target_velocity};
     exec.linear_profile.configure(initial, final, constraints);
 
     m_motion_timer->reset();
@@ -304,8 +338,13 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
 
         const Profile::State initial{.position = exec.current_cell_position,
                                      .velocity = exec.initial_velocity};
+        units::millimeters_per_second_t target_velocity = 0_mmps;
+        if (motion.end_state.end_high) {
+          target_velocity =
+              motion.end_state.end_for_turn ? m_speeds.turn_linear_velocity : m_speeds.linear_velocity;
+        }
         const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
-                                   .velocity = motion.end_high ? m_speeds.linear_velocity : 0_mmps};
+                                   .velocity = target_velocity};
         exec.linear_profile.configure(initial, final, constraints);
 
         m_motion_timer->reset();

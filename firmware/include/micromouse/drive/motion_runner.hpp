@@ -50,6 +50,12 @@ class MotionRunner : public Subsystem {
            ((m_motion_state == MotionState::NONE) || (m_motion_state == MotionState::IDLE));
   }
 
+  struct ForwardMotionEndState {
+    bool end_high = false;
+    bool end_for_turn = false;
+    units::millimeter_t distance_until_turn = 0_mm;
+  };
+
   /**
    * Add a linear motion to the motion queue. The robot will start with the final velocity of the previous
    * motion (or 0 if none).
@@ -59,8 +65,7 @@ class MotionRunner : public Subsystem {
    * @param direction           The maze-centric direction the robot is moving in.
    * @param distance            The distance the robot should travel in the specified direction. Should be
    *                            positive.
-   * @param end_high            Whether the robot should attempt to end the motion at max velocity. If false,
-   *                            the robot will attempt to decelerate to a stop at the end of the motion.
+   * @param end_state           The end state of the forward motion.
    * @param monitor_vision      Whether to monitor IR sensors during the motion and attempt to keep centered
    *                            between walls and/or adjust distance traveled to avoid
    *                            undershooting/overshooting.
@@ -70,15 +75,16 @@ class MotionRunner : public Subsystem {
                        units::millimeter_t start_cell_position,
                        maze::Direction direction,
                        units::millimeter_t distance,
-                       bool end_high = true,
+                       ForwardMotionEndState end_state,
                        bool monitor_vision = true,
                        CompletionCallback completion_func = nullptr);
 
+  // Forward with no info about position or direction in maze.
   void enqueue_forward(units::millimeter_t start_cell_position,
                        units::millimeter_t distance,
-                       bool end_high = true,
+                       ForwardMotionEndState end_state,
                        CompletionCallback completion_func = nullptr) {
-    enqueue_forward(maze::Coordinate(0, 0), start_cell_position, maze::Direction::NORTH, distance, end_high,
+    enqueue_forward(maze::Coordinate(0, 0), start_cell_position, maze::Direction::NORTH, distance, end_state,
                     false, completion_func);
   }
 
@@ -153,7 +159,7 @@ class MotionRunner : public Subsystem {
     units::millimeter_t start_cell_position;
     maze::Direction direction;
     units::millimeter_t distance;
-    bool end_high;
+    ForwardMotionEndState end_state;
     bool monitor_vision;
 
     ForwardMotionExecutionProperties exec_properties;
