@@ -29,24 +29,30 @@ class TaskRunCommand final : public Command {
 
   static constexpr const char* s_stop = "Stop";
   static constexpr const char* s_maze_search = "MazeSearch";
-  static constexpr const char* s_maze_slow_solve = "MazeSlowSolve";
-  static constexpr const char* s_maze_fast_solve = "MazeFastSolve";
-  static constexpr const char* s_maze_search_start_stop_motion = "MazeSearchWithStartAndStopMotion";
+  static constexpr const char* s_maze_slow_solve = "MazeSolve-Slow";
+  static constexpr const char* s_maze_fast_solve = "MazeSolve-Fast";
+  static constexpr const char* s_maze_search_start_stop_motion = "MazeSearch-WithStartAndStopMotion";
+  static constexpr const char* s_maze_search_two_times = "MazeSearch-TwoTimes";
+  static constexpr const char* s_maze_search_two_times_start_stop_motion =
+      "MazeSearch-TwoTimes-WithStartStopMotion";
+  static constexpr const char* s_maze_solve_with_search_navigation = "MazeSolve-WithSearchNavigation";
+  static constexpr const char* s_maze_solve_with_search_navigation_start_stop_motion =
+      "MazeSolve-WithSearchNavigation-WithStartStopMotion";
   static constexpr const char* s_test_drive_straight_from_back_wall_to_sense_spot =
-      "TestDriveStraightFromBackWallToSenseSpot";
-  static constexpr const char* s_test_drive_straight_one_cell = "TestDriveStraightOneCell";
+      "TestDrive-Straight-FromBackWallToSenseSpot";
+  static constexpr const char* s_test_drive_straight_one_cell = "TestDrive-Straight-OneCell";
   static constexpr const char* s_test_drive_turn_right_from_sense_spot_to_sense_spot =
-      "TestDriveTurnRightFromSenseSpotToSenseSpot";
+      "TestDrive-TurnRight-FromSenseSpotToSenseSpot";
   static constexpr const char* s_test_drive_turn_left_from_sense_spot_to_sense_spot =
-      "TestDriveTurnLeftFromSenseSpotToSenseSpot";
-  static constexpr const char* s_test_drive_turn_right_in_place = "TestDriveTurnRightInPlace";
-  static constexpr const char* s_test_drive_turn_left_in_place = "TestDriveTurnLeftInPlace";
-  static constexpr const char* s_test_drive_turn_180_in_place = "TestDriveTurn180InPlace";
+      "TestDrive-TurnLeft-FromSenseSpotToSenseSpot";
+  static constexpr const char* s_test_drive_turn_right_in_place = "TestDrive-TurnRight-InPlace";
+  static constexpr const char* s_test_drive_turn_left_in_place = "TestDrive-TurnLeft-InPlace";
+  static constexpr const char* s_test_drive_turn_180_in_place = "TestDrive-Turn180-InPlace";
   static constexpr const char* s_test_gyro = "TestGyro";
   static constexpr const char* s_test_drive_straight_four_cells_from_back_wall_with_vision_align =
-      "TestDriveStraightFourCellsFromBackWallWithVisionAlign";
-  static constexpr const char* s_test_drive_raw_speeds = "TestDriveRawSpeeds";
-  static constexpr const char* s_test_drive_constant_speed = "TestDriveConstantSpeed";
+      "TestDrive-Straight-FourCellsFromBackWallWithVisionAlign";
+  static constexpr const char* s_test_drive_raw_speeds = "TestDrive-RawSpeeds";
+  static constexpr const char* s_test_drive_constant_speed = "TestDrive-ConstantSpeed";
   static constexpr const char* s_idle = "Idle";
 
   static inline const std::map<std::string, RobotTask> s_tasks{
@@ -55,6 +61,11 @@ class TaskRunCommand final : public Command {
       {s_maze_slow_solve, RobotTask::MAZE_SLOW_SOLVE},
       {s_maze_fast_solve, RobotTask::MAZE_FAST_SOLVE},
       {s_maze_search_start_stop_motion, RobotTask::MAZE_SEARCH_START_STOP_MOTION},
+      {s_maze_search_two_times, RobotTask::MAZE_SEARCH_TWO_TIMES},
+      {s_maze_search_two_times_start_stop_motion, RobotTask::MAZE_SEARCH_TWO_TIMES_START_STOP_MOTION},
+      {s_maze_solve_with_search_navigation, RobotTask::MAZE_SOLVE_WITH_SEARCH_NAVIGATION},
+      {s_maze_solve_with_search_navigation_start_stop_motion,
+       RobotTask::MAZE_SOLVE_WITH_SEARCH_NAVIGATION_START_STOP_MOTION},
       {s_test_drive_straight_from_back_wall_to_sense_spot,
        RobotTask::TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT},
       {s_test_drive_straight_one_cell, RobotTask::TEST_DRIVE_STRAIGHT_ONE_CELL},
@@ -79,6 +90,10 @@ class TaskRunCommand final : public Command {
       s_maze_slow_solve,
       s_maze_fast_solve,
       s_maze_search_start_stop_motion,
+      s_maze_search_two_times,
+      s_maze_search_two_times_start_stop_motion,
+      s_maze_solve_with_search_navigation,
+      s_maze_solve_with_search_navigation_start_stop_motion,
       s_test_drive_straight_from_back_wall_to_sense_spot,
       s_test_drive_straight_one_cell,
       s_test_drive_turn_right_from_sense_spot_to_sense_spot,
