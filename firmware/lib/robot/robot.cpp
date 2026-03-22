@@ -238,6 +238,12 @@ void Robot::start_next_task() {
     case MAZE_SEARCH_START_STOP_MOTION:
       start_task_maze_search(navigation::SearchNavigator::MovementStyle::START_AND_STOP_MOTION);
       break;
+    case MAZE_SEARCH_TWO_TIMES:
+      start_task_maze_search_two_times(navigation::SearchNavigator::MovementStyle::SMOOTH_MOTION);
+      break;
+    case MAZE_SEARCH_TWO_TIMES_START_STOP_MOTION:
+      start_task_maze_search_two_times(navigation::SearchNavigator::MovementStyle::START_AND_STOP_MOTION);
+      break;
     case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
       start_task_test_drive_straight_from_back_wall_to_sense_spot();
       break;
@@ -308,6 +314,10 @@ void Robot::process_current_task() {
     case MAZE_FAST_SOLVE:
       process_task_maze_solve(true);
       break;
+    case MAZE_SEARCH_TWO_TIMES:
+    case MAZE_SEARCH_TWO_TIMES_START_STOP_MOTION:
+      process_task_maze_search_two_times();
+      break;
     case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
     case TEST_DRIVE_STRAIGHT_ONE_CELL:
     case TEST_DRIVE_TURN_RIGHT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
@@ -376,16 +386,9 @@ void Robot::process_task_maze_search() {
     switch (m_search_stage) {
       case START_TO_GOAL:
         // Goal -> Outside Start
-        next_target = Maze::outside_start_span(m_start_location);  // TODO?
-        break;
-      case GOAL_TO_OUTSIDE_START:
-        // Outside Start -> Goal
-        next_target = Maze::GOAL_ENDPOINTS;
-        break;
-      case OUTSIDE_START_TO_GOAL:
-        // Goal -> Start
         next_target = Maze::start_span(m_start_location);
         break;
+      default:
       case GOAL_TO_START:
         end_task();
         return;
@@ -433,6 +436,58 @@ void Robot::start_task_test_drive_straight_from_back_wall_to_sense_spot() {
   const units::millimeter_t forward_distance = CellPositions::SENSING_SPOT - CellPositions::back_wall();
 
   m_motion_runner.enqueue_forward(CellPositions::back_wall(), forward_distance, false);
+}
+
+void Robot::start_task_maze_search_two_times(navigation::SearchNavigator::MovementStyle movement_style) {
+  m_search_stage = SearchStage::START_TO_GOAL;
+
+  m_maze.reset();
+  m_maze.init_start_cell(Maze::StartLocation::WEST_OF_GOAL);
+
+  if (movement_style == navigation::SearchNavigator::MovementStyle::SMOOTH_MOTION) {
+    m_motion_runner.set_speeds(m_speeds.normal_speeds);
+  } else {
+    m_motion_runner.set_speeds(m_speeds.slow_speeds);
+  }
+  m_search_navigator.set_movement_style(movement_style);
+
+  m_search_navigator.reset_position(Maze::start(m_start_location), maze::Direction::NORTH,
+                                    CellPositions::back_wall());
+
+  m_search_navigator.search_to(Maze::GOAL_ENDPOINTS, m_floodfill);
+
+  m_audio_player.play_song(audio::Song::BEGIN_SEARCH);
+}
+
+void Robot::process_task_maze_search_two_times() {
+  using enum SearchStage;
+
+  if (m_search_navigator.is_done()) {
+    maze::CoordinateSpan next_target;
+
+    // Check which stage was just finished, and set the next target accordingly.
+    switch (m_search_stage) {
+      case START_TO_GOAL:
+        // Goal -> Outside Start
+        next_target = Maze::outside_start_span(m_start_location);
+        break;
+      case GOAL_TO_OUTSIDE_START:
+        // Outside Start -> Goal
+        next_target = Maze::GOAL_ENDPOINTS;
+        break;
+      case OUTSIDE_START_TO_GOAL:
+        // Goal -> Start
+        next_target = Maze::start_span(m_start_location);
+        break;
+      case GOAL_TO_START:
+        end_task();
+        return;
+    }
+
+    m_search_navigator.search_to(next_target, m_floodfill);
+
+    m_search_stage = SearchStage(uint8_t(m_search_stage) + 1);
+  }
 }
 
 void Robot::start_task_test_drive_straight_one_cell() {
