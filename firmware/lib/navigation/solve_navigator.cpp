@@ -98,7 +98,7 @@ void SolveNavigator::move_turn(bool right,
   assert(cell_position < maze::Cell::HALF_WIDTH);
 
   units::millimeter_t turn_radius = maze::Cell::HALF_WIDTH - cell_position;
-  units::millimeter_t turn_90_curve_length = 151.191897105_mm + (robot::is_real() ? 12_mm : 0_mm);
+  units::millimeter_t turn_90_curve_length = 151.191897105_mm + (robot::is_real() ? 10_mm : 0_mm);
 
   using enum drive::MotionRunner::TurnAngle;
   drive::MotionRunner::TurnAngle angle = right ? CW_90 : CCW_90;
