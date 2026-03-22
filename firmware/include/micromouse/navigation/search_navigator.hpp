@@ -38,6 +38,7 @@ class SearchNavigator : public Subsystem {
     TURN_LEFT,
     TURN_RIGHT,
     TURN_AROUND,
+    TURN_AROUND_AND_REVERSE,
     TURN_AROUND_IN_PLACE,
   } m_move;
 

@@ -211,7 +211,6 @@ void MotionRunner::start_forward_motion(ForwardMotion& motion, units::meters_per
       target_velocity = std::min(target_velocity, max_velocity_now_for_turn);
     }
   }
-  assert(exec.current_cell_position + exec.remaining_distance > 0_mm);
   const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
                              .velocity = target_velocity};
   exec.linear_profile.configure(initial, final, constraints);
