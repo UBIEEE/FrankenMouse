@@ -18,6 +18,8 @@ enum class Task : uint8_t {
   MAZE_SEARCH_START_STOP_MOTION = 4,
   MAZE_SEARCH_TWO_TIMES = 5,  // To goal, to outside start, to goal, to start.
   MAZE_SEARCH_TWO_TIMES_START_STOP_MOTION = 6,
+  MAZE_SOLVE_WITH_SEARCH_NAVIGATION = 7,
+  MAZE_SOLVE_WITH_SEARCH_NAVIGATION_START_STOP_MOTION = 8,
 
   //
   // 11-40: test drive tasks.

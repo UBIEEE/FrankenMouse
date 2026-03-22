@@ -17,6 +17,7 @@ enum class ErrorCategory : uint8_t {
 enum class GeneralErrorCode : uint8_t {
   UNKNOWN = 0,
   LOW_BATTERY,
+  CANT_SOLVE_HAVENT_SEARCHED_YET,
 };
 
 enum class DriveErrorCode : uint8_t {

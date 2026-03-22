@@ -136,9 +136,6 @@ void Robot::handle_error(const Error& error) {
   run_task(Task::STOPPED, audio::Song::WINDOWS_XP_SHUTDOWN);
 
   m_feedback.publish<feedback::TopicSend::MAIN_ERROR>(error);
-
-  // TODO: Buzzer play error sound.
-
 }
 
 void Robot::handle_button_1() {
@@ -190,10 +187,6 @@ void Robot::run_task(Task task, audio::Song song_to_play) {
 }
 
 void Robot::end_task() {
-  if (m_task == Task::MAZE_SEARCH) {
-    m_search_done = true;
-  }
-
   LogInfo("end task: {}", task_to_string(m_task));
 
   run_task(Task::STOPPED);
@@ -242,6 +235,13 @@ void Robot::start_next_task() {
       break;
     case MAZE_SEARCH_TWO_TIMES_START_STOP_MOTION:
       start_task_maze_search_two_times(navigation::SearchNavigator::MovementStyle::START_AND_STOP_MOTION);
+      break;
+    case MAZE_SOLVE_WITH_SEARCH_NAVIGATION:
+      start_task_maze_solve_with_search_navigation(navigation::SearchNavigator::MovementStyle::SMOOTH_MOTION);
+      break;
+    case MAZE_SOLVE_WITH_SEARCH_NAVIGATION_START_STOP_MOTION:
+      start_task_maze_solve_with_search_navigation(
+          navigation::SearchNavigator::MovementStyle::START_AND_STOP_MOTION);
       break;
     case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
       start_task_test_drive_straight_from_back_wall_to_sense_spot();
@@ -317,6 +317,10 @@ void Robot::process_current_task() {
     case MAZE_SEARCH_TWO_TIMES_START_STOP_MOTION:
       process_task_maze_search_two_times();
       break;
+    case MAZE_SOLVE_WITH_SEARCH_NAVIGATION:
+    case MAZE_SOLVE_WITH_SEARCH_NAVIGATION_START_STOP_MOTION:
+      process_task_maze_solve_with_search_navigation();
+      break;
     case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
     case TEST_DRIVE_STRAIGHT_ONE_CELL:
     case TEST_DRIVE_TURN_RIGHT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
@@ -384,6 +388,7 @@ void Robot::process_task_maze_search() {
     // Check which stage was just finished, and set the next target accordingly.
     switch (m_search_stage) {
       case START_TO_GOAL:
+        m_search_done = true;
         // Goal -> Outside Start
         next_target = Maze::start_span(m_start_location);
         break;
@@ -400,7 +405,10 @@ void Robot::process_task_maze_search() {
 }
 
 void Robot::start_task_maze_solve(bool fast) {
-  (void)fast;
+  if (!m_search_done) {
+    error(GeneralErrorCode::CANT_SOLVE_HAVENT_SEARCHED_YET);
+    return;
+  }
 
   m_solve_stage = SolveStage::START_TO_GOAL;
 
@@ -465,6 +473,7 @@ void Robot::process_task_maze_search_two_times() {
     // Check which stage was just finished, and set the next target accordingly.
     switch (m_search_stage) {
       case START_TO_GOAL:
+        m_search_done = true;
         // Goal -> Outside Start
         next_target = Maze::outside_start_span(m_start_location);
         break;
@@ -476,6 +485,54 @@ void Robot::process_task_maze_search_two_times() {
         // Goal -> Start
         next_target = Maze::start_span(m_start_location);
         break;
+      case GOAL_TO_START:
+        end_task();
+        return;
+    }
+
+    m_search_navigator.search_to(next_target, m_floodfill);
+
+    m_search_stage = SearchStage(uint8_t(m_search_stage) + 1);
+  }
+}
+
+void Robot::start_task_maze_solve_with_search_navigation(
+    navigation::SearchNavigator::MovementStyle movement_style) {
+  if (!m_search_done) {
+    error(GeneralErrorCode::CANT_SOLVE_HAVENT_SEARCHED_YET);
+    return;
+  }
+
+  m_search_stage = SearchStage::START_TO_GOAL;
+
+  if (movement_style == navigation::SearchNavigator::MovementStyle::SMOOTH_MOTION) {
+    m_motion_runner.set_speeds(m_speeds.normal_speeds);
+  } else {
+    m_motion_runner.set_speeds(m_speeds.slow_speeds);
+  }
+  m_search_navigator.set_movement_style(movement_style);
+
+  m_search_navigator.reset_position(Maze::start(m_start_location), maze::Direction::NORTH,
+                                    CellPositions::back_wall());
+
+  m_search_navigator.search_to(Maze::GOAL_ENDPOINTS, m_floodfill);
+
+  m_audio_player.play_song(audio::Song::BEGIN_SLOW_SOLVE);
+}
+
+void Robot::process_task_maze_solve_with_search_navigation() {
+  using enum SearchStage;
+
+  if (m_search_navigator.is_done()) {
+    maze::CoordinateSpan next_target;
+
+    // Check which stage was just finished, and set the next target accordingly.
+    switch (m_search_stage) {
+      case START_TO_GOAL:
+        // Goal -> Outside Start
+        next_target = Maze::start_span(m_start_location);
+        break;
+      default:
       case GOAL_TO_START:
         end_task();
         return;
