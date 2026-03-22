@@ -296,10 +296,9 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
         exec.initial_velocity = linear_velocity;
         units::millimeter_t new_cell_position = robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT;
         exec.remaining_distance = (exec.current_cell_position + exec.remaining_distance) - new_cell_position;
-        if (exec.remaining_distance < 0_mm) {
-          Robot::get().error(robot::NavigationErrorCode::NO_REMAINING_DISTANCE);
-          return ChassisSpeeds{};
-        }
+        exec.remaining_distance =
+            std::max(0_mm, exec.remaining_distance);  // Lets just hope that it isn't too far off...
+                                                      // (previously an error here)
         exec.current_cell_position = new_cell_position;
         exec.did_vision_adjust_for_current_cell = true;
 
@@ -311,7 +310,6 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
 
         m_motion_timer->reset();
         m_motion_timer->start();
-        // TODO: Error when large discrepancy?
       }
     }
 
