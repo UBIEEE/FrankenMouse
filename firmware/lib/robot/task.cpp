@@ -19,6 +19,10 @@ const char* task_to_string(Task task) {
       return "[Maze] Search (Two Times)";
     case MAZE_SEARCH_TWO_TIMES_START_STOP_MOTION:
       return "[Maze] Search (Two Times) (Start+Stop Motion)";
+    case MAZE_SOLVE_WITH_SEARCH_NAVIGATION:
+      return "[Maze] Solve with Search Navigation";
+    case MAZE_SOLVE_WITH_SEARCH_NAVIGATION_START_STOP_MOTION:
+      return "[Maze] Solve with Search Navigation (Start+Stop Motion)";
     case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
       return "[Test] Drive Straight from Back Wall to Sense Spot";
     case TEST_DRIVE_STRAIGHT_ONE_CELL:

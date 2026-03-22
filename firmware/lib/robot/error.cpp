@@ -39,6 +39,9 @@ std::string Error::to_string() const {
       case LOW_BATTERY:
         code_string = "LOW_BATTERY";
         break;
+      case CANT_SOLVE_HAVENT_SEARCHED_YET:
+        code_string = "CANT_SOLVE_HAVENT_SEARCHED_YET";
+        break;
     }
   } else if (c == ErrorCategory::DRIVE) {
     DriveErrorCode code = static_cast<DriveErrorCode>(this->code);
