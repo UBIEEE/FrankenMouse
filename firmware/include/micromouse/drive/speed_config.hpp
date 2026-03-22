@@ -35,11 +35,11 @@ struct SpeedConfig {
   };
 
   const SpeedConstraints moderate_speeds = {
-      .linear_velocity = 600_mmps,
+      .linear_velocity = 500_mmps,
       .linear_acceleration = 700_mmps_sq,
       .angular_velocity = 360_deg_per_s,
       .angular_acceleration = 720_deg_per_s_sq,
-      .turn_linear_velocity = 250_mmps,
+      .turn_linear_velocity = 200_mmps,
   };
 
   const SpeedConstraints fast_speeds = {
