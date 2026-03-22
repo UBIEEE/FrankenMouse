@@ -45,6 +45,8 @@ class TaskRunCommand final : public Command {
   static constexpr const char* s_test_gyro = "TestGyro";
   static constexpr const char* s_test_drive_straight_four_cells_from_back_wall_with_vision_align =
       "TestDriveStraightFourCellsFromBackWallWithVisionAlign";
+  static constexpr const char* s_test_drive_raw_speeds = "TestDriveRawSpeeds";
+  static constexpr const char* s_test_drive_constant_speed = "TestDriveConstantSpeed";
   static constexpr const char* s_idle = "Idle";
 
   static inline const std::map<std::string, RobotTask> s_tasks{
@@ -66,6 +68,8 @@ class TaskRunCommand final : public Command {
       {s_test_gyro, RobotTask::TEST_GYRO},
       {s_test_drive_straight_four_cells_from_back_wall_with_vision_align,
        RobotTask::TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN},
+      {s_test_drive_raw_speeds, RobotTask::TEST_DRIVE_RAW_SPEEDS},
+      {s_test_drive_constant_speed, RobotTask::TEST_DRIVE_CONSTANT_SPEED},
       {s_idle, RobotTask::IDLE},
   };
 
@@ -132,3 +136,4 @@ class TaskRunCommand final : public Command {
   // Returns true if the command should keep running.
   bool validate_args();
 };
+

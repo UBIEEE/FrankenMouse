@@ -4,7 +4,8 @@
 #include <micromouse/vision/vision_distances.hpp>
 #include <micromouse/robot/robot.hpp>
 #include <micromouse/math.hpp>
-#include "micromouse/robot/error.hpp"
+#include <micromouse/robot/error.hpp>
+#include <micromouse/robot/status_topic.hpp>
 #include <units/math.h>
 #include <cassert>
 #include <numbers>
@@ -30,7 +31,7 @@ struct TurnPath {
     S_z = approximate_integral(S, 0.0f, z);
   }
 
-  units::millimeter_t length(units::millimeter_t turn_radius) const {
+  constexpr units::millimeter_t length(units::millimeter_t turn_radius) const {
     const float R = turn_radius.value();
     const float half_angle = abs_angle.value() / 2.f;
     float L = (2 * R * z * gcem::tan(half_angle)) / (C_z + S_z * gcem::tan(half_angle));
@@ -43,8 +44,8 @@ struct TurnPath {
 };
 
 // Pre-compute turn paths for common angles.
-constexpr TurnPath TURN_CW_90_PATH{-90_deg};
-constexpr TurnPath TURN_CCW_90_PATH{90_deg};
+static constexpr TurnPath TURN_CW_90_PATH{-90_deg};
+static constexpr TurnPath TURN_CCW_90_PATH{90_deg};
 
 void MotionRunner::reset() {
   m_motion_timer->stop();
@@ -90,7 +91,7 @@ void MotionRunner::enqueue_forward(maze::Coordinate start_cell,
                                    units::millimeter_t start_cell_position,
                                    maze::Direction direction,
                                    units::millimeter_t distance,
-                                   bool end_high /*= true*/,
+                                   ForwardMotionEndState end_state,
                                    bool monitor_vision /*= true*/,
                                    CompletionCallback completion_func /*= nullptr*/) {
   auto motion = std::make_unique<ForwardMotion>();
@@ -99,7 +100,7 @@ void MotionRunner::enqueue_forward(maze::Coordinate start_cell,
   motion->start_cell_position = start_cell_position;
   motion->direction = direction;
   motion->distance = distance;
-  motion->end_high = end_high;
+  motion->end_state = end_state;
   motion->monitor_vision = monitor_vision;
 
   m_motions.push(std::move(motion));
@@ -119,12 +120,43 @@ void MotionRunner::enqueue_turn(TurnAngle angle,
                                 CompletionCallback completion_func /*= nullptr*/) {
   auto motion = std::make_unique<TurnMotion>();
   motion->completion_func = completion_func;
-  motion->angle = angle;
   motion->angle_value = units::degree_t{static_cast<float>(int16_t(angle))};
   if (units::math::abs(motion->angle_value) >= 180_deg) {  // Force 180 degree turns to be stationary.
     turn_radius = 0_mm;
   }
-  motion->turn_radius = turn_radius;
+  if (units::math::abs(turn_radius) > 0_mm) {
+    switch (angle) {
+      using enum TurnAngle;
+      case CW_90:
+        motion->curve_length = TURN_CW_90_PATH.length(turn_radius);
+        break;
+      case CCW_90:
+        motion->curve_length = TURN_CCW_90_PATH.length(turn_radius);
+        break;
+      case CW_180:
+      case CCW_180:
+        assert(false);
+        break;
+    }
+  }
+
+  m_motions.push(std::move(motion));
+
+  if (m_motion_state == MotionState::NONE) {
+    m_motion_state = MotionState::IDLE;
+  }
+}
+
+void MotionRunner::enqueue_turn_distance(TurnAngle angle,
+                                         units::millimeter_t curve_length,
+                                         CompletionCallback completion_func /*= nullptr*/) {
+  auto motion = std::make_unique<TurnMotion>();
+  motion->completion_func = completion_func;
+  motion->angle_value = units::degree_t{static_cast<float>(int16_t(angle))};
+  if (units::math::abs(motion->angle_value) >= 180_deg) {  // Force 180 degree turns to be stationary.
+    curve_length = 0_mm;
+  }
+  motion->curve_length = curve_length;
 
   m_motions.push(std::move(motion));
 
@@ -164,8 +196,23 @@ void MotionRunner::start_forward_motion(ForwardMotion& motion, units::meters_per
   const Profile::Constraints constraints{.max_velocity = m_speeds.linear_velocity,
                                          .max_acceleration = m_speeds.linear_acceleration};
   const Profile::State initial{.position = exec.current_cell_position, .velocity = exec.initial_velocity};
+  units::millimeters_per_second_t target_velocity = 0_mmps;
+  if (motion.end_state.end_high) {
+    target_velocity =
+        motion.end_state.end_for_turn ? m_speeds.turn_linear_velocity : m_speeds.linear_velocity;
+
+    if (motion.end_state.distance_until_turn > 0_mm) {
+      // If we're going to be turning soon, we may need to start slowing down early to make the turn.
+      units::millimeter_t remaining_distance_after_motion =
+          motion.end_state.distance_until_turn - exec.remaining_distance;
+      const units::millimeters_per_second_t max_velocity_now_for_turn =
+          units::math::sqrt(units::math::pow<2>(m_speeds.turn_linear_velocity) +
+                            2.f * m_speeds.linear_acceleration * remaining_distance_after_motion);
+      target_velocity = std::min(target_velocity, max_velocity_now_for_turn);
+    }
+  }
   const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
-                             .velocity = motion.end_high ? m_speeds.linear_velocity : 0_mmps};
+                             .velocity = target_velocity};
   exec.linear_profile.configure(initial, final, constraints);
 }
 
@@ -175,25 +222,10 @@ void MotionRunner::start_turn_motion(TurnMotion& motion, units::meters_per_secon
   decltype(exec.angular_profile)::Constraints constraints{.max_velocity = m_speeds.angular_velocity,
                                                           .max_acceleration = m_speeds.angular_acceleration};
 
-  if (motion.turn_radius > 0_mm && last_velocity > 0_mmps) {
+  if (motion.curve_length > 0_mm && last_velocity > 0_mmps) {
     exec.linear_velocity = last_velocity;
 
-    units::millimeter_t curve_length;
-    switch (motion.angle) {
-      using enum TurnAngle;
-      case CW_90:
-        curve_length = TURN_CW_90_PATH.length(motion.turn_radius);
-        break;
-      case CCW_90:
-        curve_length = TURN_CCW_90_PATH.length(motion.turn_radius);
-        break;
-      case CW_180:
-      case CCW_180:
-        assert(false);
-        break;
-    }
-
-    const units::second_t total_time = curve_length / exec.linear_velocity;
+    const units::second_t total_time = motion.curve_length / exec.linear_velocity;
 
     // Calculate acceleration and velocity to reach target angle in required time.
     const units::degree_t abs_angle = units::math::abs(motion.angle_value);
@@ -250,14 +282,32 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
       exec.current_cell = *next_cell;
     }
     exec.initial_velocity = linear_velocity;
-    exec.current_cell_position -= maze::Cell::WIDTH;
-    // assert(exec.current_cell_position + distance < maze::Cell::WIDTH);
+    exec.current_cell_position += distance - maze::Cell::WIDTH;
     exec.remaining_distance -= distance;
+    exec.remaining_distance = std::max(
+        0_mm,
+        exec.remaining_distance);  // We sometimes overshoot a little when going fast, so just clamp to 0.
     exec.did_vision_adjust_for_current_cell = false;
 
     const Profile::State initial{.position = exec.current_cell_position, .velocity = exec.initial_velocity};
+    units::millimeters_per_second_t target_velocity = 0_mmps;
+    if (motion.end_state.end_high) {
+      target_velocity =
+          motion.end_state.end_for_turn ? m_speeds.turn_linear_velocity : m_speeds.linear_velocity;
+
+      if (motion.end_state.distance_until_turn > 0_mm) {
+        // If we're going to be turning soon, we may need to start slowing down early to make the turn.
+        units::millimeter_t remaining_distance_after_motion =
+            motion.end_state.distance_until_turn - exec.remaining_distance;
+        const units::millimeters_per_second_t max_velocity_now_for_turn =
+            units::math::sqrt(units::math::pow<2>(m_speeds.turn_linear_velocity) +
+                              2.f * m_speeds.linear_acceleration * remaining_distance_after_motion);
+        target_velocity = std::min(target_velocity, max_velocity_now_for_turn);
+      }
+    }
+    assert(exec.current_cell_position + exec.remaining_distance > 0_mm);
     const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
-                               .velocity = motion.end_high ? m_speeds.linear_velocity : 0_mmps};
+                               .velocity = target_velocity};
     exec.linear_profile.configure(initial, final, constraints);
 
     m_motion_timer->reset();
@@ -270,25 +320,37 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
     // Adjust distance traveled when vision sensors tell us where we are.
     if (!exec.did_vision_adjust_for_current_cell) {
       if (m_vision.did_left_wall_just_disappear() || m_vision.did_right_wall_just_disappear()) {
-        LogInfo("vision adjustment: current position: {} mm, new position: {} mm, diff: {} mm",
-                position.value(), robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT.value(),
-                (robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT - position).value());
+        if (units::math::abs(position - robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT) < 60_mm) {
+          LogInfo("vision adjustment: current position: {} mm, new position: {} mm, diff: {} mm",
+                  position.value(), robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT.value(),
+                  (robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT - position).value());
 
-        exec.initial_velocity = linear_velocity;
-        units::millimeter_t new_cell_position = robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT;
-        exec.remaining_distance = (exec.current_cell_position + exec.remaining_distance) - new_cell_position;
-        exec.current_cell_position = new_cell_position;
-        exec.did_vision_adjust_for_current_cell = true;
+          Robot::get().feedback_status_update<robot::StatusTopic::MAZE_WALL_GONE>(position.value());
 
-        const Profile::State initial{.position = exec.current_cell_position,
-                                     .velocity = exec.initial_velocity};
-        const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
-                                   .velocity = motion.end_high ? m_speeds.linear_velocity : 0_mmps};
-        exec.linear_profile.configure(initial, final, constraints);
+          exec.initial_velocity = linear_velocity;
+          units::millimeter_t new_cell_position = robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT;
+          exec.remaining_distance =
+              (exec.current_cell_position + exec.remaining_distance) - new_cell_position;
+          exec.remaining_distance =
+              std::max(0_mm, exec.remaining_distance);  // Lets just hope that it isn't too far off...
+                                                        // (previously an error here)
+          exec.current_cell_position = new_cell_position;
+          exec.did_vision_adjust_for_current_cell = true;
 
-        m_motion_timer->reset();
-        m_motion_timer->start();
-        // TODO: Error when large discrepancy?
+          const Profile::State initial{.position = exec.current_cell_position,
+                                       .velocity = exec.initial_velocity};
+          units::millimeters_per_second_t target_velocity = 0_mmps;
+          if (motion.end_state.end_high) {
+            target_velocity =
+                motion.end_state.end_for_turn ? m_speeds.turn_linear_velocity : m_speeds.linear_velocity;
+          }
+          const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
+                                     .velocity = target_velocity};
+          exec.linear_profile.configure(initial, final, constraints);
+
+          m_motion_timer->reset();
+          m_motion_timer->start();
+        }
       }
     }
 

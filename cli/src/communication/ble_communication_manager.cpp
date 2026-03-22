@@ -1,3 +1,4 @@
+#include "micromouse_cli/robot/status_topic.hpp"
 #ifdef WITH_BLE
 
 #include <micromouse_cli/communication/ble_communication_manager.hpp>
@@ -201,8 +202,10 @@ bool BLECommunicationManager::configure_peripheral_notifications() {
   notify<FeedbackTopicNotify::MAIN_ERROR>(
       [&](const RobotError& error) { m_main_data.errors[error.timestamp] = error; });
   notify<FeedbackTopicNotify::MAIN_SONG>(m_main_data.song);
-  notify<FeedbackTopicNotify::MAIN_STATUS>([&](const std::pair<RobotStatusTopic, uint8_t>& status) {
-    m_main_data.statusTopics[status.first] = status.second;
+  notify<FeedbackTopicNotify::MAIN_STATUS>([&](const RobotStatusUpdate& status) {
+    if (status.topic != RobotStatusTopic::NONE) {
+      m_main_data.status_topics[status.topic] = status.value;
+    }
   });
   notify<FeedbackTopicNotify::MAIN_BATTERY_VOLTAGE>(m_main_data.battery_voltage);
 

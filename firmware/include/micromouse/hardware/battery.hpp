@@ -1,6 +1,7 @@
 #pragma once
 
 #include <micromouse/hardware/component.hpp>
+#include <units/voltage.h>
 
 namespace hardware {
 
@@ -9,7 +10,8 @@ class Battery : public Component {
   Battery() = default;
 
  public:
-  virtual float get_charge_percentage() = 0;
+  virtual float get_charge_percentage() const = 0;
+  virtual units::volt_t get_voltage() const = 0;
 
   virtual bool is_battery() const = 0;
   bool is_usb() const { return !is_battery(); }

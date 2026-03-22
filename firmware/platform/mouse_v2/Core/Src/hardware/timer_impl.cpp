@@ -32,6 +32,10 @@ units::millisecond_t TimerImpl::get() const {
   return units::millisecond_t{end_time_ms - m_time_start_ms};
 }
 
+units::millisecond_t get_system_timestamp() {
+  return units::millisecond_t{HAL_GetTick()};
+}
+
 std::unique_ptr<hardware::Timer> make_platform_timer() {
   return std::make_unique<TimerImpl>();
 }

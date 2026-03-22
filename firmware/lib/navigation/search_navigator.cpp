@@ -1,14 +1,15 @@
-#include <micromouse/navigation/navigator.hpp>
+#include <micromouse/navigation/search_navigator.hpp>
 #include <micromouse/robot/robot.hpp>
 #include <micromouse/robot/cell_positions.hpp>
-#include "micromouse/robot/error.hpp"
+#include <micromouse/robot/error.hpp>
+#include <cassert>
 
-#define LOG_PREFIX "[nav] "
+#define LOG_PREFIX "[nav1] "
 #include <micromouse/logging.hpp>
 
 using namespace navigation;
 
-void Navigator::periodic() {
+void SearchNavigator::periodic() {
   if (m_done || !m_should_sense)
     return;
 
@@ -79,7 +80,8 @@ void Navigator::periodic() {
     return;
   }
 
-  LogInfo("left: {}, right: {}, front: {}", is_left_wall_present, is_right_wall_present, is_front_wall_present);
+  LogInfo("left: {}, right: {}, front: {}", is_left_wall_present, is_right_wall_present,
+          is_front_wall_present);
 
   m_maze.set_wall(m_next_position, left_direction, is_left_wall_present);
   m_maze.set_wall(m_next_position, right_direction, is_right_wall_present);
@@ -104,36 +106,40 @@ void Navigator::periodic() {
     move(Move::TURN_RIGHT);
   } else {  // Opposite
     m_next_direction = maze::opposite(m_direction);
-    move(Move::TURN_AROUND);
+    if (is_front_wall_present) {
+      move(Move::TURN_AROUND_AND_REVERSE);
+    } else {
+      move(Move::TURN_AROUND);
+    }
   }
 }
 
-void Navigator::reset_position(maze::Coordinate position,
-                               maze::Direction direction,
-                               units::millimeter_t cell_position) {
+void SearchNavigator::reset_position(maze::Coordinate position,
+                                     maze::Direction direction,
+                                     units::millimeter_t cell_position) {
   m_position = m_next_position = position;
   m_direction = m_next_direction = direction;
   m_start_cell_position = cell_position;
 }
 
-void Navigator::search_to(maze::CoordinateSpan targets, Solver& solver) {
+void SearchNavigator::search_to(maze::CoordinateSpan targets, SearchSolver& solver) {
   m_drive.stop();
   m_targets = targets;
   m_solver = &solver;
   m_done = false;
 
   units::millimeter_t sense_distance = robot::CellPositions::SENSING_SPOT - m_start_cell_position;
-  // assert(sense_distance >= 0_mm);
+  assert(sense_distance >= 0_mm);
   if (sense_distance > 0_mm) {
-    m_drive.enqueue_forward(m_position, m_start_cell_position, m_direction, sense_distance, true, true,
-                            m_should_sense_callback);
+    m_drive.enqueue_forward(m_position, m_start_cell_position, m_direction, sense_distance,
+                            {.end_high = true}, true, m_should_sense_callback);
   } else {
     m_should_sense = true;
   }
 
   units::millimeter_t remaining_distance = maze::Cell::WIDTH - robot::CellPositions::SENSING_SPOT;
   m_drive.enqueue_forward(m_position, robot::CellPositions::SENSING_SPOT, m_direction, remaining_distance,
-                          m_movement_style == MovementStyle::SMOOTH_MOTION, true);
+                          {.end_high = m_movement_style == MovementStyle::SMOOTH_MOTION}, true);
 
   LogInfo("cell: ({}, {}), direction: {}", m_position.x(), m_position.y(),
           maze::direction_to_string(m_direction));
@@ -141,7 +147,7 @@ void Navigator::search_to(maze::CoordinateSpan targets, Solver& solver) {
   m_move = Move::FORWARD;
 }
 
-void Navigator::move(Move move) {
+void SearchNavigator::move(Move move) {
   m_move = move;
 
   switch (m_movement_style) {
@@ -155,23 +161,28 @@ void Navigator::move(Move move) {
   }
 }
 
-void Navigator::move_smooth_motion() {
+void SearchNavigator::move_smooth_motion() {
   units::millimeter_t sense_distance = robot::CellPositions::SENSING_SPOT;
   units::millimeter_t remaining_distance = maze::Cell::WIDTH - robot::CellPositions::SENSING_SPOT;
   units::millimeter_t turn_distance = robot::CellPositions::SEARCH_TURN_START;
+
+  // Temporary fix for now.
+  units::millimeter_t turn_90_curve_length = 109.194147909_mm + (robot::is_real() ? 8_mm : 0_mm);
 
   switch (m_move) {
     using enum Move;
     case FORWARD:
       // Drive to sense spot
-      m_drive.enqueue_forward(m_position, 0_mm, m_direction, sense_distance, true, true,
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, sense_distance, {.end_high = true}, true,
                               m_should_sense_callback);
       // Drive to end of cell
-      m_drive.enqueue_forward(m_position, sense_distance, m_direction, remaining_distance, true, true);
+      m_drive.enqueue_forward(m_position, sense_distance, m_direction, remaining_distance, {.end_high = true},
+                              true);
       break;
     case FINISH:
       // Drive to middle of cell and stop
-      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, false, true);
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, {.end_high = false},
+                              true);
       // Turn Around
       m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180, [&] {
         m_position = m_next_position;
@@ -182,33 +193,58 @@ void Navigator::move_smooth_motion() {
       break;
     case TURN_LEFT:
       // Drive to turn start
-      m_drive.enqueue_forward(m_position, 0_mm, m_direction, turn_distance, true, true);
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, turn_distance, {.end_high = true}, true);
       // Turn and reach sense spot
-      m_drive.enqueue_turn(drive::MotionRunner::TurnAngle::CCW_90, robot::CellPositions::SEARCH_TURN_RADIUS,
-                           m_should_sense_callback);
+      // m_drive.enqueue_turn(drive::MotionRunner::TurnAngle::CCW_90,
+      // robot::CellPositions::SEARCH_TURN_RADIUS, m_should_sense_callback);
+      m_drive.enqueue_turn_distance(drive::MotionRunner::TurnAngle::CCW_90, turn_90_curve_length,
+                                    m_should_sense_callback);
       // Drive to end of cell
-      m_drive.enqueue_forward(m_position, sense_distance, m_next_direction, remaining_distance, true, true);
+      m_drive.enqueue_forward(m_position, sense_distance, m_next_direction, remaining_distance,
+                              {.end_high = true}, true);
       break;
     case TURN_RIGHT:
       // Drive to turn start
-      m_drive.enqueue_forward(m_position, 0_mm, m_direction, turn_distance, true, true);
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, turn_distance, {.end_high = true}, true);
       // Turn and reach sense spot
-      m_drive.enqueue_turn(drive::MotionRunner::TurnAngle::CW_90, robot::CellPositions::SEARCH_TURN_RADIUS,
-                           m_should_sense_callback);
+      // m_drive.enqueue_turn(drive::MotionRunner::TurnAngle::CW_90, robot::CellPositions::SEARCH_TURN_RADIUS,
+      // m_should_sense_callback);
+      m_drive.enqueue_turn_distance(drive::MotionRunner::TurnAngle::CW_90, turn_90_curve_length,
+                                    m_should_sense_callback);
       // Drive to end of cell
-      m_drive.enqueue_forward(m_position, sense_distance, m_next_direction, remaining_distance, true, true);
+      m_drive.enqueue_forward(m_position, sense_distance, m_next_direction, remaining_distance,
+                              {.end_high = true}, true);
       break;
     case TURN_AROUND:
       // Drive to middle of cell and stop
-      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, false, true);
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, {.end_high = false},
+                              true);
       // Turn
       m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180);
       // Drive to sense spot
       m_drive.enqueue_forward(m_position, maze::Cell::HALF_WIDTH, m_next_direction,
-                              robot::CellPositions::SENSING_SPOT - maze::Cell::HALF_WIDTH, true, true,
-                              m_should_sense_callback);
+                              robot::CellPositions::SENSING_SPOT - maze::Cell::HALF_WIDTH, {.end_high = true},
+                              true, m_should_sense_callback);
       // Drive to end of cell
-      m_drive.enqueue_forward(m_position, sense_distance, m_next_direction, remaining_distance, true, true);
+      m_drive.enqueue_forward(m_position, sense_distance, m_next_direction, remaining_distance,
+                              {.end_high = true}, true);
+      break;
+    case TURN_AROUND_AND_REVERSE:
+      // Drive to middle of cell and stop
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, {.end_high = false},
+                              true);
+      // Turn
+      m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180);
+      // Back up into wall
+      m_drive.enqueue_forward(m_position, maze::Cell::HALF_WIDTH, m_next_direction, -maze::Cell::HALF_WIDTH,
+                              {.end_high = false}, false);
+      // Drive to sense spot
+      m_drive.enqueue_forward(m_position, robot::CellPositions::back_wall(), m_next_direction,
+                              robot::CellPositions::SENSING_SPOT - robot::CellPositions::back_wall(),
+                              {.end_high = true}, true, m_should_sense_callback);
+      // Drive to end of cell
+      m_drive.enqueue_forward(m_position, sense_distance, m_next_direction, remaining_distance,
+                              {.end_high = true}, true);
       break;
     case TURN_AROUND_IN_PLACE:
       // Already stopped, just turn
@@ -217,7 +253,7 @@ void Navigator::move_smooth_motion() {
   }
 }
 
-void Navigator::move_start_and_stop_motion() {
+void SearchNavigator::move_start_and_stop_motion() {
   units::millimeter_t sense_distance = robot::CellPositions::SENSING_SPOT;
   units::millimeter_t remaining_distance = maze::Cell::WIDTH - robot::CellPositions::SENSING_SPOT;
 
@@ -225,14 +261,16 @@ void Navigator::move_start_and_stop_motion() {
     using enum Move;
     case FORWARD:
       // Drive to sense spot
-      m_drive.enqueue_forward(m_position, 0_mm, m_direction, sense_distance, true, true,
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, sense_distance, {.end_high = true}, true,
                               m_should_sense_callback);
       // Drive to end of cell
-      m_drive.enqueue_forward(m_position, sense_distance, m_direction, remaining_distance, false, true);
+      m_drive.enqueue_forward(m_position, sense_distance, m_direction, remaining_distance,
+                              {.end_high = false}, true);
       break;
     case FINISH:
       // Drive to middle of cell and stop
-      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, false, true);
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, {.end_high = false},
+                              true);
       // Turn Around
       m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180, [&] {
         m_position = m_next_position;
@@ -243,41 +281,62 @@ void Navigator::move_start_and_stop_motion() {
       break;
     case TURN_LEFT:
       // Drive to middle of cell and stop
-      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, false, false);
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, {.end_high = false},
+                              false);
       // Turn
       m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_90);
       // Drive to sense spot and stop
       m_drive.enqueue_forward(m_position, sense_distance, m_next_direction,
-                              robot::CellPositions::SENSING_SPOT - maze::Cell::HALF_WIDTH, true, false,
-                              m_should_sense_callback);
+                              robot::CellPositions::SENSING_SPOT - maze::Cell::HALF_WIDTH, {.end_high = true},
+                              false, m_should_sense_callback);
       // Drive to end of cell
       m_drive.enqueue_forward(m_position, robot::CellPositions::SENSING_SPOT, m_next_direction,
-                              remaining_distance, false, false);
+                              remaining_distance, {.end_high = false}, false);
       break;
     case TURN_RIGHT:
       // Drive to middle of cell and stop
-      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, false, false);
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, {.end_high = false},
+                              false);
       // Turn
       m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CW_90);
       // Drive to sense spot and stop
       m_drive.enqueue_forward(m_position, sense_distance, m_next_direction,
-                              robot::CellPositions::SENSING_SPOT - maze::Cell::HALF_WIDTH, true, false,
-                              m_should_sense_callback);
+                              robot::CellPositions::SENSING_SPOT - maze::Cell::HALF_WIDTH, {.end_high = true},
+                              false, m_should_sense_callback);
       // Drive to end of cell
       m_drive.enqueue_forward(m_position, robot::CellPositions::SENSING_SPOT, m_next_direction,
-                              remaining_distance, false, false);
+                              remaining_distance, {.end_high = false}, false);
       break;
     case TURN_AROUND:
       // Drive to middle of cell and stop
-      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, false, true);
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, {.end_high = false},
+                              true);
       // Turn
       m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180);
       // Drive to sense spot
       m_drive.enqueue_forward(m_position, maze::Cell::HALF_WIDTH, m_next_direction,
-                              robot::CellPositions::SENSING_SPOT - maze::Cell::HALF_WIDTH, true, true,
-                              m_should_sense_callback);
+                              robot::CellPositions::SENSING_SPOT - maze::Cell::HALF_WIDTH, {.end_high = true},
+                              true, m_should_sense_callback);
       // Drive to end of cell
-      m_drive.enqueue_forward(m_position, sense_distance, m_next_direction, remaining_distance, false, true);
+      m_drive.enqueue_forward(m_position, sense_distance, m_next_direction, remaining_distance,
+                              {.end_high = false}, true);
+      break;
+    case TURN_AROUND_AND_REVERSE:
+      // Drive to middle of cell and stop
+      m_drive.enqueue_forward(m_position, 0_mm, m_direction, maze::Cell::HALF_WIDTH, {.end_high = false},
+                              true);
+      // Turn
+      m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180);
+      // Back up into wall
+      m_drive.enqueue_forward(m_position, maze::Cell::HALF_WIDTH, m_next_direction, -maze::Cell::HALF_WIDTH,
+                              {.end_high = false}, false);
+      // Drive to sense spot
+      m_drive.enqueue_forward(m_position, robot::CellPositions::back_wall(), m_next_direction,
+                              robot::CellPositions::SENSING_SPOT - robot::CellPositions::back_wall(),
+                              {.end_high = true}, true, m_should_sense_callback);
+      // Drive to end of cell
+      m_drive.enqueue_forward(m_position, sense_distance, m_next_direction, remaining_distance,
+                              {.end_high = false}, true);
       break;
     case TURN_AROUND_IN_PLACE:
       // Already stopped, just turn

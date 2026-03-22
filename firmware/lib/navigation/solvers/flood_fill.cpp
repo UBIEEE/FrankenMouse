@@ -1,6 +1,8 @@
 #include <micromouse/navigation/solvers/flood_fill.hpp>
 #include <queue>
 #include <sstream>
+#include <cassert>
+#include "micromouse/navigation/solvers/finish_solver.hpp"
 
 #define LOG_PREFIX "[flood_fill_solver] "
 #include <micromouse/logging.hpp>
@@ -10,7 +12,7 @@ using namespace maze;
 
 Direction FloodFillSolver::next(Coordinate robot_coord, CoordinateSpan endpoints, bool should_solve) {
   if (should_solve) {
-    solve(endpoints);
+    solve(endpoints, true);
   }
 
   LogInfo("maze: \n{}", maze_to_string(robot_coord));
@@ -18,7 +20,71 @@ Direction FloodFillSolver::next(Coordinate robot_coord, CoordinateSpan endpoints
   return smallest_neighbor(robot_coord);
 }
 
-void FloodFillSolver::solve(CoordinateSpan endpoints) {
+std::queue<SolveRunStep> FloodFillSolver::solution(maze::Coordinate start_coord,
+                                                   maze::Direction start_direction,
+                                                   maze::CoordinateSpan endpoints) {
+  solve(endpoints, false);
+
+  std::queue<SolveRunStep> steps;
+
+  Coordinate position = start_coord;
+  Direction direction = start_direction;
+  bool visited[maze::Maze::TOTAL_CELLS] = {false};
+  visited[position] = true;
+  bool reached_target = false;
+  while (!reached_target) {
+    Direction move_direction = smallest_neighbor(position, direction);
+    std::optional<Coordinate> new_position_opt = m_maze.neighbor_coordinate(position, move_direction);
+    assert(new_position_opt.has_value()); // TODO: Not all these asserts!
+
+    Coordinate new_position = *new_position_opt;
+    if (visited[new_position]) {
+      // Not solvable?
+      return {};
+    }
+
+    visited[new_position] = true;
+
+    SolveRunStep::Type type;
+    if (move_direction == direction) {
+      type = SolveRunStep::Type::FORWARD;
+    } else if (maze::left_of(direction) == move_direction) {
+      type = SolveRunStep::Type::TURN_LEFT;
+    } else if (maze::right_of(direction) == move_direction) {
+      type = SolveRunStep::Type::TURN_RIGHT;
+    } else {
+      assert(false);
+    }
+
+    if (type == SolveRunStep::Type::FORWARD && !steps.empty() &&
+        steps.back().type == SolveRunStep::Type::FORWARD) {
+      SolveRunStep& last_step = steps.back();
+      assert(last_step.end == position);
+      last_step.end = new_position;
+      last_step.num_cells++;
+    } else {
+      steps.push({.type = type,
+                  .start = position,
+                  .end = new_position,
+                  .direction = move_direction,
+                  .num_cells = 1});
+    }
+
+    position = new_position;
+    direction = move_direction;
+
+    for (maze::Coordinate target : endpoints) {
+      if (position == target) {
+        reached_target = true;
+        break;
+      }
+    }
+  }
+
+  return steps;
+}
+
+void FloodFillSolver::solve(CoordinateSpan endpoints, bool dynamic /*= true*/) {
   for (uint16_t i = 0; i < Maze::TOTAL_CELLS; ++i) {
     m_cell_values[i] = 0xFF;
   }
@@ -38,6 +104,9 @@ void FloodFillSolver::solve(CoordinateSpan endpoints) {
 
     using enum Direction;
     for (Direction d : {NORTH, EAST, SOUTH, WEST}) {
+      if (!dynamic && !cell.is_seen(d))  // Do not travel through unseen walls if not searching.
+        continue;
+
       if (cell.is_exit(d)) {
         std::optional<Coordinate> next_coord_tmp = m_maze.neighbor_coordinate(coord, d);
         if (!next_coord_tmp.has_value()) {
@@ -55,7 +124,8 @@ void FloodFillSolver::solve(CoordinateSpan endpoints) {
   }
 }
 
-Direction FloodFillSolver::smallest_neighbor(Coordinate center_coord) const {
+Direction FloodFillSolver::smallest_neighbor(Coordinate center_coord,
+                                             std::optional<Direction> preference) const {
   using enum Direction;
 
   Direction smallest;
@@ -71,7 +141,11 @@ Direction FloodFillSolver::smallest_neighbor(Coordinate center_coord) const {
 
     uint8_t value = m_cell_values[*c];
 
-    if (value <= smallest_value) {
+    if (value == smallest_value && preference.has_value()) {  // Tiebreaker goes to preference
+      if (d == *preference || smallest == *preference) {
+        smallest = *preference;
+      }
+    } else if (value <= smallest_value) {
       smallest = d;
       smallest_value = value;
     }

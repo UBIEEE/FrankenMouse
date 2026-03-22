@@ -3,20 +3,20 @@
 #include <micromouse/drive/motion_runner.hpp>
 #include <micromouse/maze/maze.hpp>
 #include <micromouse/vision/vision.hpp>
-#include <micromouse/navigation/solvers/solver.hpp>
+#include <micromouse/navigation/solvers/search_solver.hpp>
 #include <micromouse/subsystem.hpp>
 #include <units/length.h>
 
 namespace navigation {
 
-class Navigator : public Subsystem {
+class SearchNavigator : public Subsystem {
   drive::MotionRunner& m_drive;
   vision::Vision& m_vision;
   hardware::Feedback& m_feedback = get_platform_feedback();
 
   Maze& m_maze;
 
-  Solver* m_solver = nullptr;
+  SearchSolver* m_solver = nullptr;
 
   units::millimeter_t m_start_cell_position = 0_mm;
   units::millimeter_t m_target_cell_position;
@@ -38,11 +38,12 @@ class Navigator : public Subsystem {
     TURN_LEFT,
     TURN_RIGHT,
     TURN_AROUND,
+    TURN_AROUND_AND_REVERSE,
     TURN_AROUND_IN_PLACE,
   } m_move;
 
  public:
-  Navigator(drive::MotionRunner& drive, vision::Vision& vision, Maze& maze)
+  SearchNavigator(drive::MotionRunner& drive, vision::Vision& vision, Maze& maze)
       : m_drive(drive), m_vision(vision), m_maze(maze) {}
 
   void periodic() override;
@@ -58,8 +59,7 @@ class Navigator : public Subsystem {
 
   void set_movement_style(MovementStyle style) { m_movement_style = style; }
 
-  void search_to(maze::CoordinateSpan targets, Solver& solver);
-  // TODO: solve_to() for faster?
+  void search_to(maze::CoordinateSpan targets, SearchSolver& solver);
 
   bool is_done() const { return m_done; }
 

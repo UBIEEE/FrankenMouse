@@ -4,7 +4,8 @@ using namespace hardware;
 
 class UnimplementedBattery : public Battery {
  public:
-  float get_charge_percentage() override { return 1.f; }
+  float get_charge_percentage() const override { return 1.f; }
+  units::volt_t get_voltage() const override { return 8_V; }
   bool is_battery() const override { return true; }
 };
 

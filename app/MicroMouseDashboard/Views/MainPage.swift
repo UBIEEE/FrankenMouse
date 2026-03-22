@@ -24,8 +24,18 @@ struct MainPage: View {
           }
         }
 
-        Section("Error message") {
-          Text("None")
+        Section("Latest Error message") {
+          if feedback.mainService.errorCodes.isEmpty {
+            Text("None")
+          }
+          else {
+            let error = feedback.mainService.errorCodes.first!.value
+            Text("\(error.timestamp): \(error.errorCategory)-\(error.errorCode)")
+          }
+        }
+        
+        Section("Battery Voltage") {
+          Text("\(feedback.mainService.batteryVoltage) V")
         }
 
         Section(header: Text("User task Selection"), footer: Text(TaskDescriptions[selectedTask] ?? ""))

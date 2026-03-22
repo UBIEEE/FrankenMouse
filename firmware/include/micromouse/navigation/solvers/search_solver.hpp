@@ -6,27 +6,23 @@
 
 namespace navigation {
 
-class Solver {
+// Solver to be used during the search phase, just needs to decide the next cell to move to.
+class SearchSolver {
  protected:
-  Maze& m_maze;
-
-  Solver(Maze& maze) : m_maze(maze) {}
+  SearchSolver() = default;
 
  public:
-  virtual ~Solver() = default;
+  virtual ~SearchSolver() = default;
 
   /**
-   * @brief Solve the maze.
+   * Solve the maze.
    *
    * @param coord The coordinates of the robot's current cell.
    * @param endpoints The coordinates of the destination cells.
-   * @param solve Whether the solver algorithm should be run. If false, just use
-   * previous solve.
+   * @param solve Whether the solver algorithm should be run. If false, just use previous solve.
    * @return Direction of the next cell to move to.
    */
-  virtual maze::Direction next(maze::Coordinate coord,
-                               maze::CoordinateSpan endpoints,
-                               bool solve = true) = 0;
+  virtual maze::Direction next(maze::Coordinate coord, maze::CoordinateSpan endpoints, bool solve = true) = 0;
 };
 
 }  // namespace navigation

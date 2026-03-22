@@ -16,6 +16,8 @@ enum class Task : uint8_t {
   MAZE_FAST_SOLVE = 3,
 
   MAZE_SEARCH_START_STOP_MOTION = 4,
+  MAZE_SEARCH_TWO_TIMES = 5,  // To goal, to outside start, to goal, to start.
+  MAZE_SEARCH_TWO_TIMES_START_STOP_MOTION = 6,
 
   //
   // 11-40: test drive tasks.
@@ -30,6 +32,8 @@ enum class Task : uint8_t {
   TEST_DRIVE_TURN_180_IN_PLACE = 17,
   TEST_GYRO = 18,
   TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN = 19,
+  TEST_DRIVE_RAW_SPEEDS = 20,
+  TEST_DRIVE_CONSTANT_SPEED = 21,
 
   //
   // 41-50: Other

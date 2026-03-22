@@ -69,6 +69,7 @@ class DrivetrainImpl : public hardware::Drivetrain {
   void set_wheel_speeds(const drive::WheelSpeeds& speeds) override {
     set_chassis_speeds(drive::to_chassis_speeds(speeds, m_measurements.track_width));
   }
+  void set_motors_manual(float left_percent, float right_percent) override;
 
  private:
   void update_encoders();

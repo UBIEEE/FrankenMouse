@@ -7,6 +7,7 @@
 #include <micromouse/audio/song.hpp>
 #include <micromouse/drive/kinematics.hpp>
 #include <micromouse/robot/error.hpp>
+#include <micromouse/robot/status_topic.hpp>
 #include <micromouse/hardware/drivetrain.hpp>
 #include <micromouse/hardware/imu.hpp>
 #include <units/voltage.h>
@@ -75,6 +76,7 @@ enum class TopicSend : uint8_t {
   MAIN_TASK = FB_TOPIC_SEND_MAIN_TASK,
   MAIN_ERROR = FB_TOPIC_SEND_MAIN_ERROR,
   MAIN_SONG = FB_TOPIC_SEND_MAIN_SONG,
+  MAIN_STATUS = FB_TOPIC_SEND_MAIN_STATUS,
   MAIN_BATTERY_VOLTAGE = FB_TOPIC_SEND_MAIN_BATTERY_VOLTAGE,
 
   VISION_RAW_READINGS = FB_TOPIC_SEND_VISION_RAW_READINGS,
@@ -105,6 +107,10 @@ struct TopicSendData<TopicSend::MAIN_ERROR> {
 template <>
 struct TopicSendData<TopicSend::MAIN_SONG> {
   using type = audio::Song;
+};
+template <>
+struct TopicSendData<TopicSend::MAIN_STATUS> {
+  using type = robot::StatusUpdate;
 };
 template <>
 struct TopicSendData<TopicSend::MAIN_BATTERY_VOLTAGE> {

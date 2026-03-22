@@ -33,6 +33,15 @@ units::millisecond_t TimerImpl::get() const {
   return units::millisecond_t{static_cast<float>(duration.count())};
 }
 
+const auto start_time_point = std::chrono::high_resolution_clock::now();
+
+units::millisecond_t get_system_timestamp() {
+  auto now = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_point);
+
+  return units::millisecond_t{static_cast<float>(duration.count())};
+}
+
 std::unique_ptr<Timer> make_platform_timer() {
   return std::make_unique<TimerImpl>();
 }

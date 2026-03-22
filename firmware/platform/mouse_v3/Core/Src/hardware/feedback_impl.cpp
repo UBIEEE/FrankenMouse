@@ -18,6 +18,9 @@ void FeedbackImpl::publish_topic(feedback::TopicSend topic, const uint8_t* _data
     case MAIN_SONG:
       Custom_STM_App_Update_Char(CUSTOM_STM_MAIN_SONG_CHAR, data);
       break;
+    case MAIN_STATUS:
+      Custom_STM_App_Update_Char(CUSTOM_STM_MAIN_STATUS_CHAR, data);
+      break;
     case MAIN_BATTERY_VOLTAGE:
       Custom_STM_App_Update_Char(CUSTOM_STM_MAIN_BATTERYVOLTAGE_CHAR, data);
       break;

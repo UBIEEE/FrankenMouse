@@ -19,6 +19,8 @@ enum Task: UInt8, CaseIterable, Identifiable {
   case testDriveTurn180InPlace = 17
   case testGyro = 18
   case testDriveStraightFourCellsFromBackWallWithVisionAlign = 19
+  case testDriveRawSpeeds = 20
+  case testDriveConstantSpeed = 21
   
   // 41-50: Other
   
@@ -55,6 +57,8 @@ let TaskNames: [Task: String] = [
   .testDriveTurn180InPlace: "TEST - Drive Turn 180 In Place",
   .testGyro: "TEST - Gyro",
   .testDriveStraightFourCellsFromBackWallWithVisionAlign: "TEST - Drive Straight Four Cells From Back Wall With Vision Align",
+  .testDriveRawSpeeds: "TEST - Drive Raw Speeds",
+  .testDriveConstantSpeed: "TEST - Drive Constant Speed",
   
   .manualChassisSpeeds: "Manual Control - Chassis Speeds",
   .idle: "Idle",
@@ -86,6 +90,8 @@ let TaskDescriptions: [Task: String] = [
   .testDriveTurn180InPlace: "Turn 180 degrees in place",
   .testGyro: "Maintain a rotational velocity of 0 deg/s",
   .testDriveStraightFourCellsFromBackWallWithVisionAlign: "Drive straight four cells from back wall with vision align",
+  .testDriveRawSpeeds: "Set motors to raw speed",
+  .testDriveConstantSpeed: "Drive forward at a constant speed",
   
   .idle: "Idle",
 ]

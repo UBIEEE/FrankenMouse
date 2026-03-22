@@ -2,6 +2,7 @@
 #include <simulation/hardware/feedback_impl.hpp>
 
 #include <micromouse/robot/robot.hpp>
+#include "micromouse/robot/status_topic.hpp"
 
 using namespace std::placeholders;
 
@@ -43,7 +44,7 @@ FeedbackImpl::FeedbackImpl() : Node("micromouse_feedback") {
   m_main_task_pub = this->create_publisher<std_msgs::msg::UInt8MultiArray>("/robot/main/task", 10);
   m_main_error_pub = this->create_publisher<std_msgs::msg::UInt8MultiArray>("/robot/main/error", 10);
   m_main_song_pub = this->create_publisher<std_msgs::msg::UInt8>("/robot/main/song", 10);
-  m_main_status_pub = this->create_publisher<std_msgs::msg::UInt8MultiArray>("/robot/main/status", 10);
+  m_main_status_pub = this->create_publisher<std_msgs::msg::Float32MultiArray>("/robot/main/status", 10);
   m_main_battery_voltage_pub =
       this->create_publisher<std_msgs::msg::Float32>("/robot/main/battery_voltage", 10);
   m_vision_raw_readings_pub =
@@ -79,6 +80,12 @@ void FeedbackImpl::publish_topic(feedback::TopicSend topic, const uint8_t* data)
       std_msgs::msg::UInt8 msg;
       msg.data = data[0];
       m_main_song_pub->publish(msg);
+      break;
+    }
+    case MAIN_STATUS: {
+      std_msgs::msg::Float32MultiArray msg;
+      msg.data = {static_cast<float>(data[0]), *reinterpret_cast<const float*>(data + 1)};
+      m_main_status_pub->publish(msg);
       break;
     }
     case MAIN_BATTERY_VOLTAGE: {

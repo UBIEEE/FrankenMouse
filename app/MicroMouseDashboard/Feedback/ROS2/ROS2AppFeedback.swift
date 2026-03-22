@@ -43,7 +43,7 @@ class ROS2AppFeedback: NSObject, AppFeedbackBase, ObservableObject {
     
     var song: Song = .none
     
-    var statusTopics: [StatusTopic: UInt8] = [:]
+    var statusTopics: [StatusTopic: Float32] = [:]
     
     var batteryVoltage: Float32 = 0
   }

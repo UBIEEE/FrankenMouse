@@ -75,7 +75,7 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
     
     var song: Song = .none
     
-    var statusTopics: [StatusTopic: UInt8] = [:]
+    var statusTopics: [StatusTopic: Float32] = [:]
     
     var batteryVoltage: Float32 = 0
   }
@@ -355,6 +355,11 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
       return value
     }
     
+    func getUIntValue(_ data: Data) -> UInt32 {
+      let value = data.withUnsafeBytes { $0.load(as: UInt32.self) }
+      return value
+    }
+
     func getIntValue(_ data: Data) -> Int32 {
       let value = data.withUnsafeBytes { $0.load(as: Int32.self) }
       return value
@@ -375,28 +380,27 @@ class BLEAppFeedback: NSObject, AppFeedbackBase, ObservableObject,
     switch ch.uuid {
       // Main service
     case AppConstants.Bluetooth.MainService.TaskUUID:
-        mainService.currentTask = Task(rawValue: ch.value![0]) ?? .unknown
-        mainService.startingPosition = StartingPosition(rawValue: ch.value![1]) ?? .westOfGoal
+      mainService.currentTask = Task(rawValue: ch.value![0]) ?? .unknown
+      mainService.startingPosition = StartingPosition(rawValue: ch.value![1]) ?? .westOfGoal
     case AppConstants.Bluetooth.MainService.ErrorUUID:
-        let timestamp: UInt32 = UInt32(ch.value![0]) << 24
-                              | UInt32(ch.value![1]) << 16
-                              | UInt32(ch.value![2]) << 8
-                              | UInt32(ch.value![3])
-        let errorCategory = ch.value![5]
-        let errorCode = ch.value![4]
-        mainService.errorCodes[timestamp] = MainService.Error(timestamp: timestamp,
-                                                              errorCategory: errorCategory,
-                                                              errorCode: errorCode)
+      let timestamp = getUIntValue(ch.value!.subdata(in: 0..<4))
+      let errorCategory = ch.value![5]
+      let errorCode = ch.value![4]
+      mainService.errorCodes[timestamp] = MainService.Error(timestamp: timestamp,
+                                                            errorCategory: errorCategory,
+                                                            errorCode: errorCode)
     case AppConstants.Bluetooth.MainService.SongUUID:
       mainService.song = Song(rawValue: ch.value![0]) ?? .unknown
     case AppConstants.Bluetooth.MainService.StatusUUID:
       let topic = StatusTopic(rawValue: ch.value![0])!
-      mainService.statusTopics[topic] = ch.value![1]
+      if topic != .none {
+        mainService.statusTopics[topic] = getFloatValue(ch.value!.subdata(in: 1..<5))
+      }
       
       // Main service 2
     case AppConstants.Bluetooth.MainService2.BatteryVoltageUUID:
       mainService.batteryVoltage = getFloatValue(ch.value!)
-
+      
       // Vision service
     case AppConstants.Bluetooth.VisionService.RawReadingsUUID:
       visionService.rawSensorData = getFloatValues(ch.value!, numValues: 4)

@@ -15,6 +15,10 @@ const char* task_to_string(Task task) {
       return "[Maze] Fast Solve";
     case MAZE_SEARCH_START_STOP_MOTION:
       return "[Maze] Search (Start+Stop Motion)";
+    case MAZE_SEARCH_TWO_TIMES:
+      return "[Maze] Search (Two Times)";
+    case MAZE_SEARCH_TWO_TIMES_START_STOP_MOTION:
+      return "[Maze] Search (Two Times) (Start+Stop Motion)";
     case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
       return "[Test] Drive Straight from Back Wall to Sense Spot";
     case TEST_DRIVE_STRAIGHT_ONE_CELL:
@@ -33,6 +37,10 @@ const char* task_to_string(Task task) {
       return "[Test] Gyro";
     case TEST_DRIVE_STRAIGHT_FOUR_CELLS_FROM_BACK_WALL_WITH_VISION_ALIGN:
       return "[Test] Drive Straight Four Cells from Back Wall with Vision Align";
+    case TEST_DRIVE_RAW_SPEEDS:
+      return "[Test] Drive Raw Speeds";
+    case TEST_DRIVE_CONSTANT_SPEED:
+      return "[Test] Drive Constant Speed";
     case MANUAL_CHASSIS_SPEEDS:
       return "Manual Chassis Speeds";
     case IDLE:

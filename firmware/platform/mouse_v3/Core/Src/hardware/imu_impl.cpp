@@ -109,6 +109,10 @@ void IMUImpl::set_standby(bool on_standby) {
 
   m_time_since_standby_timer->reset();
   m_time_since_standby_timer->start();
+
+  for (Axis axis : {Axis::X, Axis::Y, Axis::Z}) {
+    m_gyro_filters[axis].reset();
+  }
 }
 
 HAL_StatusTypeDef IMUImpl::write_register(uint8_t reg, uint8_t value) {
@@ -208,9 +212,9 @@ void IMUImpl::read_complete_handler() {
   const int16_t gyro_y = (m_data_raw[8] << 8) | m_data_raw[9];
   const int16_t gyro_z = (m_data_raw[10] << 8) | m_data_raw[11];
 
-  m_data.gyro_data[Axis::X] = gyro_x * gyro_conversion;
-  m_data.gyro_data[Axis::Y] = gyro_y * gyro_conversion;
-  m_data.gyro_data[Axis::Z] = gyro_z * gyro_conversion;
+  m_data.gyro_data[Axis::X] = m_gyro_filters[Axis::X].calculate(gyro_x * gyro_conversion);
+  m_data.gyro_data[Axis::Y] = m_gyro_filters[Axis::Y].calculate(gyro_y * gyro_conversion);
+  m_data.gyro_data[Axis::Z] = m_gyro_filters[Axis::Z].calculate(gyro_z * gyro_conversion);
 
   m_is_receiving = false;
 }

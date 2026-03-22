@@ -103,6 +103,10 @@ enable_language(CXX)
 # Make core library
 add_library(micromouse)
 
+if(BUILD_SIMULATION)
+  target_compile_definitions(micromouse PUBLIC IS_SIMULATION)
+endif()
+
 # Sources
 file(GLOB_RECURSE LIB_SOURCES lib/*.c lib/*.cpp)
 target_sources(micromouse PRIVATE ${LIB_SOURCES})

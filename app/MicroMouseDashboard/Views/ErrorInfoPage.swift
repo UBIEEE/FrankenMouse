@@ -21,6 +21,24 @@ struct ErrorInfoPage: View {
             let error = feedback.mainService.errorCodes[timestamp]!
             Text("\(timestamp): \(error.errorCategory)-\(error.errorCode)")
           }
+          
+          if !feedback.mainService.errorCodes.isEmpty {
+            Button("Clear") {
+              feedback.mainService.errorCodes.removeAll()
+            }
+          }
+        }
+        Section("Status Topics") {
+          ForEach(Array(feedback.mainService.statusTopics.keys), id: \.self) { topic in
+            let statusValue = feedback.mainService.statusTopics[topic]!
+            VStack(alignment: .leading) {
+              Text("\(statusValue)")
+              Text("\(StatusTopicDescriptions[topic]!)")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            }
+          }
+          
         }
       }
       .navigationTitle("Error Info")

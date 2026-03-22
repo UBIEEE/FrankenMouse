@@ -16,12 +16,15 @@
 #include <micromouse/hardware/timer.hpp>
 #include <micromouse/maze/coordinate.hpp>
 #include <micromouse/maze/maze.hpp>
-#include <micromouse/navigation/navigator.hpp>
+#include <micromouse/navigation/search_navigator.hpp>
+#include <micromouse/navigation/solve_navigator.hpp>
 #include <micromouse/navigation/solvers/flood_fill.hpp>
 #include <micromouse/singleton.hpp>
 #include <micromouse/robot/task.hpp>
+#include <micromouse/robot/status_topic.hpp>
 #include <micromouse/vision/vision.hpp>
-#include "micromouse/audio/song.hpp"
+#include <array>
+#include <unordered_map>
 
 namespace robot {
 
@@ -49,13 +52,15 @@ class Robot : public Singleton<Robot> {
   vision::Vision m_vision;
   audio::AudioPlayer m_audio_player;
   drive::MotionRunner m_motion_runner{m_maze, m_vision, m_speeds.normal_speeds};
-  navigation::Navigator m_navigator{m_motion_runner, m_vision, m_maze};
+  navigation::SearchNavigator m_search_navigator{m_motion_runner, m_vision, m_maze};
+  navigation::SolveNavigator m_solve_navigator{m_motion_runner, m_vision, m_maze};
 
-  const std::array<Subsystem*, 4> m_subsystems{
+  const std::array<Subsystem*, 5> m_subsystems{
       &m_motion_runner,
       &m_audio_player,
       &m_vision,
-      &m_navigator,
+      &m_search_navigator,
+      &m_solve_navigator,
   };
 
   bool m_feedback_connected = false;
@@ -92,6 +97,8 @@ class Robot : public Singleton<Robot> {
   drive::ChassisSpeeds m_chassis_speeds{};
   std::unique_ptr<hardware::Timer> m_chassis_speeds_timer = make_platform_timer();
 
+  std::unordered_map<StatusTopic, float> m_status_updates_to_publish;
+
  public:
   void init();
   void periodic();
@@ -105,8 +112,15 @@ class Robot : public Singleton<Robot> {
 
   template <ErrorCode Code>
   void error(Code code) {
-    Error error = Error::create<Code>(0, code);
+    Error error = Error::create<Code>(get_system_timestamp().to<uint32_t>(), code);
     handle_error(error);
+  }
+
+  template <StatusTopic Topic>
+  void feedback_status_update(float value = 0.f) {
+    if (Topic != StatusTopic::NONE) {
+      m_status_updates_to_publish[Topic] = value;
+    }
   }
 
  private:
@@ -135,9 +149,16 @@ class Robot : public Singleton<Robot> {
   void end_task();
 
   void start_next_task();
+  void process_current_task();
 
-  void start_task_maze_search(navigation::Navigator::MovementStyle movement_style);
+  void start_task_maze_search(navigation::SearchNavigator::MovementStyle movement_style);
+  void process_task_maze_search();
+
+  void start_task_maze_search_two_times(navigation::SearchNavigator::MovementStyle movement_style);
+  void process_task_maze_search_two_times();
+
   void start_task_maze_solve(bool fast);
+  void process_task_maze_solve(bool fast);
 
   void start_task_test_drive_straight_from_back_wall_to_sense_spot();
   void start_task_test_drive_straight_one_cell();
@@ -146,30 +167,33 @@ class Robot : public Singleton<Robot> {
   void start_task_test_drive_turn_right_in_place();
   void start_task_test_drive_turn_left_in_place();
   void start_task_test_drive_turn_180_in_place();
-  void start_task_test_gyro();
-  void start_task_test_drive_straight_four_cells_from_back_wall_with_vision_align();
-
-  void start_task_manual_chassis_speeds();
-
-  void start_task_armed();
-  void start_task_armed_triggering();
-  void start_task_armed_triggered();
-
-  void process_current_task();
-
-  void process_task_maze_search();
-  void process_task_maze_solve(bool fast);
-
   void process_task_test_drive();
 
+  void start_task_test_gyro();
+
+  void start_task_test_drive_straight_four_cells_from_back_wall_with_vision_align();
+
+  void start_task_test_drive_raw_speed();
+
+  void start_task_test_drive_constant_speed();
+
+  void start_task_manual_chassis_speeds();
   void process_task_manual_chassis_speeds();
 
+  void start_task_armed();
   void process_task_armed();
+
+  void start_task_armed_triggering();
   void process_task_armed_triggering();
+
+  void start_task_armed_triggered();
   void process_task_armed_triggered();
+
 
   void publish_current_task();
 };
+
+bool is_real();
 
 }  // namespace robot
 

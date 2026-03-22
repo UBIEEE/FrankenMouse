@@ -22,6 +22,9 @@ class Timer {
 
 }  // namespace hardware
 
+// Returns the current system timestamp in milliseconds.
+units::millisecond_t get_system_timestamp();
+
 /**
  * Returns a newly created platform-specific timer.
  *

@@ -7,6 +7,7 @@ class UnimplementedDrivetrain : public Drivetrain {
   void stop() override {}
   void set_wheel_speeds(const drive::WheelSpeeds&) override {}
   void set_chassis_speeds(const drive::ChassisSpeeds&) override {}
+  void set_motors_manual(float, float) override {}
 };
 
 __attribute__((weak)) Drivetrain& get_platform_drivetrain() {

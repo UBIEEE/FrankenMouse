@@ -90,6 +90,10 @@ void IRSensorsImpl::periodic() {
   }
 }
 
+void IRSensorsImpl::publish_status_feedback() {
+  m_feedback.publish<feedback::TopicSend::MAIN_BATTERY_VOLTAGE>(m_battery_voltage);
+}
+
 void IRSensorsImpl::set_emitter(Sensor sensor, GPIO_PinState state) {
   HAL_GPIO_WritePin(EMIT_PORTS[sensor], EMIT_PINS[sensor], state);
 }
@@ -110,8 +114,11 @@ units::millimeter_t IRSensorsImpl::calculate_distance(const float& R) {
   // Measurements:
   // 120mm: 0.047852
   // 160mm: 0.027344
-  const units::millimeter_t known_distance = 120_mm;
-  const float known_intensity = 0.047852f;
+  // const units::millimeter_t known_distance = 120_mm;
+  // const float known_intensity = 0.047852f;
+
+  const units::millimeter_t known_distance = 84_mm;
+  const float known_intensity = 0.068359f;
 
   // The light intensity emitted gets weaker as the distance increases (by the
   // inverse square law). The distance is actually double, since it needs to
@@ -154,48 +161,56 @@ void IRSensorsImpl::handle_raw_battery_reading() {
   m_feedback.publish<feedback::TopicSend::MAIN_BATTERY_VOLTAGE>(m_battery_voltage);
 }
 
-  bool IRSensorsImpl::is_battery() const {
-    return m_battery_voltage > 6_V;
-  }
+bool IRSensorsImpl::is_battery() const {
+  return m_battery_voltage > 6_V;
+}
 
-  float IRSensorsImpl::get_charge_percentage() {
-    float percentage = (m_battery_voltage - LOW_VOLTAGE) / (FULLY_CHARGED_VOLTAGE - LOW_VOLTAGE);
-    return std::clamp(percentage, 0.f, 1.f);
-  }
+float IRSensorsImpl::get_charge_percentage() const {
+  float percentage = (m_battery_voltage - LOW_VOLTAGE) / (FULLY_CHARGED_VOLTAGE - LOW_VOLTAGE);
+  return std::clamp(percentage, 0.f, 1.f);
+}
 
-  void IRSensorsImpl::read_complete_handler() {
-    m_adc_ready = true;
-  }
+units::volt_t IRSensorsImpl::get_voltage() const {
+  return m_battery_voltage;
+}
 
-  bool BatteryImpl::is_battery() const {
-    return get_mouse_v3_ir_sensors().is_battery();
-  }
+void IRSensorsImpl::read_complete_handler() {
+  m_adc_ready = true;
+}
 
-  float BatteryImpl::get_charge_percentage() {
-    return get_mouse_v3_ir_sensors().get_charge_percentage();
-  }
+bool BatteryImpl::is_battery() const {
+  return get_mouse_v3_ir_sensors().is_battery();
+}
 
-  void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef * hadc) {
-    assert_param(hadc->Instance == ADC1);
-    UNUSED(hadc);
+float BatteryImpl::get_charge_percentage() const {
+  return get_mouse_v3_ir_sensors().get_charge_percentage();
+}
 
-    get_mouse_v3_ir_sensors().read_complete_handler();
-  }
+units::volt_t BatteryImpl::get_voltage() const {
+  return get_mouse_v3_ir_sensors().get_voltage();
+}
 
-  IRSensorsImpl& get_mouse_v3_ir_sensors() {
-    static IRSensorsImpl ir_sensors;
-    return ir_sensors;
-  }
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef * hadc) {
+  assert_param(hadc->Instance == ADC1);
+  UNUSED(hadc);
 
-  BatteryImpl& get_mouse_v3_battery() {
-    static BatteryImpl battery;
-    return battery;
-  }
+  get_mouse_v3_ir_sensors().read_complete_handler();
+}
 
-  hardware::IRSensors& get_platform_ir_sensors() {
-    return get_mouse_v3_ir_sensors();
-  }
+IRSensorsImpl& get_mouse_v3_ir_sensors() {
+  static IRSensorsImpl ir_sensors;
+  return ir_sensors;
+}
 
-  hardware::Battery& get_platform_battery() {
-    return get_mouse_v3_battery();
-  }
+BatteryImpl& get_mouse_v3_battery() {
+  static BatteryImpl battery;
+  return battery;
+}
+
+hardware::IRSensors& get_platform_ir_sensors() {
+  return get_mouse_v3_ir_sensors();
+}
+
+hardware::Battery& get_platform_battery() {
+  return get_mouse_v3_battery();
+}
