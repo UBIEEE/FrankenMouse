@@ -9,7 +9,7 @@
 #define LOG_PREFIX "[robot] "
 #include <micromouse/logging.hpp>
 
-using namespace robot;
+namespace robot {
 
 void Robot::init() {
   m_buttons.register_button_1_callback(std::bind(&Robot::handle_button_1, this));
@@ -608,6 +608,12 @@ void Robot::publish_current_task() {
   using namespace feedback;
   m_feedback.publish<TopicSend::MAIN_TASK>(m_task);
 }
+
+__attribute__((weak)) bool is_real() {
+  return true;
+}
+
+}  // namespace robot
 
 void Robot_Init(void) {
   Robot::get().init();

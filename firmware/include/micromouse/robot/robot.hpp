@@ -189,6 +189,8 @@ class Robot : public Singleton<Robot> {
   void publish_current_task();
 };
 
+bool is_real();
+
 }  // namespace robot
 
 using robot::Robot;

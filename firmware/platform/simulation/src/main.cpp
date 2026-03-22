@@ -13,6 +13,12 @@
 
 using namespace robot;
 
+namespace robot {
+bool is_real() {
+  return false;
+}
+}  // namespace robot
+
 int main(int argc, char** argv) {
   rclcpp::init(argc, argv);
 
