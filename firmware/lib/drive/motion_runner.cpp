@@ -320,34 +320,37 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
     // Adjust distance traveled when vision sensors tell us where we are.
     if (!exec.did_vision_adjust_for_current_cell) {
       if (m_vision.did_left_wall_just_disappear() || m_vision.did_right_wall_just_disappear()) {
-        LogInfo("vision adjustment: current position: {} mm, new position: {} mm, diff: {} mm",
-                position.value(), robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT.value(),
-                (robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT - position).value());
+        if (units::math::abs(position - robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT) < 60_mm) {
+          LogInfo("vision adjustment: current position: {} mm, new position: {} mm, diff: {} mm",
+                  position.value(), robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT.value(),
+                  (robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT - position).value());
 
-        Robot::get().feedback_status_update<robot::StatusTopic::MAZE_WALL_GONE>(position.value());
+          Robot::get().feedback_status_update<robot::StatusTopic::MAZE_WALL_GONE>(position.value());
 
-        exec.initial_velocity = linear_velocity;
-        units::millimeter_t new_cell_position = robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT;
-        exec.remaining_distance = (exec.current_cell_position + exec.remaining_distance) - new_cell_position;
-        exec.remaining_distance =
-            std::max(0_mm, exec.remaining_distance);  // Lets just hope that it isn't too far off...
-                                                      // (previously an error here)
-        exec.current_cell_position = new_cell_position;
-        exec.did_vision_adjust_for_current_cell = true;
+          exec.initial_velocity = linear_velocity;
+          units::millimeter_t new_cell_position = robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT;
+          exec.remaining_distance =
+              (exec.current_cell_position + exec.remaining_distance) - new_cell_position;
+          exec.remaining_distance =
+              std::max(0_mm, exec.remaining_distance);  // Lets just hope that it isn't too far off...
+                                                        // (previously an error here)
+          exec.current_cell_position = new_cell_position;
+          exec.did_vision_adjust_for_current_cell = true;
 
-        const Profile::State initial{.position = exec.current_cell_position,
-                                     .velocity = exec.initial_velocity};
-        units::millimeters_per_second_t target_velocity = 0_mmps;
-        if (motion.end_state.end_high) {
-          target_velocity =
-              motion.end_state.end_for_turn ? m_speeds.turn_linear_velocity : m_speeds.linear_velocity;
+          const Profile::State initial{.position = exec.current_cell_position,
+                                       .velocity = exec.initial_velocity};
+          units::millimeters_per_second_t target_velocity = 0_mmps;
+          if (motion.end_state.end_high) {
+            target_velocity =
+                motion.end_state.end_for_turn ? m_speeds.turn_linear_velocity : m_speeds.linear_velocity;
+          }
+          const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
+                                     .velocity = target_velocity};
+          exec.linear_profile.configure(initial, final, constraints);
+
+          m_motion_timer->reset();
+          m_motion_timer->start();
         }
-        const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
-                                   .velocity = target_velocity};
-        exec.linear_profile.configure(initial, final, constraints);
-
-        m_motion_timer->reset();
-        m_motion_timer->start();
       }
     }
 
