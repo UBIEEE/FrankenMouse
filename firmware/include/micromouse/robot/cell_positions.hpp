@@ -17,11 +17,15 @@ class CellPositions {
     return m.center_to_back + maze::Cell::HALF_WALL_THICKNESS;
   }
 
-  static constexpr units::millimeter_t CENTERED = maze::Cell::WIDTH / 2.f;
+  static constexpr units::millimeter_t CENTERED = maze::Cell::WIDTH / 2;
 
   static constexpr units::millimeter_t SENSING_SPOT = CENTERED + 65_mm;
 
+#if IS_SIMULATION
   static constexpr units::millimeter_t SIDE_WALL_OUT_OF_VIEW_SPOT = 85_mm;
+#else  // idk, ir sensors readings are weird in real life so just measure this value on the robot
+  static constexpr units::millimeter_t SIDE_WALL_OUT_OF_VIEW_SPOT = 99_mm;
+#endif
 
   static constexpr units::millimeter_t SEARCH_TURN_START = maze::Cell::WIDTH - SENSING_SPOT;
 
