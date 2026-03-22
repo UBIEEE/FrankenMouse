@@ -423,11 +423,19 @@ void Robot::start_task_maze_solve(bool fast) {
 void Robot::process_task_maze_solve(bool fast) {
   (void)fast;
 
-  if (m_solve_navigator.is_done()) {
+  if (m_solve_navigator.is_done() && m_search_navigator.is_done()) {
+    // Check which stage was just finished, and set the next target accordingly.
     switch (m_solve_stage) {
       using enum SolveStage;
       case START_TO_GOAL:
-        // TODO: Navigate (slow) back to start
+        // Navigate back to start
+        m_motion_runner.set_speeds(m_speeds.normal_speeds);
+        m_search_navigator.set_movement_style(navigation::SearchNavigator::MovementStyle::SMOOTH_MOTION);
+        {
+          const auto [end_position, end_direction, end_cell_position] = m_solve_navigator.get_end();
+          m_search_navigator.reset_position(end_position, end_direction, end_cell_position);
+        }
+        m_search_navigator.search_to(Maze::start_span(m_start_location), m_floodfill);
         m_solve_stage = GOAL_TO_START;
         break;
       case GOAL_TO_START:

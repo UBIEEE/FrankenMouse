@@ -42,6 +42,10 @@ void SolveNavigator::solve_to(maze::Coordinate position,
   m_drive.enqueue_forward(step.end, 0_mm, step.direction, maze::Cell::HALF_WIDTH, {.end_high = false}, true);
   // Turn Around
   m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180, [&] { m_done = true; });
+
+  m_end_position = step.end;
+  m_end_direction = maze::opposite(step.direction);
+  m_end_cell_position = maze::Cell::HALF_WIDTH;
 }
 
 void SolveNavigator::move(const SolveRunStep& move, units::millimeter_t cell_position /*= 0_mm*/) {
