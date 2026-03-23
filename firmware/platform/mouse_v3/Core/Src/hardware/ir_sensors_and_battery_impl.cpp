@@ -117,8 +117,13 @@ units::millimeter_t IRSensorsImpl::calculate_distance(const float& R) {
   // const units::millimeter_t known_distance = 120_mm;
   // const float known_intensity = 0.047852f;
 
+  // UB maze
+  // const units::millimeter_t known_distance = 84_mm;
+  // const float known_intensity = 0.068359f;
+
+  // APEC maze
   const units::millimeter_t known_distance = 84_mm;
-  const float known_intensity = 0.068359f;
+  const float known_intensity = 0.062500f;
 
   // The light intensity emitted gets weaker as the distance increases (by the
   // inverse square law). The distance is actually double, since it needs to

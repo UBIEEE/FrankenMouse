@@ -37,6 +37,8 @@ const char* song_to_string(Song song) {
       return "Armed Tone";
     case ARMED_TRIGGERING:
       return "Armed and Triggering Tone";
+    case TASK_SELECTION_MODE:
+      return "Task Selection Mode";
   }
   return "Unknown";
 }
@@ -223,6 +225,9 @@ const AudioPlayer::SongHandle& AudioPlayer::get_song(Song song) const {
     case ARMED_TRIGGERING:
       static constexpr SongHandle ARMED_TRIGGERING_SONG_HANDLE = {SONG_ARMED_AND_TRIGGERING_NOTES, SONG_ARMED_AND_TRIGGERING_NOTE_LENGTH_MS / ROBOT_UPDATE_PERIOD_MS};
       return ARMED_TRIGGERING_SONG_HANDLE;
+    case TASK_SELECTION_MODE:
+      static constexpr SongHandle TASK_SELECTION_MODE_SONG_HANDLE = {SONG_TASK_SELECTION_MODE_NOTES, SONG_TASK_SELECTION_MODE_NOTE_LENGTH_MS / ROBOT_UPDATE_PERIOD_MS};
+      return TASK_SELECTION_MODE_SONG_HANDLE;
   }
 }
 

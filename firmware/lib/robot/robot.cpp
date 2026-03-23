@@ -27,6 +27,36 @@ void Robot::periodic() {
   for (auto s : m_subsystems) {
     s->periodic();
   }
+
+  if (m_buttons_in_task_selection_mode && m_buttons_task_selection_mode_num_presses > 0 &&
+      m_buttons_task_selection_mode_timer->get() >= 2_s) {
+    switch (m_buttons_task_selection_mode_num_presses) {
+      case 1:
+        arm_task(Task::MAZE_SLOW_SOLVE);
+        break;
+      case 2:
+        arm_task(Task::MAZE_FAST_SOLVE);
+        break;
+      case 3:
+        arm_task(Task::MAZE_SOLVE_WITH_SEARCH_NAVIGATION);
+        break;
+      case 4:
+        arm_task(Task::MAZE_SEARCH_FASTER);
+        break;
+      case 5:
+        arm_task(Task::MAZE_SEARCH);
+        break;
+      default:
+        LogInfo("invalid buttons task selection mode, num presses: {}",
+                m_buttons_task_selection_mode_num_presses);
+        m_audio_player.quiet();
+        break;
+    }
+    m_buttons_in_task_selection_mode = false;
+    m_buttons_task_selection_mode_num_presses = 0;
+    m_buttons_task_selection_mode_timer->stop();
+    m_buttons_task_selection_mode_timer->reset();
+  }
 }
 
 void Robot::on_connect() {
@@ -147,10 +177,13 @@ void Robot::handle_button_1() {
     return;
   }
 
-  if (m_search_done) {
-    arm_task(Task::MAZE_SLOW_SOLVE);
+  if (m_buttons_in_task_selection_mode) {
+    m_buttons_task_selection_mode_timer->reset();
+    m_buttons_task_selection_mode_timer->start();
+    m_buttons_task_selection_mode_num_presses++;
+    LogInfo("buttons task selection mode num presses: {}", m_buttons_task_selection_mode_num_presses);
   } else {
-    arm_task(Task::MAZE_SEARCH);
+    arm_task(Task::MAZE_SEARCH_THEN_SLOW_SOLVE_THEN_FAST_SOLVE);
   }
 }
 
@@ -163,7 +196,19 @@ void Robot::handle_button_2() {
     return;
   }
 
-  // reset_maze();
+  m_buttons_task_selection_mode_timer->stop();
+  m_buttons_task_selection_mode_timer->reset();
+
+  if (m_buttons_in_task_selection_mode) {
+    m_buttons_in_task_selection_mode = false;
+    m_audio_player.quiet();
+    LogInfo("buttons leaving task selection mode");
+  } else {
+    m_buttons_in_task_selection_mode = true;
+    m_buttons_task_selection_mode_num_presses = 0;
+    m_audio_player.play_song(audio::Song::TASK_SELECTION_MODE, true);
+    LogInfo("buttons entering task selection mode");
+  }
 }
 
 void Robot::arm_task(Task task) {
@@ -184,6 +229,11 @@ void Robot::run_task(Task task, audio::Song song_to_play) {
   m_next_task_song = song_to_play;
   m_next_task = task;
   m_is_next_task = true;
+
+  m_buttons_in_task_selection_mode = false;
+  m_buttons_task_selection_mode_num_presses = 0;
+  m_buttons_task_selection_mode_timer->stop();
+  m_buttons_task_selection_mode_timer->reset();
 }
 
 void Robot::end_task() {
@@ -199,6 +249,7 @@ void Robot::start_next_task() {
   m_audio_player.play_song(m_next_task_song);
   m_next_task_song = audio::Song::QUIET;
   m_motion_runner.stop();
+  m_search_navigator.reset();
   m_task = m_next_task;
 
   {
@@ -243,6 +294,12 @@ void Robot::start_next_task() {
       start_task_maze_solve_with_search_navigation(
           navigation::SearchNavigator::MovementStyle::START_AND_STOP_MOTION);
       break;
+    case MAZE_SEARCH_FASTER:
+      start_task_maze_search(navigation::SearchNavigator::MovementStyle::SMOOTH_MOTION, true);
+      return;
+    case MAZE_SEARCH_THEN_SLOW_SOLVE_THEN_FAST_SOLVE:
+      start_task_maze_search_then_slow_solve_then_fast_solve();
+      break;
     case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
       start_task_test_drive_straight_from_back_wall_to_sense_spot();
       break;
@@ -279,6 +336,9 @@ void Robot::start_next_task() {
     case MANUAL_CHASSIS_SPEEDS:
       start_task_manual_chassis_speeds();
       break;
+    case DRIVE_BACKUP_INTO_WALL:
+      start_task_drive_backup_into_wall();
+      break;
     case IDLE:
       // Do nothing, or something
       break;
@@ -305,6 +365,7 @@ void Robot::process_current_task() {
       break;
     case MAZE_SEARCH:
     case MAZE_SEARCH_START_STOP_MOTION:
+    case MAZE_SEARCH_FASTER:
       process_task_maze_search();
       break;
     case MAZE_SLOW_SOLVE:
@@ -321,6 +382,9 @@ void Robot::process_current_task() {
     case MAZE_SOLVE_WITH_SEARCH_NAVIGATION_START_STOP_MOTION:
       process_task_maze_solve_with_search_navigation();
       break;
+    case MAZE_SEARCH_THEN_SLOW_SOLVE_THEN_FAST_SOLVE:
+      process_task_maze_search_then_slow_solve_then_fast_solve();
+      break;
     case TEST_DRIVE_STRAIGHT_FROM_BACK_WALL_TO_SENSE_SPOT:
     case TEST_DRIVE_STRAIGHT_ONE_CELL:
     case TEST_DRIVE_TURN_RIGHT_FROM_SENSE_SPOT_TO_SENSE_SPOT:
@@ -328,7 +392,8 @@ void Robot::process_current_task() {
     case TEST_DRIVE_TURN_RIGHT_IN_PLACE:
     case TEST_DRIVE_TURN_LEFT_IN_PLACE:
     case TEST_DRIVE_TURN_180_IN_PLACE:
-      process_task_test_drive();
+    case DRIVE_BACKUP_INTO_WALL:
+      process_task_drive();
       break;
     case TEST_GYRO:
       break;
@@ -358,14 +423,19 @@ void Robot::process_current_task() {
   }
 }
 
-void Robot::start_task_maze_search(navigation::SearchNavigator::MovementStyle movement_style) {
+void Robot::start_task_maze_search(navigation::SearchNavigator::MovementStyle movement_style,
+                                   bool faster /*= false*/) {
   m_search_stage = SearchStage::START_TO_GOAL;
 
   m_maze.reset();
   m_maze.init_start_cell(Maze::StartLocation::WEST_OF_GOAL);
 
   if (movement_style == navigation::SearchNavigator::MovementStyle::SMOOTH_MOTION) {
-    m_motion_runner.set_speeds(m_speeds.normal_speeds);
+    if (faster) {
+      m_motion_runner.set_speeds(m_speeds.normal_faster_speeds);
+    } else {
+      m_motion_runner.set_speeds(m_speeds.normal_speeds);
+    }
   } else {
     m_motion_runner.set_speeds(m_speeds.slow_speeds);
   }
@@ -389,6 +459,7 @@ void Robot::process_task_maze_search() {
     switch (m_search_stage) {
       case START_TO_GOAL:
         m_search_done = true;
+        m_audio_player.play_song(audio::Song::HOME_DEPOT);  // Celebrate!
         // Goal -> Outside Start
         next_target = Maze::start_span(m_start_location);
         break;
@@ -445,6 +516,55 @@ void Robot::process_task_maze_solve(bool fast) {
   }
 }
 
+void Robot::start_task_maze_search_then_slow_solve_then_fast_solve() {
+  start_task_maze_search(navigation::SearchNavigator::MovementStyle::SMOOTH_MOTION, true);
+
+  m_search_and_solve_stage = SearchAndSolveStage::SEARCH_START_TO_GOAL;
+}
+
+void Robot::process_task_maze_search_then_slow_solve_then_fast_solve() {
+  using enum SearchAndSolveStage;
+
+  if (m_search_navigator.is_done() && m_solve_navigator.is_done() && m_motion_runner.is_done()) {
+    // Check which stage was just finished, and set the next target accordingly.
+    switch (m_search_and_solve_stage) {
+      case SEARCH_START_TO_GOAL:
+        m_search_done = true;
+        m_audio_player.play_song(audio::Song::HOME_DEPOT);  // Celebrate!
+        m_search_navigator.search_to(Maze::start_span(m_start_location), m_floodfill);
+        break;
+      case SEARCH_GOAL_TO_START:
+      case SOLVE_SLOW_GOAL_TO_START:
+        // Back up into wall
+        m_motion_runner.enqueue_forward(maze::Cell::HALF_WIDTH, -maze::Cell::HALF_WIDTH, {.end_high = true});
+        m_motion_runner.enqueue_pause();
+        break;
+      case SEARCH_BACKUP:
+        start_task_maze_solve(false);
+        break;
+      case SOLVE_SLOW_START_TO_GOAL:
+      case SOLVE_FAST_START_TO_GOAL:
+        // Navigate back to start
+        m_motion_runner.set_speeds(m_speeds.normal_speeds);
+        m_search_navigator.set_movement_style(navigation::SearchNavigator::MovementStyle::SMOOTH_MOTION);
+        {
+          const auto [end_position, end_direction, end_cell_position] = m_solve_navigator.get_end();
+          m_search_navigator.reset_position(end_position, end_direction, end_cell_position);
+        }
+        m_search_navigator.search_to(Maze::start_span(m_start_location), m_floodfill);
+        break;
+      case SOLVE_SLOW_BACKUP:
+        start_task_maze_solve(true);
+        break;
+      case SOLVE_FAST_GOAL_TO_START:
+        end_task();
+        return;
+    }
+
+    m_search_and_solve_stage = SearchAndSolveStage(uint8_t(m_search_and_solve_stage) + 1);
+  }
+}
+
 void Robot::start_task_test_drive_straight_from_back_wall_to_sense_spot() {
   const units::millimeter_t forward_distance = CellPositions::SENSING_SPOT - CellPositions::back_wall();
 
@@ -482,6 +602,7 @@ void Robot::process_task_maze_search_two_times() {
     switch (m_search_stage) {
       case START_TO_GOAL:
         m_search_done = true;
+        m_audio_player.play_song(audio::Song::HOME_DEPOT);  // Celebrate!
         // Goal -> Outside Start
         next_target = Maze::outside_start_span(m_start_location);
         break;
@@ -586,7 +707,13 @@ void Robot::start_task_test_drive_turn_180_in_place() {
   m_motion_runner.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180);
 }
 
-void Robot::process_task_test_drive() {
+void Robot::start_task_drive_backup_into_wall() {
+  // Back up into wall
+  m_motion_runner.enqueue_forward(maze::Cell::HALF_WIDTH, -maze::Cell::HALF_WIDTH, {.end_high = true});
+  m_motion_runner.enqueue_pause();
+}
+
+void Robot::process_task_drive() {
   if (m_motion_runner.is_done()) {
     end_task();
   }
@@ -641,9 +768,9 @@ void Robot::process_task_armed() {
   if (!left_blocked && !right_blocked)
     return;
 
-  m_armed_trigger_side = ArmedTriggerSide::LEFT;
-  if (right_blocked && !left_blocked) {
-    m_armed_trigger_side = ArmedTriggerSide::RIGHT;
+  m_armed_trigger_side = ArmedTriggerSide::RIGHT;
+  if (left_blocked && !right_blocked) {
+    m_armed_trigger_side = ArmedTriggerSide::LEFT;
   }
 
   run_task(Task::ARMED_TRIGGERING);

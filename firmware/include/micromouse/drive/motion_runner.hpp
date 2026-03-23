@@ -24,21 +24,28 @@
 namespace drive {
 
 class MotionRunner : public Subsystem {
+  static constexpr float VISION_ALIGN_P = 0.50;
+  static constexpr float VISION_ALIGN_I = 0.00;
+  static constexpr float VISION_ALIGN_D = 0.00;
+
  public:
   using CompletionCallback = std::function<void()>;
 
   enum class TurnAngle : int16_t {
-    CW_180 = -180,
+    CW_180 = -177,
     CW_90 = -90,
     CCW_90 = 90,
-    CCW_180 = 180,
+    CCW_180 = 177,
   };
 
   MotionRunner(maze::Maze& maze, vision::Vision& vision, const SpeedConstraints& speeds)
       : m_maze(maze), m_vision(vision), m_speeds(speeds) {}
 
   void reset();
-  void set_speeds(const SpeedConstraints& speeds) { m_speeds = speeds; }
+  void set_speeds(const SpeedConstraints& speeds) {
+    m_speeds = speeds;
+    m_vision_align_pid.reset();
+  }
   const SpeedConstraints& get_speeds() const { return m_speeds; }
 
   void periodic() override;
@@ -115,6 +122,8 @@ class MotionRunner : public Subsystem {
                              units::millimeter_t curve_length,
                              CompletionCallback completion_func = nullptr);
 
+  void enqueue_pause();
+
   // Stops and clears queued motions.
   void stop() {
     m_drivetrain.stop();
@@ -136,6 +145,7 @@ class MotionRunner : public Subsystem {
     enum class Type {
       FORWARD,
       TURN,
+      PAUSE,
     };
     virtual Type type() const = 0;
 
@@ -180,13 +190,19 @@ class MotionRunner : public Subsystem {
     TurnMotionExecutionProperties exec_properties;
   };
 
+  struct PauseMotion : public Motion {
+    Type type() const override { return Type::PAUSE; }
+  };
+
   void start_next_motion(units::meters_per_second_t last_velocity);
   void start_forward_motion(ForwardMotion& motion, units::meters_per_second_t last_velocity);
   void start_turn_motion(TurnMotion& motion, units::meters_per_second_t last_velocity);
+  void start_pause(PauseMotion& motion);
 
   ChassisSpeeds process_motion(units::second_t t);
   ChassisSpeeds process_forward_motion(ForwardMotion& motion, units::second_t t);
   ChassisSpeeds process_turn_motion(TurnMotion& motion, units::second_t t);
+  ChassisSpeeds process_pause(PauseMotion& motion, units::second_t t);
 
   hardware::RobotMeasurements& m_measurements = get_robot_measurements();
   hardware::Drivetrain& m_drivetrain = get_platform_drivetrain();
@@ -201,9 +217,9 @@ class MotionRunner : public Subsystem {
   SpeedConstraints m_speeds;
 
   drive::PIDController m_vision_align_pid{
-      0.5f,
-      0.f,
-      0.f,
+      VISION_ALIGN_P,
+      VISION_ALIGN_I,
+      VISION_ALIGN_D,
       ROBOT_UPDATE_PERIOD_S,
   };
 

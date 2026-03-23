@@ -237,7 +237,8 @@ void SearchNavigator::move_smooth_motion() {
       m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180);
       // Back up into wall
       m_drive.enqueue_forward(m_position, maze::Cell::HALF_WIDTH, m_next_direction, -maze::Cell::HALF_WIDTH,
-                              {.end_high = false}, false);
+                              {.end_high = true}, false);
+      m_drive.enqueue_pause();
       // Drive to sense spot
       m_drive.enqueue_forward(m_position, robot::CellPositions::back_wall(), m_next_direction,
                               robot::CellPositions::SENSING_SPOT - robot::CellPositions::back_wall(),
@@ -329,7 +330,8 @@ void SearchNavigator::move_start_and_stop_motion() {
       m_drive.enqueue_stationary_turn(drive::MotionRunner::TurnAngle::CCW_180);
       // Back up into wall
       m_drive.enqueue_forward(m_position, maze::Cell::HALF_WIDTH, m_next_direction, -maze::Cell::HALF_WIDTH,
-                              {.end_high = false}, false);
+                              {.end_high = true}, false);
+      m_drive.enqueue_pause();
       // Drive to sense spot
       m_drive.enqueue_forward(m_position, robot::CellPositions::back_wall(), m_next_direction,
                               robot::CellPositions::SENSING_SPOT - robot::CellPositions::back_wall(),
