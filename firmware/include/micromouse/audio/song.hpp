@@ -26,6 +26,8 @@ enum class Song : uint8_t {
 
   ARMED,
   ARMED_TRIGGERING,
+
+  TASK_SELECTION_MODE,
 };
 
 const char* song_to_string(Song song);

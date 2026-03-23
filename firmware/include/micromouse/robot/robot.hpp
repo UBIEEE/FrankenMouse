@@ -56,11 +56,7 @@ class Robot : public Singleton<Robot> {
   navigation::SolveNavigator m_solve_navigator{m_motion_runner, m_vision, m_maze};
 
   const std::array<Subsystem*, 5> m_subsystems{
-      &m_motion_runner,
-      &m_audio_player,
-      &m_vision,
-      &m_search_navigator,
-      &m_solve_navigator,
+      &m_motion_runner, &m_audio_player, &m_vision, &m_search_navigator, &m_solve_navigator,
   };
 
   bool m_feedback_connected = false;
@@ -80,6 +76,10 @@ class Robot : public Singleton<Robot> {
     RIGHT,
   } m_armed_trigger_side;
 
+  bool m_buttons_in_task_selection_mode = false;
+  int m_buttons_task_selection_mode_num_presses = 0;
+  std::unique_ptr<hardware::Timer> m_buttons_task_selection_mode_timer = make_platform_timer();
+
   bool m_search_done = false;
 
   enum class SearchStage : uint8_t {
@@ -93,6 +93,17 @@ class Robot : public Singleton<Robot> {
     START_TO_GOAL = 0,
     GOAL_TO_START = 1,
   } m_solve_stage = SolveStage::START_TO_GOAL;
+
+  enum class SearchAndSolveStage : uint8_t {
+    SEARCH_START_TO_GOAL = 0,
+    SEARCH_GOAL_TO_START,
+    SEARCH_BACKUP,
+    SOLVE_SLOW_START_TO_GOAL,
+    SOLVE_SLOW_GOAL_TO_START,
+    SOLVE_SLOW_BACKUP,
+    SOLVE_FAST_START_TO_GOAL,
+    SOLVE_FAST_GOAL_TO_START,
+  } m_search_and_solve_stage = SearchAndSolveStage::SEARCH_START_TO_GOAL;
 
   drive::ChassisSpeeds m_chassis_speeds{};
   std::unique_ptr<hardware::Timer> m_chassis_speeds_timer = make_platform_timer();
@@ -144,24 +155,28 @@ class Robot : public Singleton<Robot> {
   // Task things
 
   void arm_task(Task task);
-  void run_task(Task task, audio::Song song_to_play=audio::Song::QUIET);
+  void run_task(Task task, audio::Song song_to_play = audio::Song::QUIET);
 
   void end_task();
 
   void start_next_task();
   void process_current_task();
 
-  void start_task_maze_search(navigation::SearchNavigator::MovementStyle movement_style);
+  void start_task_maze_search(navigation::SearchNavigator::MovementStyle movement_style, bool faster = false);
   void process_task_maze_search();
 
   void start_task_maze_search_two_times(navigation::SearchNavigator::MovementStyle movement_style);
   void process_task_maze_search_two_times();
 
-  void start_task_maze_solve_with_search_navigation(navigation::SearchNavigator::MovementStyle movement_style);
+  void start_task_maze_solve_with_search_navigation(
+      navigation::SearchNavigator::MovementStyle movement_style);
   void process_task_maze_solve_with_search_navigation();
 
   void start_task_maze_solve(bool fast);
   void process_task_maze_solve(bool fast);
+
+  void start_task_maze_search_then_slow_solve_then_fast_solve();
+  void process_task_maze_search_then_slow_solve_then_fast_solve();
 
   void start_task_test_drive_straight_from_back_wall_to_sense_spot();
   void start_task_test_drive_straight_one_cell();
@@ -170,7 +185,8 @@ class Robot : public Singleton<Robot> {
   void start_task_test_drive_turn_right_in_place();
   void start_task_test_drive_turn_left_in_place();
   void start_task_test_drive_turn_180_in_place();
-  void process_task_test_drive();
+  void start_task_drive_backup_into_wall();
+  void process_task_drive();
 
   void start_task_test_gyro();
 
@@ -191,7 +207,6 @@ class Robot : public Singleton<Robot> {
 
   void start_task_armed_triggered();
   void process_task_armed_triggered();
-
 
   void publish_current_task();
 };

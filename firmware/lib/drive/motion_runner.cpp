@@ -15,6 +15,8 @@
 
 namespace drive {
 
+static constexpr auto WALL_EDGE_VISION_ADJUSTMENT_SPEED_COMPENSATION = 5_mm / 100_mmps;
+
 // The turn path is formed by two symmetric segments of an Euler spiral (clothoid).
 struct TurnPath {
   units::radian_t angle;
@@ -165,6 +167,14 @@ void MotionRunner::enqueue_turn_distance(TurnAngle angle,
   }
 }
 
+void MotionRunner::enqueue_pause() {
+  m_motions.push(std::make_unique<PauseMotion>());
+
+  if (m_motion_state == MotionState::NONE) {
+    m_motion_state = MotionState::IDLE;
+  }
+}
+
 void MotionRunner::start_next_motion(units::meters_per_second_t last_velocity) {
   m_current_motion = std::move(m_motions.front());
   m_motions.pop();
@@ -180,6 +190,8 @@ void MotionRunner::start_next_motion(units::meters_per_second_t last_velocity) {
       return start_forward_motion(static_cast<ForwardMotion&>(*m_current_motion), last_velocity);
     case Motion::Type::TURN:
       return start_turn_motion(static_cast<TurnMotion&>(*m_current_motion), last_velocity);
+    case Motion::Type::PAUSE:
+      return start_pause(static_cast<PauseMotion&>(*m_current_motion));
   }
 }
 
@@ -210,6 +222,8 @@ void MotionRunner::start_forward_motion(ForwardMotion& motion, units::meters_per
                             2.f * m_speeds.linear_acceleration * remaining_distance_after_motion);
       target_velocity = std::min(target_velocity, max_velocity_now_for_turn);
     }
+
+    target_velocity = units::math::copysign(target_velocity, motion.distance);
   }
   const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
                              .velocity = target_velocity};
@@ -238,6 +252,10 @@ void MotionRunner::start_turn_motion(TurnMotion& motion, units::meters_per_secon
   exec.angular_profile.configure(motion.angle_value, 0_deg_per_s, 0_deg_per_s, constraints);
 }
 
+void MotionRunner::start_pause(PauseMotion&) {
+  m_drivetrain.reset();
+}
+
 ChassisSpeeds MotionRunner::process_motion(units::second_t t) {
   switch (m_current_motion->type()) {
     using enum Motion::Type;
@@ -245,6 +263,8 @@ ChassisSpeeds MotionRunner::process_motion(units::second_t t) {
       return process_forward_motion(static_cast<ForwardMotion&>(*m_current_motion), t);
     case Motion::Type::TURN:
       return process_turn_motion(static_cast<TurnMotion&>(*m_current_motion), t);
+    case Motion::Type::PAUSE:
+      return process_pause(static_cast<PauseMotion&>(*m_current_motion), t);
   }
   return ChassisSpeeds{};
 }
@@ -304,6 +324,8 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
                               2.f * m_speeds.linear_acceleration * remaining_distance_after_motion);
         target_velocity = std::min(target_velocity, max_velocity_now_for_turn);
       }
+
+      target_velocity = units::math::copysign(target_velocity, motion.distance);
     }
     assert(exec.current_cell_position + exec.remaining_distance > 0_mm);
     const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
@@ -328,7 +350,9 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
           Robot::get().feedback_status_update<robot::StatusTopic::MAZE_WALL_GONE>(position.value());
 
           exec.initial_velocity = linear_velocity;
-          units::millimeter_t new_cell_position = robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT;
+          units::millimeter_t new_cell_position =
+              robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT +
+              std::min(linear_velocity - 200_mmps, 0_mmps) * WALL_EDGE_VISION_ADJUSTMENT_SPEED_COMPENSATION;
           exec.remaining_distance =
               (exec.current_cell_position + exec.remaining_distance) - new_cell_position;
           exec.remaining_distance =
@@ -343,6 +367,8 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
           if (motion.end_state.end_high) {
             target_velocity =
                 motion.end_state.end_for_turn ? m_speeds.turn_linear_velocity : m_speeds.linear_velocity;
+
+            target_velocity = units::math::copysign(target_velocity, motion.distance);
           }
           const Profile::State final{.position = exec.current_cell_position + exec.remaining_distance,
                                      .velocity = target_velocity};
@@ -354,9 +380,10 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
       }
     }
 
-    bool vision_align_left_wall = false;
-    bool vision_align_right_wall = false;
+    bool vision_align_left_wall = true;
+    bool vision_align_right_wall = true;
 
+#if 0
     if (position < robot::CellPositions::SIDE_WALL_OUT_OF_VIEW_SPOT) {
       const maze::Cell& current_cell = m_maze.cell(exec.current_cell);
       vision_align_left_wall = current_cell.is_wall(maze::left_of(motion.direction));
@@ -368,6 +395,7 @@ ChassisSpeeds MotionRunner::process_forward_motion(ForwardMotion& motion, units:
         vision_align_right_wall = front_cell->is_wall(maze::right_of(motion.direction));
       }
     }
+#endif
 
     vision_align_left_wall &= m_vision.left_wall();
     vision_align_right_wall &= m_vision.right_wall();
@@ -412,6 +440,13 @@ ChassisSpeeds MotionRunner::process_turn_motion(TurnMotion& motion, units::secon
   const auto& [position, angular_velocity, distance] = exec.angular_profile.sample(t);
 
   return ChassisSpeeds{.linear_velocity = exec.linear_velocity, .angular_velocity = angular_velocity};
+}
+
+ChassisSpeeds MotionRunner::process_pause(PauseMotion&, units::second_t t) {
+  if (t > 0.25_s) {
+    m_motion_state = MotionState::IDLE;
+  }
+  return ChassisSpeeds{};
 }
 
 }  // namespace drive

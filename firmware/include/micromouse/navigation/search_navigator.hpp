@@ -48,6 +48,12 @@ class SearchNavigator : public Subsystem {
 
   void periodic() override;
 
+  void reset() {
+    m_done = true;
+    m_should_sense = false;
+    m_drive.reset();
+  }
+
   void reset_position(maze::Coordinate position,
                       maze::Direction direction,
                       units::millimeter_t cell_position);
