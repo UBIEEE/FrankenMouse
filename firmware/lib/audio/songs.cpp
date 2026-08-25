@@ -172,6 +172,18 @@ static constexpr Note SONG_ARMED_AND_TRIGGERING_NOTES[] = {
     REST,
 };
 
+// Task selection mode tone.
+
+static constexpr uint16_t SONG_TASK_SELECTION_MODE_NOTE_LENGTH_MS = 250;
+
+static constexpr Note SONG_TASK_SELECTION_MODE_NOTES[] = {
+    {A, 4},
+    REST,
+    REST,
+};
+
+// Windows XP shutdown tone.
+
 static constexpr uint16_t SONG_WINDOWS_XP_SHUTDOWN_NOTE_LENGTH_MS = 350;
 
 static constexpr Note SONG_WINDOWS_XP_SHUTDOWN_NOTES[] = {
